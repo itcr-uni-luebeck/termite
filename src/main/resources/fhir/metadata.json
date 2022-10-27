@@ -1,0 +1,48 @@
+{
+  "resourceType" : "CapabilityStatement",
+  "id" : "terminology-server",
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/capabilitystatement-supported-system",
+    "valueUri" : "http://loinc.org"
+  }],
+  "url" : "http://hl7.org/fhir/terminology-server",
+  "name" : "Terminology Service Capability Statement",
+  "status" : "active",
+  "experimental" : false,
+  "date" : "2022-10-17",
+  "publisher" : "ITCR-L",
+  "kind" : "instance",
+  "software" : {
+    "name" : "Termite Terminology Service"
+  },
+  "fhirVersion" : "4.0.1",
+  "format" : ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"],
+  "rest" : [{
+    "mode" : "server",
+    "documentation" : "RESTful Terminology Server",
+    "resource" : [
+      {
+        "type": "ValueSet",
+        "versioning": "versioned",
+        "readHistory": false,
+        "updateCreate": false,
+        "conditionalCreate": false,
+        "conditionalRead": "not-supported",
+        "conditionalUpdate": false,
+        "conditionalDelete": "not-supported",
+        "referencePolicy": "logical",
+        "interaction": [
+          {
+            "code": "create"
+          }
+        ],
+        "operation": [
+          {
+            "name": "validate-code",
+            "definition": "http://hl7.org/fhir/OperationDefinition/ValueSet-validate-code"
+          }
+        ]
+      }
+    ]
+  }]
+}

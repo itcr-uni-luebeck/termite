@@ -1,0 +1,5 @@
+/.idea/
+/log/logging.log
+/build/
+/.gradle/
+/src/main/resources/db/
