@@ -1,4 +1,4 @@
-package de.itcr.termite.database
+package de.itcr.termite.database.sql
 
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger

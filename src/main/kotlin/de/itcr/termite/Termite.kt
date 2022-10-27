@@ -1,7 +1,7 @@
 package de.itcr.termite
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.database.TerminologyDatabase
+import de.itcr.termite.database.sql.TerminologyDatabase
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.boot.autoconfigure.SpringBootApplication

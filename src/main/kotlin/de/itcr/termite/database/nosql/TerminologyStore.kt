@@ -1,12 +1,14 @@
-package de.itcr.termite.database
+package de.itcr.termite.database.nosql
 
+import de.itcr.termite.database.TerminologyStorage
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4.model.CodeSystem
 import org.hl7.fhir.r4.model.ValueSet
 import java.nio.file.Path
 import java.sql.Timestamp
 
-class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("valuesets", "systems", "codes")), TerminologyStorage {
+class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("valuesets", "systems", "codes")),
+    TerminologyStorage {
 
     companion object {
         private val logger = LogManager.getLogger()

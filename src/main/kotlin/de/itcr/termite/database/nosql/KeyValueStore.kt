@@ -1,15 +1,32 @@
-package de.itcr.termite.database
+package de.itcr.termite.database.nosql
 
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.rocksdb.*
 import java.io.*
-import java.nio.ByteBuffer
 import java.nio.file.Path
 import kotlin.Exception
 
-open class KeyValueStore constructor(dbPath: Path, columnFamilyNames: List<String>) {
+open class KeyValueStore constructor(dbPath: Path, columnFamilyNames: List<String> = listOf()) {
+
+    companion object{
+        private fun getBytes(a: Serializable): ByteArray {
+            return SerializationUtils.serialize(a)
+        }
+
+        private fun getBytes(aList: List<Serializable>): List<ByteArray>{
+            return aList.map { a -> getBytes(a)}
+        }
+
+        private fun getObject(b: ByteArray): Any {
+            return SerializationUtils.deserialize(b)
+        }
+
+        private fun getObjects(bList: List<ByteArray>): Any {
+            return bList.map { b -> getObject(b) }
+        }
+    }
 
     private val logger: Logger = LogManager.getLogger(this::class)
 
@@ -34,7 +51,9 @@ open class KeyValueStore constructor(dbPath: Path, columnFamilyNames: List<Strin
             .setCreateMissingColumnFamilies(true)
         this.database = RocksDB.open(this.dbOptions, this.dbPath, cfDescriptors, columnFamilyHandles)
 
-        this.columnFamilyHandleMap = columnFamilyHandles.associateBy { columnFamilyHandle -> String(columnFamilyHandle.descriptor.name, Charsets.UTF_8) }
+        this.columnFamilyHandleMap = columnFamilyHandles.associateBy {
+                columnFamilyHandle -> String(columnFamilyHandle.descriptor.name, Charsets.UTF_8)
+        }
     }
 
     fun put(key: Serializable, value: Serializable, columnFamily: String){
@@ -50,7 +69,7 @@ open class KeyValueStore constructor(dbPath: Path, columnFamilyNames: List<Strin
         put(key, value, "default")
     }
 
-    fun get(key: Serializable, columnFamily: String): ByteArray{
+    fun get(key: Serializable, columnFamily: String): ByteArray?{
         try {
             return database.get(columnFamilyHandleMap[columnFamily], getBytes(key))
         }
@@ -60,17 +79,17 @@ open class KeyValueStore constructor(dbPath: Path, columnFamilyNames: List<Strin
     }
 
     @JvmName("getT")
-    internal inline fun <reified T> get(key: Serializable, columnFamily: String): T{
-        return getObject(get(key, columnFamily)) as T
+    internal inline fun <reified T> get(key: Serializable, columnFamily: String): T?{
+        return get(key, columnFamily)?.let { getObject(it) } as T?
     }
 
-    fun get(key: Serializable): ByteArray{
+    fun get(key: Serializable): ByteArray?{
         return get(key, "default")
     }
 
     @JvmName("getT")
-    internal inline fun <reified T> get(key: Serializable): T{
-        return getObject(get(key)) as T
+    internal inline fun <reified T> get(key: Serializable): T?{
+        return get(key)?.let { getObject(it) } as T?
     }
 
     fun delete(key: Serializable, columnFamily: String){
@@ -86,12 +105,24 @@ open class KeyValueStore constructor(dbPath: Path, columnFamilyNames: List<Strin
         delete(key, "default")
     }
 
-    private fun getBytes(a: Serializable): ByteArray{
-        return SerializationUtils.serialize(a)
+    fun contains(key: Serializable, columnFamilyName: String): Boolean{
+        return get(key, columnFamilyName) != null
     }
 
-    private fun getObject(b: ByteArray): Any {
-        return SerializationUtils.deserialize(b)
+    fun contains(key: Serializable): Boolean{
+        return contains(key, "default")
+    }
+
+    fun createColumnFamily(name: ByteArray){
+        database.createColumnFamily(ColumnFamilyDescriptor(name, cfOptions))
+    }
+
+    fun createColumnFamily(name: String){
+        createColumnFamily(getBytes(name))
+    }
+
+    fun createColumnFamilies(names: List<String>){
+        database.createColumnFamilies(cfOptions, getBytes(names))
     }
 
     fun close(){

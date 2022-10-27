@@ -1,5 +1,6 @@
-package de.itcr.termite.database
+package de.itcr.termite.database.sql
 
+import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.AmbiguousValueSetVersionException
 import de.itcr.termite.exception.ValueSetException
 import org.apache.logging.log4j.LogManager
