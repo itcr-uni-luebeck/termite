@@ -164,7 +164,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         }
     }
 
-    override fun validateCodeVS(url: String, version: String?, system: String, code: String, display: String?): Pair<Boolean, String>{
+    override fun validateCodeVS(url: String, version: String?, system: String, code: String, display: String?): Pair<Boolean, String?>{
         return if(version != null){
             validateCodeWithVsVersion(url, version, system, code, display) to version
         } else{
@@ -189,7 +189,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         }
     }
 
-    private fun validateCodeWithoutVsVersion(url: String, system: String, code: String, display: String?): Pair<Boolean, String>{
+    private fun validateCodeWithoutVsVersion(url: String, system: String, code: String, display: String?): Pair<Boolean, String?>{
         val query = "SELECT ValueSetsSlice.VS_ID, ValueSetsSlice.VERSION FROM Membership, " +
                 "(SELECT VS_ID, VERSION FROM ValueSets WHERE URL = ?) AS ValueSetsSlice " +
                 "WHERE Membership.VS_ID = ValueSetsSlice.VS_ID AND Membership.SYSTEM = ? AND Membership.CODE = ? " +
@@ -201,15 +201,18 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
             val versions = mutableListOf<String>()
             val result = rs.next()
             //JDBC left me no choice
-            versions.add(rs.getString(2))
+            var version = rs.getString(2)
+            if(version != null) versions.add(version)
             if(result && rs.next()){
-                versions.add(rs.getString(2))
+                version = rs.getString(2)
+                if(version != null) versions.add(version)
                 while(rs.next()){
-                    versions.add(rs.getString(2))
+                    version = rs.getString(2)
+                    if(version != null) versions.add(version)
                 }
                 throw AmbiguousValueSetVersionException("More than one version is available for value set [url = $url]", versions)
             }
-            return result to versions[0]
+            return result to if(versions.isEmpty()) null else versions[0]
         } catch (e: Exception){
             val message = "Failed to check if code $code from system $system is in ValueSet with URL $url"
             logger.error(message)

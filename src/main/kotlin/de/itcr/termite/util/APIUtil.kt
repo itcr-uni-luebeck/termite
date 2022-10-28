@@ -24,3 +24,7 @@ fun generateParametersString(parser: IParser, vararg parameters: Parameters.Para
     return parser.encodeResourceToString(generateParameters(*parameters))
 }
 
+fun parseParameters(parameters: Parameters): Map<String, String>{
+    return parameters.parameter.associate { component -> component.name to component.value.primitiveValue() }
+}
+

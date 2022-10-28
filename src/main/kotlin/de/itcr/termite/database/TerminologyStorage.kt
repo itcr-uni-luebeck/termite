@@ -34,7 +34,7 @@ interface TerminologyStorage {
      *         string representing the version of the value set (not the internal version ID!) against which the
      *         validation was performed
      */
-    fun validateCodeVS(url: String, version: String?, system: String, code: String, display: String?): Pair<Boolean, String>
+    fun validateCodeVS(url: String, version: String?, system: String, code: String, display: String?): Pair<Boolean, String?>
 
     /**
      * Returns all value sets matching the criteria provided via the arguments

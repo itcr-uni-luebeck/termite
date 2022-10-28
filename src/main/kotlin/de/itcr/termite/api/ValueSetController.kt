@@ -6,6 +6,8 @@ import ca.uhn.fhir.parser.IParser
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.util.generateOperationOutcomeString
 import de.itcr.termite.util.generateParametersString
+import de.itcr.termite.util.parseParameters
+import okhttp3.Response
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.instance.model.api.IBaseResource
@@ -34,27 +36,9 @@ import kotlin.Exception
 @Controller
 @RequestMapping("fhir/ValueSet")
 class ValueSetController(
-    @Autowired val database: TerminologyStorage,
-    @Autowired val fhirContext: FhirContext
-    ) {
-
-    private val parsers: Map<String, Pair<IParser, String>>
-    private val jsonParser = fhirContext.newJsonParser().setPrettyPrint(true)
-    //private val baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-
-    init{
-        val json = jsonParser to "json"
-        val xml = fhirContext.newXmlParser() to "xml"
-        val ndjson = fhirContext.newNDJsonParser() to "ndjson"
-        this.parsers = mapOf(
-            "application/json" to json,
-            "application/fhir+json" to json,
-            "application/xml" to xml,
-            "application/fhir+xml" to xml,
-            "application/ndjson" to ndjson,
-            "application/fhir+ndjson" to ndjson
-        )
-    }
+    @Autowired database: TerminologyStorage,
+    @Autowired fhirContext: FhirContext
+    ): ResourceController(database, fhirContext) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(ValueSetController::class.java)
@@ -139,6 +123,7 @@ class ValueSetController(
     @GetMapping(params = ["url"])
     @ResponseBody
     fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
+        logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
         try{
             val vsList = database.searchValueSet(url, valueSetVersion)
             val bundle = Bundle()
@@ -153,6 +138,7 @@ class ValueSetController(
                         .setResource(vs)
                 )
             }
+            logger.debug("Found ${vsList.size} value sets for URL $url and value set version $valueSetVersion")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
         }
         catch(e: Exception){
@@ -209,24 +195,44 @@ class ValueSetController(
         }
     }
 
-    /**
-     * Parses the html message body based on the provided value of the Content-Type header. The design is heavily
-     * inspired by the FHIR-Marshal handles this issue
-     * @see <a href="https://github.com/itcr-uni-luebeck/fhir-marshal/blob/main/src/main/kotlin/de/uksh/medic/fhirmarshal/controller/ValidationController.kt">FHIR-Marshal</a>
-     */
-    private fun parseBodyAsResource(requestEntity: RequestEntity<String>, contentType: String): IBaseResource{
+    @PostMapping(path = ["\$validate-code"])
+    @ResponseBody
+    fun validateCode(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
+        logger.info("POST: Validating code against value set with request body: ${requestEntity.body}")
         try{
-            val (parser, parserFormat) = parsers[contentType] ?: throw Exception("Unsupported content type: $contentType")
-            try {
-                return parser.parseResource(requestEntity.body)
-            } catch (e: DataFormatException) {
-                val message = "Data is not in $parserFormat"
-                throw Exception(message, e)
-            }
+            val parameters = parseBodyAsResource(requestEntity, contentType) as Parameters
+            val paramMap = parseParameters(parameters)
+            val url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
+            val system = paramMap["system"] ?: throw Exception("system has to be provided in parameters in request body")
+            val code = paramMap["code"] ?: throw Exception("code has to be provided in parameters in request body")
+            val display = paramMap["display"]
+            //TODO: Implement other parameters like version
+            val (result, version) = database.validateCodeVS(url, null, system, code, display)
+            val resultParam = generateParametersString(
+                jsonParser,
+                Parameters.ParametersParameterComponent()
+                    .setName("result").setValue(BooleanType(result)),
+                Parameters.ParametersParameterComponent()
+                    .setName("message").setValue(StringType(
+                        "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
+                                "[url = $url and version = $version]"
+                    ))
+            )
+            logger.debug("Validation result: $resultParam")
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultParam)
         }
-        catch (e: Exception) {
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
-            throw Exception(message, e)
+        catch (e: Exception){
+            logger.warn("Validation of code against value set failed")
+            logger.debug(e.stackTraceToString())
+            val opOutcome = generateOperationOutcomeString(
+                OperationOutcome.IssueSeverity.ERROR,
+                OperationOutcome.IssueType.INVALID,
+                e.message,
+                jsonParser
+            )
+            return ResponseEntity.internalServerError()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(opOutcome)
         }
     }
 
