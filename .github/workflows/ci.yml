@@ -28,6 +28,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           tags: |
-            ghcr.io/paulolaup/termite:latest
-            ghcr.io/paulolaup/termite:${{ steps.prep.outputs.version }}
+            ghcr.io/itcr-uni-lubeck/termite:latest
+            ghcr.io/itcr-uni-luebeck/termite:${{ steps.prep.outputs.version }}
           push: true
