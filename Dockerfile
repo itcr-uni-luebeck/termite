@@ -14,5 +14,7 @@ RUN gradle bootJar --no-daemon
 FROM openjdk:17
 COPY --from=gradle_build /home/abide_validation/termite/build/libs/termite.jar /app/termite.jar
 COPY /src/main/resources/config/log4j2.xml /app/log4j2.xml
+COPY upload.sh /app/upload.sh
+VOLUME ["/app/terminology_data"]
 WORKDIR /app
-ENTRYPOINT ["java", "-Dserver.port=8083", "-jar", "termite.jar", "-Dlog4j.configurationFile=app/log4j2.xml"]
+ENTRYPOINT sh upload.sh
