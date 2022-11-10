@@ -19,7 +19,7 @@ do
   sleep 5
 done
 echo "Connected to Termite"
-for json_file in app/value_sets/*.json
+for json_file in value_sets/*.json
 do
   curl -vX POST -d @$json_file -H "Content-Type: application/json" "http://localhost:${TERMINOLOGY_SERVICE_PORT}/fhir/ValueSet"
   echo "Uploading ${json_file}"
