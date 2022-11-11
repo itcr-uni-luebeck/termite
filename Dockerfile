@@ -10,7 +10,6 @@ FROM openjdk:17
 COPY --from=gradle_build /home/abide_validation/termite/build/libs/termite.jar /app/termite.jar
 COPY /src/main/resources/config/log4j2.xml /app/log4j2.xml
 COPY upload.sh /app/upload.sh
-VOLUME ["/app/terminology_data"]
 WORKDIR /app
 
 ENTRYPOINT sh upload.sh
