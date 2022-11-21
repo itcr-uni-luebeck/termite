@@ -303,11 +303,13 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         return if(cs.concept.isEmpty()) return listOf() else listOf(cs)
     }
 
+    //TODO: Proper display handling: As of now display value will be ignored
     override fun validateCodeCS(code: String, display: String?, url: String): Boolean{
         logger.debug("Validating if code [code = $code, display = $display] is in code system [url = $url]")
-        val query = "SELECT CODE FROM Membership WHERE SYSTEM = ? AND CODE = ?${if(display != null) " AND DISPLAY = ?" else ""}"
+        //val query = "SELECT CODE FROM Membership WHERE SYSTEM = ? AND CODE = ?${if(display != null) " AND DISPLAY = ?" else ""}"
+        val query = "SELECT CODE FROM Membership WHERE SYSTEM = ? AND CODE = ?"
         val parameters = mutableListOf(url, code)
-        if(display != null) parameters.add(display)
+        //if(display != null) parameters.add(display)
         val rs = super.executeQuery(query, parameters)
         return rs.next()
     }
