@@ -21,6 +21,8 @@ interface TerminologyStorage {
      */
     fun addValueSet(valueSet: ValueSet): Triple<Int, Int, Timestamp>
 
+    fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp>
+
     /**
      * Validates if the given code is in the given value set
      *

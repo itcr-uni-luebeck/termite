@@ -25,6 +25,10 @@ class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("
         return Triple(0, 0, Timestamp(0))
     }
 
+    override fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp> {
+        TODO("Not yet implemented")
+    }
+
     private fun addSystems(systems: List<String>){
         logger.debug("Adding ${systems.size} systems to key value store")
 

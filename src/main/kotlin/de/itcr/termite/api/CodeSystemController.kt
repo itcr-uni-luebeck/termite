@@ -1,15 +1,12 @@
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
-import ca.uhn.fhir.parser.DataFormatException
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.util.generateOperationOutcomeString
 import de.itcr.termite.util.generateParametersString
 import de.itcr.termite.util.parseParameters
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport
-import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -24,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.server.ResponseStatusException
+import java.net.URI
 import java.util.*
 
 @Controller
@@ -35,6 +33,65 @@ class CodeSystemController(
 
     companion object{
         private val logger: Logger = LogManager.getLogger(this)
+    }
+
+    @PostMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    @ResponseBody
+    fun addCodeSystem(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
+        try {
+            val cs = parseBodyAsResource(requestEntity, contentType)
+            if (cs is CodeSystem) {
+                try {
+                    val (csId, versionId, lastUpdated) = database.addCodeSystem(cs)
+                    logger.info("Added code system [url: ${cs.url}, version: ${cs.version}] to database")
+                    return ResponseEntity.created(URI("$csId"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .eTag("W/\"$versionId\"")
+                        .lastModified(lastUpdated.time)
+                        .body(null)
+                } catch (e: Exception) {
+                    val opOutcome = generateOperationOutcomeString(
+                        OperationOutcome.IssueSeverity.ERROR,
+                        OperationOutcome.IssueType.PROCESSING,
+                        e.message,
+                        jsonParser
+                    )
+                    logger.warn("Adding of CodeSystem instance failed during database access")
+                    logger.debug(e.stackTraceToString())
+                    return ResponseEntity.unprocessableEntity()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(opOutcome)
+                }
+            } else {
+                val message =
+                    "Request body contained instance which was not of type CodeSystem but ${cs.javaClass.simpleName}"
+                val opOutcome = generateOperationOutcomeString(
+                    OperationOutcome.IssueSeverity.ERROR,
+                    OperationOutcome.IssueType.INVALID,
+                    message,
+                    jsonParser
+                )
+                logger.warn("Request body contained instance which was not of type CodeSystem but ${cs.javaClass.simpleName}")
+                return ResponseEntity.unprocessableEntity()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(opOutcome)
+            }
+        }
+        catch (e: Exception){
+            if(e is ResponseStatusException) throw e
+            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
+            val opOutcome = generateOperationOutcomeString(
+                OperationOutcome.IssueSeverity.ERROR,
+                OperationOutcome.IssueType.STRUCTURE,
+                message,
+                jsonParser
+            )
+            logger.warn(message)
+            logger.debug(e.stackTraceToString())
+            return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(opOutcome)
+        }
     }
 
     @GetMapping(path = ["\$validate-code"])

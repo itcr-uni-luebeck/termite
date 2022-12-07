@@ -2,11 +2,11 @@ package de.itcr.termite.database.sql
 
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.AmbiguousValueSetVersionException
+import de.itcr.termite.exception.CodeSystemException
 import de.itcr.termite.exception.ValueSetException
 import org.apache.logging.log4j.LogManager
-import org.hl7.fhir.r4.model.CodeSystem
-import org.hl7.fhir.r4.model.Enumerations
-import org.hl7.fhir.r4.model.ValueSet
+import org.hl7.fhir.r4.model.*
+import java.lang.System
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Timestamp
@@ -29,15 +29,10 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         logger.debug("Creating ValueSets table ...")
         super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID INTEGER PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
                           "UNIQUE(URL, VERSION))")
+        logger.debug("Creating CodeSystems table ...")
         /*
-        logger.debug("Creating Systems table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS Systems (S_ID INTEGER PRIMARY KEY, URL TEXT NOT NULL, " +
-                          "UNIQUE(URL))")
-        logger.debug("Creating Codes table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS Codes (C_ID INTEGER PRIMARY KEY, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
-                          "UNIQUE(CODE, DISPLAY))")
-        logger.debug("Creating Codes index ...")
-        super.execute("CREATE INDEX IF NOT EXISTS idx_Codes ON Codes (CODE, DISPLAY)")
+        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID INTEGER PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP), " +
+                          "UNIQUE(URL, VERSION)")
          */
         logger.debug("Creating Membership table ...")
         super.execute("CREATE TABLE IF NOT EXISTS Membership (VS_ID INTEGER, SYSTEM TEXT NOT NULL, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
@@ -59,6 +54,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
                 //Create database entries for codes if not already present and retrieve keys
                 if(valueSet.expansion.contains.isEmpty()) throw ValueSetException("Value set is empty or not expanded")
                 val codes = valueSet.expansion.contains.distinct()
+                    .map { coding -> Triple(coding.system, coding.code, coding.display) }
                 insertCodes(vsIds[0], codes)
             }
             else{
@@ -115,23 +111,49 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
      * Inserts codes into the Membership table belonging to a certain value set
      *
      * @param vsId VS_ID by which the value set is represented in the ValueSets table
-     * @param entries list containing all codes contained in the expanded form of the value set: the codes are contained
-     *                in the expansion.contains element of the ValueSet instance
+     * @param entries list containing all codes contained in the expanded form of the value set: the codes represented
+     *                as Triple instances with the system as the first, the code as the second and the display value as
+     *                the third element
      */
-    private fun insertCodes(vsId: Int, entries: List<ValueSet.ValueSetExpansionContainsComponent>) {
+    private fun insertCodes(vsId: Int?, entries: List<Triple<String, String, String>>) {
         logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "Code" else "Codes"} ...")
         val sql = "INSERT OR IGNORE INTO Membership (VS_ID, SYSTEM, CODE, DISPLAY) VALUES (?, ?, ?, ?)"
-        val transformation = { stmt: PreparedStatement, codes: List<ValueSet.ValueSetExpansionContainsComponent> -> codes.forEach { c ->
-            stmt.setInt(1, vsId)
-            stmt.setString(2, c.system)
-            stmt.setString(3, c.code)
-            stmt.setString(4, c.display)
+        val transformation = { stmt: PreparedStatement, codes: List<Triple<String, String, String>> -> codes.forEach { c ->
+            if (vsId != null) stmt.setInt(1, vsId) else stmt.setNull(1, java.sql.Types.INTEGER)
+            stmt.setString(2, c.first)
+            stmt.setString(3, c.second)
+            stmt.setString(4, c.third)
             stmt.addBatch()
         }}
         super.insert(sql, entries, transformation)
     }
 
-   override fun searchValueSet(url: String, version: String?): List<ValueSet>{
+    override fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp> {
+        try{
+            val url = codeSystem.url
+            logger.debug("Adding CodeSystem with URL $url and version to database")
+
+            //Create database entries for codes if not already present and retrieve keys
+            if(codeSystem.concept.isEmpty()) throw CodeSystemException("Code system is empty")
+            val codes = codeSystem.concept.distinct().map { coding -> Triple(url, coding.code, coding.display) }
+            insertCodes(null, codes)
+
+            val info = Triple(0, 0, Timestamp(System.currentTimeMillis()))
+            logger.debug("Finished adding CodeSystem with URL $url to database")
+            return info
+        }
+        catch (e: CodeSystemException){
+            throw e
+        }
+        catch (e: Exception){
+            val message = "Couldn't add CodeSystem to database"
+            logger.error(message)
+            logger.error(e.stackTraceToString())
+            throw Exception(message, e)
+        }
+    }
+
+    override fun searchValueSet(url: String, version: String?): List<ValueSet>{
         val query = "SELECT VS_ID FROM ValueSets WHERE URL = ?${if(version != null) "AND VERSION = ?" else ""}"
         val value = mutableListOf(url)
         if(version != null) value.add(version)
@@ -140,7 +162,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         try{
             while(rs.next()){
                 val vsId = rs.getString(1)
-                vsList.add(buildValueSet(vsId))
+                vsList.add(buildValueSet(vsId, true))
             }
             return vsList
         } catch (e: Exception){
@@ -225,7 +247,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     fun getValueSet(vsId: String, versionId: Int): ValueSet{
         logger.debug("Retrieving ValueSet instance with internal ID $vsId and internal version ID $versionId ...")
         try{
-            var rs: ResultSet = super.executeQuery(
+            val rs: ResultSet = super.executeQuery(
                 "SELECT * FROM ValueSets WHERE VS_ID = ? AND VERSION_ID = ?",
                 listOf(vsId, versionId)
             )
@@ -253,7 +275,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         return getValueSet(vsId, 0)
     }
 
-    private fun buildValueSet(vsId: String): ValueSet{
+    private fun buildValueSet(vsId: String, summarized: Boolean): ValueSet{
         logger.debug("Building value set with internal ID $vsId")
         //Retrieve value set metadata
         var query = "SELECT VS_ID, URL, VERSION, VERSION_ID, LAST_UPDATED FROM ValueSets WHERE VS_ID = ?"
@@ -269,38 +291,46 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         else{
             throw Exception("Value set corresponding to internal ID $vsId doesn't exist")
         }
-        //Retrieve contained codings
-        val expansion = vs.expansion
-        expansion.timestamp = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
-        query = "SELECT SYSTEM, CODE, DISPLAY FROM Membership WHERE VS_ID = ?"
-        rs = super.executeQuery(query, listOf(vsId))
-        while (rs.next()){
-            expansion.addContains(
-                ValueSet.ValueSetExpansionContainsComponent()
-                    .setSystem(rs.getString(1))
-                    .setCode(rs.getString(2))
-                    .setDisplay(rs.getString(3))
-            )
+        if (summarized) {
+            tagAsSummarized(vs)
+        }
+        else{
+            //Retrieve contained codings
+            val expansion = vs.expansion
+            expansion.timestamp = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
+            query = "SELECT SYSTEM, CODE, DISPLAY FROM Membership WHERE VS_ID = ?"
+            rs = super.executeQuery(query, listOf(vsId))
+            while (rs.next()){
+                expansion.addContains(
+                    ValueSet.ValueSetExpansionContainsComponent()
+                        .setSystem(rs.getString(1))
+                        .setCode(rs.getString(2))
+                        .setDisplay(rs.getString(3))
+                )
+            }
         }
         return vs
     }
 
+    private fun tagAsSummarized(metadataResource: MetadataResource) {
+        metadataResource.meta.addTag(Coding(
+            "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
+            "SUBSETTED",
+            "subsetted"
+        ))
+    }
+
     override fun searchCodeSystem(url: String): List<CodeSystem> {
         logger.debug("Retrieving fragment of code system [url = $url]")
-        val query = "SELECT CODE, DISPLAY FROM Membership WHERE SYSTEM = ? GROUP BY CODE, DISPLAY"
+        val query = "SELECT CODE, DISPLAY FROM Membership WHERE SYSTEM = ? GROUP BY CODE, DISPLAY LIMIT 1"
         val rs = super.executeQuery(query, listOf(url))
+        if (!rs.isBeforeFirst) return listOf()
         val cs = CodeSystem()
         cs.url = url
         cs.status = Enumerations.PublicationStatus.UNKNOWN
         cs.content = CodeSystem.CodeSystemContentMode.FRAGMENT
-        while(rs.next()){
-            cs.addConcept(
-                CodeSystem.ConceptDefinitionComponent()
-                    .setCode(rs.getString(1))
-                    .setDisplay(rs.getString(2))
-            )
-        }
-        return if(cs.concept.isEmpty()) return listOf() else listOf(cs)
+        tagAsSummarized(cs)
+        return listOf(cs)
     }
 
     //TODO: Proper display handling: As of now display value will be ignored
