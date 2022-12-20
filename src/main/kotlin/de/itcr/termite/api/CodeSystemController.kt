@@ -71,7 +71,7 @@ class CodeSystemController(
                     message,
                     jsonParser
                 )
-                logger.warn("Request body contained instance which was not of type CodeSystem but ${cs.javaClass.simpleName}")
+                logger.warn(message)
                 return ResponseEntity.unprocessableEntity()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(opOutcome)
