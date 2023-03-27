@@ -169,9 +169,8 @@ class ValueSetController(
                      @RequestParam system: String,
                      @RequestParam code: String,
                      @RequestParam(required = false) display: String?): ResponseEntity<String>{
-        if ('|' in url) {
-            url = url.substringBefore('|')
-        }
+        val urlParts = url.split("|")
+        url = if (urlParts.isNotEmpty()) urlParts[0] else url
         logger.info("Validating code [system=$system, code=$code, display=$display] against value set [url=$url, version=$valueSetVersion]")
         try{
             val (result, version) = database.validateCodeVS(url, valueSetVersion, system, code, display)
@@ -206,9 +205,8 @@ class ValueSetController(
             val parameters = parseBodyAsResource(requestEntity, contentType) as Parameters
             val paramMap = parseParameters(parameters)
             val url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
-            if ('|' in url) {
-                url = url.substringBefore('|')
-            }
+            val urlParts = url.split("|")
+            url = if (urlParts.isNotEmpty()) urlParts[0] else url
             val system = paramMap["system"] ?: throw Exception("system has to be provided in parameters in request body")
             val code = paramMap["code"] ?: throw Exception("code has to be provided in parameters in request body")
             val display = paramMap["display"]
