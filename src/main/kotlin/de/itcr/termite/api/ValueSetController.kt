@@ -38,7 +38,7 @@ import kotlin.Exception
 class ValueSetController(
     @Autowired database: TerminologyStorage,
     @Autowired fhirContext: FhirContext
-    ): ResourceController(database, fhirContext) {
+): ResourceController(database, fhirContext) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(ValueSetController::class.java)
@@ -169,24 +169,25 @@ class ValueSetController(
                      @RequestParam system: String,
                      @RequestParam code: String,
                      @RequestParam(required = false) display: String?): ResponseEntity<String>{
-        val urlParts = url.split("|")
-        url = if (urlParts.isNotEmpty()) urlParts[0] else url
-        logger.info("Validating code [system=$system, code=$code, display=$display] against value set [url=$url, version=$valueSetVersion]")
+        var mutableUrl = url
+        val urlParts = mutableUrl.split("|")
+        mutableUrl = if (urlParts.isNotEmpty()) urlParts[0] else mutableUrl
+        logger.info("Validating code [system=$system, code=$code, display=$display] against value set [url=$mutableUrl, version=$valueSetVersion]")
         try{
-            val (result, version) = database.validateCodeVS(url, valueSetVersion, system, code, display)
+            val (result, version) = database.validateCodeVS(mutableUrl, valueSetVersion, system, code, display)
             val body = generateParametersString(
                 jsonParser,
                 Parameters.ParametersParameterComponent(StringType("result")).setValue(BooleanType(result)),
                 Parameters.ParametersParameterComponent(StringType("message")).setValue(StringType(
                     "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
-                            "[url = $url and version = $version]"
+                            "[mutableUrl = $mutableUrl and version = $version]"
                 ))
             )
-            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [url = $url, version = $version]: $result")
+            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [mutableUrl = $mutableUrl, version = $version]: $result")
             return ResponseEntity.ok().body(body)
         }
         catch (e: Exception){
-            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [url = $url${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
+            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [mutableUrl = $mutableUrl${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
             logger.warn(message)
             logger.debug(e.stackTraceToString())
             throw ResponseStatusException(
@@ -204,7 +205,7 @@ class ValueSetController(
         try{
             val parameters = parseBodyAsResource(requestEntity, contentType) as Parameters
             val paramMap = parseParameters(parameters)
-            val url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
+            var url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
             val urlParts = url.split("|")
             url = if (urlParts.isNotEmpty()) urlParts[0] else url
             val system = paramMap["system"] ?: throw Exception("system has to be provided in parameters in request body")
