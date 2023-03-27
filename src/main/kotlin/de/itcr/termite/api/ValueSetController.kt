@@ -180,14 +180,14 @@ class ValueSetController(
                 Parameters.ParametersParameterComponent(StringType("result")).setValue(BooleanType(result)),
                 Parameters.ParametersParameterComponent(StringType("message")).setValue(StringType(
                     "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
-                            "[mutableUrl = $mutableUrl and version = $version]"
+                            "[url = $mutableUrl and version = $version]"
                 ))
             )
-            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [mutableUrl = $mutableUrl, version = $version]: $result")
+            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [url = $mutableUrl, version = $version]: $result")
             return ResponseEntity.ok().body(body)
         }
         catch (e: Exception){
-            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [mutableUrl = $mutableUrl${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
+            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [url = $mutableUrl${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
             logger.warn(message)
             logger.debug(e.stackTraceToString())
             throw ResponseStatusException(
