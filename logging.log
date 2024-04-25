@@ -6496,3 +6496,825 @@
 2022-12-09 09:10:18.353  INFO 6102 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
 2022-12-09 09:10:18.972  INFO 6102 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
 2022-12-09 09:10:18.987  INFO 6102 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 2.455 seconds (JVM running for 3.682)
+2024-04-25 16:18:30.940  INFO 19380 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 11.0.23 on DESKTOP-L9AIA8O with PID 19380 (C:\Users\Confi Dential\Projects\termite\build\classes\kotlin\main started by Confi Dential in C:\Users\Confi Dential\Projects\termite)
+2024-04-25 16:18:30.951  INFO 19380 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-04-25 16:18:31.545  INFO 19380 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-04-25 16:18:31.551  INFO 19380 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-04-25 16:18:31.552  INFO 19380 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-04-25 16:18:31.634  INFO 19380 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-04-25 16:18:31.635  INFO 19380 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 645 ms
+2024-04-25 16:18:31.795  INFO 19380 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-04-25 16:18:31.798  INFO 19380 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-04-25 16:18:32.135  INFO 19380 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-04-25 16:18:32.142  INFO 19380 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 1.523 seconds (JVM running for 2.531)
+2024-04-25 16:18:57.904  INFO 19380 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-25 16:18:57.905  INFO 19380 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-04-25 16:18:57.905  INFO 19380 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 0 ms
+2024-04-25 16:18:57.926  INFO 19380 --- [http-nio-8083-exec-1] d.i.t.a.ValueSetController               : Expanding value set [url = abc,  version = null]
+2024-04-25 16:18:57.935  WARN 19380 --- [http-nio-8083-exec-1] d.i.t.a.ValueSetController               : Search for ValueSet instances [url = abc, version = null] failed
+2024-04-25 16:21:31.246  INFO 10168 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 11.0.23 on DESKTOP-L9AIA8O with PID 10168 (C:\Users\Confi Dential\Projects\termite\build\classes\kotlin\main started by Confi Dential in C:\Users\Confi Dential\Projects\termite)
+2024-04-25 16:21:31.255  INFO 10168 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-04-25 16:21:31.950  INFO 10168 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-04-25 16:21:31.955  INFO 10168 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-04-25 16:21:31.956  INFO 10168 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-04-25 16:21:32.027  INFO 10168 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-04-25 16:21:32.027  INFO 10168 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 705 ms
+2024-04-25 16:21:32.181  INFO 10168 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-04-25 16:21:32.184  INFO 10168 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-04-25 16:21:32.512  INFO 10168 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-04-25 16:21:32.518  INFO 10168 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 1.742 seconds (JVM running for 2.567)
+2024-04-25 16:21:40.053  INFO 10168 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-25 16:21:40.054  INFO 10168 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-04-25 16:21:40.054  INFO 10168 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 0 ms
+2024-04-25 16:21:40.070  WARN 10168 --- [http-nio-8083-exec-1] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MissingServletRequestParameterException: Required request parameter 'id' for method parameter type String is not present]
+2024-04-25 16:21:45.164  INFO 10168 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Expanding value set [url = abc,  version = null]
+2024-04-25 16:21:45.174  WARN 10168 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Search for ValueSet instances [url = abc, version = null] failed
+2024-04-25 16:22:30.916  INFO 5556 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 11.0.23 on DESKTOP-L9AIA8O with PID 5556 (C:\Users\Confi Dential\Projects\termite\build\classes\kotlin\main started by Confi Dential in C:\Users\Confi Dential\Projects\termite)
+2024-04-25 16:22:30.919  INFO 5556 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-04-25 16:22:31.458  INFO 5556 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-04-25 16:22:31.464  INFO 5556 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-04-25 16:22:31.464  INFO 5556 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-04-25 16:22:31.536  INFO 5556 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-04-25 16:22:31.536  INFO 5556 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 588 ms
+2024-04-25 16:22:31.700  INFO 5556 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-04-25 16:22:31.703  INFO 5556 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-04-25 16:22:32.031  INFO 5556 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-04-25 16:22:32.038  INFO 5556 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 1.407 seconds (JVM running for 2.146)
+2024-04-25 16:22:38.601  INFO 5556 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-25 16:22:38.611  INFO 5556 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-04-25 16:22:38.611  INFO 5556 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 0 ms
+2024-04-25 16:22:38.630  WARN 5556 --- [http-nio-8083-exec-1] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MissingServletRequestParameterException: Required request parameter 'id' for method parameter type String is not present]
+2024-04-25 16:22:49.428  INFO 5556 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Expanding value set [url = abc,  version = abc]
+2024-04-25 16:22:49.437  WARN 5556 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Search for ValueSet instances [url = abc, version = abc] failed
+2024-04-25 16:23:08.853  INFO 11644 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 11.0.23 on DESKTOP-L9AIA8O with PID 11644 (C:\Users\Confi Dential\Projects\termite\build\classes\kotlin\main started by Confi Dential in C:\Users\Confi Dential\Projects\termite)
+2024-04-25 16:23:08.853  INFO 11644 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-04-25 16:23:09.401  INFO 11644 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-04-25 16:23:09.406  INFO 11644 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-04-25 16:23:09.406  INFO 11644 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-04-25 16:23:09.473  INFO 11644 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-04-25 16:23:09.474  INFO 11644 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 579 ms
+2024-04-25 16:23:09.625  INFO 11644 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-04-25 16:23:09.628  INFO 11644 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-04-25 16:23:09.950  INFO 11644 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-04-25 16:23:09.957  INFO 11644 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 1.381 seconds (JVM running for 2.126)
+2024-04-25 16:23:20.313  INFO 11644 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-25 16:23:20.313  INFO 11644 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-04-25 16:23:20.314  INFO 11644 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 1 ms
+2024-04-25 16:23:20.331  WARN 11644 --- [http-nio-8083-exec-1] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.bind.MissingServletRequestParameterException: Required request parameter 'url' for method parameter type String is not present]
+2024-04-25 16:23:27.806  INFO 11644 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Expanding value set [url = abc,  version = null]
+2024-04-25 16:23:27.815  WARN 11644 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Search for ValueSet instances [url = abc, version = null] failed
+2024-04-25 16:24:35.556  INFO 4088 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 11.0.23 on DESKTOP-L9AIA8O with PID 4088 (C:\Users\Confi Dential\Projects\termite\build\classes\kotlin\main started by Confi Dential in C:\Users\Confi Dential\Projects\termite)
+2024-04-25 16:24:35.558  INFO 4088 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-04-25 16:24:36.113  INFO 4088 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-04-25 16:24:36.118  INFO 4088 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-04-25 16:24:36.119  INFO 4088 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-04-25 16:24:36.187  INFO 4088 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-04-25 16:24:36.187  INFO 4088 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 585 ms
+2024-04-25 16:24:36.338  INFO 4088 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-04-25 16:24:36.341  INFO 4088 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-04-25 16:24:36.677  INFO 4088 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-04-25 16:24:36.683  INFO 4088 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 1.413 seconds (JVM running for 2.164)
+2024-04-25 16:24:42.710  INFO 4088 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-25 16:24:42.711  INFO 4088 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-04-25 16:24:42.712  INFO 4088 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 1 ms
+2024-04-25 16:24:42.728  INFO 4088 --- [http-nio-8083-exec-1] d.i.t.a.ValueSetController               : Expanding value set [url = abc,  version = null]
+2024-04-25 16:24:42.738  WARN 4088 --- [http-nio-8083-exec-1] d.i.t.a.ValueSetController               : Expanding ValueSet [url = abc, version = null] failed
+2024-04-25 16:25:16.544  INFO 18792 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 11.0.23 on DESKTOP-L9AIA8O with PID 18792 (C:\Users\Confi Dential\Projects\termite\build\classes\kotlin\main started by Confi Dential in C:\Users\Confi Dential\Projects\termite)
+2024-04-25 16:25:16.544  INFO 18792 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-04-25 16:25:17.088  INFO 18792 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-04-25 16:25:17.093  INFO 18792 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-04-25 16:25:17.093  INFO 18792 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-04-25 16:25:17.160  INFO 18792 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-04-25 16:25:17.161  INFO 18792 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 586 ms
+2024-04-25 16:25:17.320  INFO 18792 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-04-25 16:25:17.323  INFO 18792 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-04-25 16:25:17.641  INFO 18792 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-04-25 16:25:17.647  INFO 18792 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 1.388 seconds (JVM running for 2.147)
+2024-04-25 16:27:31.848  INFO 18792 --- [http-nio-8083-exec-3] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-04-25 16:27:31.850  INFO 18792 --- [http-nio-8083-exec-3] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-04-25 16:27:31.851  INFO 18792 --- [http-nio-8083-exec-3] o.s.w.s.DispatcherServlet                : Completed initialization in 0 ms
+2024-04-25 16:27:32.284  INFO 18792 --- [http-nio-8083-exec-3] d.i.t.a.ValueSetController               : Added value set [url: https://ontoserver.imi.uni-luebeck.de/fhir/ValueSet/synthea_observation, version: 0.0.1] to database
+2024-04-25 16:27:53.761  INFO 18792 --- [http-nio-8083-exec-4] d.i.t.a.ValueSetController               : Searching for value set [url = https://ontoserver.imi.uni-luebeck.de/fhir/ValueSet/synthea_observation,  version = null]
+2024-04-25 16:28:03.465  INFO 18792 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : Expanding value set [url = https://ontoserver.imi.uni-luebeck.de/fhir/ValueSet/synthea_observation,  version = null]
+2024-04-25 16:28:03.483  INFO 18792 --- [http-nio-8083-exec-2] d.i.t.a.ValueSetController               : {
+  "resourceType": "ValueSet",
+  "id": "1",
+  "meta": {
+    "versionId": "0",
+    "lastUpdated": "2024-04-25T14:27:32.000+02:00"
+  },
+  "url": "https://ontoserver.imi.uni-luebeck.de/fhir/ValueSet/synthea_observation",
+  "version": "0.0.1",
+  "expansion": {
+    "timestamp": "2024-04-25T16:28:03+02:00",
+    "contains": [ {
+      "system": "http://loinc.org",
+      "code": "10480-2",
+      "display": "Estrogen+Progesterone receptor Ag [Presence] in Tissue by Immune stain"
+    }, {
+      "system": "http://loinc.org",
+      "code": "14804-9",
+      "display": "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Lactate to pyruvate reaction"
+    }, {
+      "system": "http://loinc.org",
+      "code": "14959-1",
+      "display": "Microalbumin/Creatinine [Mass Ratio] in Urine"
+    }, {
+      "system": "http://loinc.org",
+      "code": "18752-6",
+      "display": "Exercise stress test study"
+    }, {
+      "system": "http://loinc.org",
+      "code": "19123-9",
+      "display": "Magnesium [Mass/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "1988-5",
+      "display": "C reactive protein [Mass/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "19926-5",
+      "display": "FEV1/FVC"
+    }, {
+      "system": "http://loinc.org",
+      "code": "19994-3",
+      "display": "Oxygen/Total gas setting [Volume Fraction] Ventilator"
+    }, {
+      "system": "http://loinc.org",
+      "code": "20447-9",
+      "display": "HIV 1 RNA [#/volume] (viral load) in Serum or Plasma by NAA with probe detection"
+    }, {
+      "system": "http://loinc.org",
+      "code": "21377-7",
+      "display": "Magnesium [Mass/volume] in Blood"
+    }, {
+      "system": "http://loinc.org",
+      "code": "2157-6",
+      "display": "Creatine kinase [Enzymatic activity/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "21905-5",
+      "display": "Primary tumor.clinical [Class] Cancer"
+    }, {
+      "system": "http://loinc.org",
+      "code": "21906-3",
+      "display": "Regional lymph nodes.clinical [Class] Cancer"
+    }, {
+      "system": "http://loinc.org",
+      "code": "21907-1",
+      "display": "Distant metastases.clinical [Class] Cancer"
+    }, {
+      "system": "http://loinc.org",
+      "code": "21908-9",
+      "display": "Stage group.clinical Cancer"
+    }, {
+      "system": "http://loinc.org",
+      "code": "21924-6",
+      "display": "Tumor marker Cancer"
+    }, {
+      "system": "http://loinc.org",
+      "code": "22577-1",
+      "display": "Toxoplasma gondii Ab [Presence] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "24467-3",
+      "display": "CD3+CD4+ (T4 helper) cells [#/volume] in Blood"
+    }, {
+      "system": "http://loinc.org",
+      "code": "2532-0",
+      "display": "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "2708-6",
+      "display": "Oxygen saturation in Arterial blood"
+    }, {
+      "system": "http://loinc.org",
+      "code": "2713-6",
+      "display": "Oxygen saturation Calculated from oxygen partial pressure in Blood"
+    }, {
+      "system": "http://loinc.org",
+      "code": "2777-1",
+      "display": "Phosphate [Mass/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "28245-9",
+      "display": "Abuse Status [OMAHA]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "2857-1",
+      "display": "Prostate specific Ag [Mass/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "29463-7",
+      "display": "Body Weight"
+    }, {
+      "system": "http://loinc.org",
+      "code": "29554-3",
+      "display": "Procedure Narrative"
+    }, {
+      "system": "http://loinc.org",
+      "code": "3016-3",
+      "display": "Thyrotropin [Units/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "3024-7",
+      "display": "Thyroxine (T4) free [Mass/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "3173-2",
+      "display": "aPTT in Blood by Coagulation assay"
+    }, {
+      "system": "http://loinc.org",
+      "code": "3184-9",
+      "display": "Activated clotting time (ACT) of Blood by Coagulation assay"
+    }, {
+      "system": "http://loinc.org",
+      "code": "32465-7",
+      "display": "Physical findings of Prostate"
+    }, {
+      "system": "http://loinc.org",
+      "code": "32624-9",
+      "display": "Race"
+    }, {
+      "system": "http://loinc.org",
+      "code": "32693-4",
+      "display": "Lactate [Moles/volume] in Blood"
+    }, {
+      "system": "http://loinc.org",
+      "code": "33728-7",
+      "display": "Size.maximum dimension in Tumor"
+    }, {
+      "system": "http://loinc.org",
+      "code": "33756-8",
+      "display": "Polyp size greatest dimension"
+    }, {
+      "system": "http://loinc.org",
+      "code": "33762-6",
+      "display": "NT-proBNP"
+    }, {
+      "system": "http://loinc.org",
+      "code": "33914-3",
+      "display": "Glomerular filtration rate/1.73 sq M.predicted [Volume Rate/Area] in Serum or Plasma by Creatinine-based formula (MDRD)"
+    }, {
+      "system": "http://loinc.org",
+      "code": "33959-8",
+      "display": "Procalcitonin [Mass/volume] in Serum or Plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "38208-5",
+      "display": "Pain severity - Reported"
+    }, {
+      "system": "http://loinc.org",
+      "code": "38265-5",
+      "display": "DXA Radius and Ulna [T-score] Bone density"
+    }, {
+      "system": "http://loinc.org",
+      "code": "39156-5",
+      "display": "Body mass index (BMI) [Ratio]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "44667-4",
+      "display": "Site of distant metastasis in Breast tumor"
+    }, {
+      "system": "http://loinc.org",
+      "code": "44963-7",
+      "display": "Capillary refill [Time] of Nail bed"
+    }, {
+      "system": "http://loinc.org",
+      "code": "4548-4",
+      "display": "Hemoglobin A1c/Hemoglobin.total in Blood"
+    }, {
+      "system": "http://loinc.org",
+      "code": "46240-8",
+      "display": "History of Hospitalizations+Outpatient visits Narrative"
+    }, {
+      "system": "http://loinc.org",
+      "code": "46288-7",
+      "display": "US Guidance for biopsy of Prostate"
+    }, {
+      "system": "http://loinc.org",
+      "code": "48065-7",
+      "display": "Fibrin D-dimer FEU [Mass/volume] in Platelet poor plasma"
+    }, {
+      "system": "http://loinc.org",
+      "code": "54899-0",
+      "display": "Preferred language"
+    }, {
+      "system": "http://loinc.org",
+      "code": "55277-8",
+      "display": "HIV status"
+    }, {
+      "system": "http://loinc.org",
+      "code": "56051-6",
+      "display": "Do you consider yourself Hispanic/Latino?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "56799-0",
+      "display": "Address"
+    }, {
+      "system": "http://loinc.org",
+      "code": "57905-2",
+      "display": "Hemoglobin.gastrointestinal.lower [Presence] in Stool by Immunoassay --1st specimen"
+    }, {
+      "system": "http://loinc.org",
+      "code": "59408-5",
+      "display": "Oxygen saturation in Arterial blood by Pulse oximetry"
+    }, {
+      "system": "http://loinc.org",
+      "code": "59557-9",
+      "display": "Treatment status Cancer"
+    }, {
+      "system": "http://loinc.org",
+      "code": "59576-9",
+      "display": "Body mass index (BMI) [Percentile] Per age and sex"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6075-6",
+      "display": "Cladosporium herbarum IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6082-2",
+      "display": "Codfish IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6085-5",
+      "display": "Common Ragweed IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6095-4",
+      "display": "American house dust mite IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6106-9",
+      "display": "Egg white IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "61576-5",
+      "display": "PROMIS short form - global - version 1.1"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6158-0",
+      "display": "Latex IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6189-5",
+      "display": "White oak IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6206-7",
+      "display": "Peanut IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "62337-1",
+      "display": "PROMIS item bank - 29 profile"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6246-3",
+      "display": "Shrimp IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6248-9",
+      "display": "Soybean IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6273-7",
+      "display": "Walnut IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6276-0",
+      "display": "Wheat IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6301-6",
+      "display": "INR in Platelet poor plasma by Coagulation assay"
+    }, {
+      "system": "http://loinc.org",
+      "code": "63512-8",
+      "display": "How many people are living or staying at this address?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "63513-6",
+      "display": "Are you covered by health insurance or some other kind of health care plan [PhenX]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "63586-2",
+      "display": "What was your best estimate of the total income of all family members from all sources, before taxes, in last year?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "65750-2",
+      "display": "Drugs of abuse 5 panel - Urine by Screen method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "66519-0",
+      "display": "Percentage area affected by eczema Head and Neck [PhenX]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "66524-0",
+      "display": "Percentage area affected by eczema Upper extremity - bilateral [PhenX]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "66529-9",
+      "display": "Percentage area affected by eczema Trunk [PhenX]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "66534-9",
+      "display": "Percentage area affected by eczema Lower extremity - bilateral [PhenX]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "67875-5",
+      "display": "Employment status - current"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6833-8",
+      "display": "Cat dander IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "6844-5",
+      "display": "Honey bee IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "70006-2",
+      "display": "Medication management note"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71425-3",
+      "display": "Natriuretic peptide.B prohormone N-Terminal [Mass/volume] in Blood by Immunoassay"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71802-3",
+      "display": "Housing status"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71933-6",
+      "display": "Veterans Rand health survey - 36 item (VR-36)"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71934-4",
+      "display": "Veterans Rand health survey - 12 item (VR-12)"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71956-7",
+      "display": "PROMIS-29 Sleep disturbance score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71958-3",
+      "display": "PROMIS-29 Satisfaction with participation in social roles score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71960-9",
+      "display": "PROMIS-29 Physical function score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71962-5",
+      "display": "PROMIS-29 Pain interference score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71964-1",
+      "display": "PROMIS-29 Fatigue score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71966-6",
+      "display": "PROMIS-29 Depression score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71968-2",
+      "display": "PROMIS-29 Anxiety score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71970-8",
+      "display": "PROMIS-10 Global Mental Health (GMH) score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71972-4",
+      "display": "PROMIS-10 Global Physical Health (GPH) score"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71973-2",
+      "display": "VR-36 Mental health (MH) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71974-0",
+      "display": "VR-36 Role emotion (RE) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71975-7",
+      "display": "VR-36 Social functioning (SF) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71976-5",
+      "display": "VR-36 Vitality (VT) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71977-3",
+      "display": "VR-36 General health (GH) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71978-1",
+      "display": "VR-36 Bodily pain (BP) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71979-9",
+      "display": "VR-36 Role physical (RP) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "71980-7",
+      "display": "VR-36 Physical functioning (PF) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72009-4",
+      "display": "VR-12 Mental health (MH) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72010-2",
+      "display": "VR-12 Role emotion (RE) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72011-0",
+      "display": "VR-12 Social functioning (SF) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72012-8",
+      "display": "VR-12 Vitality (VT) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72013-6",
+      "display": "VR-12 General health (GH) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72014-4",
+      "display": "VR-12 Bodily pain (BP) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72015-1",
+      "display": "VR-12 Role physical (RP) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72016-9",
+      "display": "VR-12 Physical functioning (PF) score - oblique method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72091-2",
+      "display": "Knee injury and Osteoarthritis Outcome Score [KOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72092-0",
+      "display": "Hip Dysfunction and Osteoarthritis Outcome Score [HOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72093-8",
+      "display": "Quality of life score [HOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72094-6",
+      "display": "Sport-recreation score [HOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72095-3",
+      "display": "Activities of daily living score [HOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72096-1",
+      "display": "Symptoms score [HOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72097-9",
+      "display": "Pain score [HOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72098-7",
+      "display": "Quality of life score [KOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72099-5",
+      "display": "Sport-recreation score [KOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72100-1",
+      "display": "Activities of daily living score [KOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72101-9",
+      "display": "Symptoms score [KOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72102-7",
+      "display": "Pain score [KOOS]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72106-8",
+      "display": "Total score [MMSE]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72166-2",
+      "display": "Tobacco smoking status"
+    }, {
+      "system": "http://loinc.org",
+      "code": "72514-3",
+      "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+    }, {
+      "system": "http://loinc.org",
+      "code": "7258-7",
+      "display": "Cow milk IgE Ab [Units/volume] in Serum"
+    }, {
+      "system": "http://loinc.org",
+      "code": "74006-8",
+      "display": "Weight difference [Mass difference] --pre dialysis - post dialysis"
+    }, {
+      "system": "http://loinc.org",
+      "code": "751-8",
+      "display": "Neutrophils [#/volume] in Blood by Automated count"
+    }, {
+      "system": "http://loinc.org",
+      "code": "75325-1",
+      "display": "Symptom"
+    }, {
+      "system": "http://loinc.org",
+      "code": "75443-2",
+      "display": "Mental health Outpatient Note"
+    }, {
+      "system": "http://loinc.org",
+      "code": "75893-8",
+      "display": "Pain severity in the past week - 0-10 numeric rating [Reported]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "76437-3",
+      "display": "Primary insurance"
+    }, {
+      "system": "http://loinc.org",
+      "code": "76501-6",
+      "display": "Within the last year, have you been afraid of your partner or ex-partner?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "76690-7",
+      "display": "Sexual orientation"
+    }, {
+      "system": "http://loinc.org",
+      "code": "77606-2",
+      "display": "Weight-for-length Per age and sex"
+    }, {
+      "system": "http://loinc.org",
+      "code": "80271-0",
+      "display": "Physical findings of Abdomen by Palpation"
+    }, {
+      "system": "http://loinc.org",
+      "code": "82589-3",
+      "display": "Highest level of education"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8289-1",
+      "display": "Head Occipital-frontal circumference Percentile"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8302-2",
+      "display": "Body Height"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8310-5",
+      "display": "Body Temperature"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8331-1",
+      "display": "Oral temperature"
+    }, {
+      "system": "http://loinc.org",
+      "code": "84215-3",
+      "display": "Mental health Telehealth Note"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8462-4",
+      "display": "Diastolic Blood Pressure"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8478-0",
+      "display": "Mean blood pressure"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8480-6",
+      "display": "Systolic Blood Pressure"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85318-4",
+      "display": "HER2 [Presence] in Breast cancer specimen by FISH"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85319-2",
+      "display": "HER2 [Presence] in Breast cancer specimen by Immune stain"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85337-4",
+      "display": "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85339-0",
+      "display": "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85343-2",
+      "display": "Lymph nodes with macrometastases [#] in Cancer specimen by Light microscopy"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85344-0",
+      "display": "Lymph nodes with micrometastases [#] in Cancer specimen by Light microscopy"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85352-3",
+      "display": "Lymph nodes with isolated tumor cells [#] in Cancer specimen by Light microscopy"
+    }, {
+      "system": "http://loinc.org",
+      "code": "85354-9",
+      "display": "Blood pressure panel with all children optional"
+    }, {
+      "system": "http://loinc.org",
+      "code": "86923-0",
+      "display": "Kansas City Cardiomyopathy Questionnaire - 12 item [KCCQ-12]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "86924-8",
+      "display": "Overall summary score [KCCQ-12]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "87626-8",
+      "display": "Suicide prevention note"
+    }, {
+      "system": "http://loinc.org",
+      "code": "88040-1",
+      "display": "Response to cancer treatment"
+    }, {
+      "system": "http://loinc.org",
+      "code": "8867-4",
+      "display": "Heart rate"
+    }, {
+      "system": "http://loinc.org",
+      "code": "89579-7",
+      "display": "Troponin I.cardiac [Mass/volume] in Serum or Plasma by High sensitivity method"
+    }, {
+      "system": "http://loinc.org",
+      "code": "91145-3",
+      "display": "What number best describes how pain has interfered with your enjoyment of life during the past week"
+    }, {
+      "system": "http://loinc.org",
+      "code": "91146-1",
+      "display": "What number best describes how pain has interfered with your general activity during the past week"
+    }, {
+      "system": "http://loinc.org",
+      "code": "91148-7",
+      "display": "Pain intensity, Enjoyment of life, General activity (PEG) 3 item pain scale"
+    }, {
+      "system": "http://loinc.org",
+      "code": "9279-1",
+      "display": "Respiratory rate"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93025-5",
+      "display": "Protocol for Responding to and Assessing Patients' Assets, Risks, and Experiences [PRAPARE]"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93026-3",
+      "display": "Do you feel physically and emotionally safe where you currently live?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93027-1",
+      "display": "Are you a refugee?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93028-9",
+      "display": "In the past year, have you spent more than 2 nights in a row in a jail, prison, detention center, or juvenile correctional facility?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93029-7",
+      "display": "How often do you see or talk to people that you care about and feel close to (For example: talking to friends on the phone, visiting friends or family, going to church or club meetings)?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93030-5",
+      "display": "Has lack of transportation kept you from medical appointments, meetings, work, or from getting things needed for daily living"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93031-3",
+      "display": "In the past year, have you or any family members you live with been unable to get any of the following when it was really needed?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93033-9",
+      "display": "Are you worried about losing your housing?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93034-7",
+      "display": "Have you been discharged from the armed forces of the United States?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93035-4",
+      "display": "At any point in the past 2 years, has season or migrant farm work been your or your family's main source of income?"
+    }, {
+      "system": "http://loinc.org",
+      "code": "93038-8",
+      "display": "Stress level"
+    }, {
+      "system": "http://loinc.org",
+      "code": "9843-4",
+      "display": "Head Occipital-frontal circumference"
+    }, {
+      "system": "http://snomed.info/sct",
+      "code": "29303009",
+      "display": "Electrocardiographic procedure"
+    } ]
+  }
+}

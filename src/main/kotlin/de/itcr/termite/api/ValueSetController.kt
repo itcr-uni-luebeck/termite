@@ -242,12 +242,13 @@ class ValueSetController(
         }
     }
 
-    @GetMapping(path = ["\$expand"], params = ["url"])
+    @GetMapping(path = ["\$expand"])
     @ResponseBody
     fun expand(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
         logger.info("Expanding value set [url = $url,  version = $valueSetVersion]")
         try {
             val vs = database.expandValueSet(url, valueSetVersion)
+            logger.info(jsonParser.encodeResourceToString(vs))
             logger.debug("Found value set for URL $url and value set version $valueSetVersion")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(vs))
         }
@@ -266,7 +267,7 @@ class ValueSetController(
                 .body(opOutcome)
         }
         catch(e: Exception){
-            val message = "Search for ValueSet instances [url = $url, version = $valueSetVersion] failed"
+            val message = "Expanding ValueSet [url = $url, version = $valueSetVersion] failed"
             logger.warn(message)
             logger.debug(e.stackTraceToString())
             throw ResponseStatusException(
