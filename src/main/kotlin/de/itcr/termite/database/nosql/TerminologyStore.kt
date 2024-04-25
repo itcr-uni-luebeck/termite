@@ -50,4 +50,8 @@ class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("
         TODO("Not yet implemented")
     }
 
+    override fun expandValueSet(url: String, version: String?): ValueSet {
+        TODO("Not yet implemented")
+    }
+
 }

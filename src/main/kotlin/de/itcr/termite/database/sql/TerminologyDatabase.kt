@@ -344,6 +344,25 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         return rs.next()
     }
 
+    override fun expandValueSet(url: String, version: String?): ValueSet{
+        val query = "SELECT VS_ID FROM ValueSets WHERE URL = ?${if(version != null) "AND VERSION = ?" else ""}"
+        val value = mutableListOf(url)
+        if(version != null) value.add(version)
+        val rs: ResultSet = super.executeQuery(query, value)
+        try{
+            if(rs.next()) {
+                val vsId = rs.getString(1)
+                return buildValueSet(vsId, false)
+            }
+            else {
+                throw ValueSetException("No ValueSet found with URL $url and version $version")
+            }
+        } catch (e: Exception){
+            val message = "Failed to search for ValueSet instances with URL $url and version $version"
+            throw Exception(message, e)
+        }
+    }
+
 }
 
 data class System(val url: String)

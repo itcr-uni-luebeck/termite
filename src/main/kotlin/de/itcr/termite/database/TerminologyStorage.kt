@@ -52,4 +52,6 @@ interface TerminologyStorage {
 
     fun validateCodeCS(code: String, display: String?, url: String): Boolean
 
+    fun expandValueSet(url: String, version: String?): ValueSet
+
 }

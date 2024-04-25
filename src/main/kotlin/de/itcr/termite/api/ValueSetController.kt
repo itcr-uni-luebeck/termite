@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.parser.DataFormatException
 import ca.uhn.fhir.parser.IParser
 import de.itcr.termite.database.TerminologyStorage
+import de.itcr.termite.exception.ValueSetException
 import de.itcr.termite.util.generateOperationOutcomeString
 import de.itcr.termite.util.generateParametersString
 import de.itcr.termite.util.parseParameters
@@ -238,6 +239,40 @@ class ValueSetController(
             return ResponseEntity.internalServerError()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
+        }
+    }
+
+    @GetMapping(path = ["\$expand"], params = ["url"])
+    @ResponseBody
+    fun expand(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
+        logger.info("Expanding value set [url = $url,  version = $valueSetVersion]")
+        try {
+            val vs = database.expandValueSet(url, valueSetVersion)
+            logger.debug("Found value set for URL $url and value set version $valueSetVersion")
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(vs))
+        }
+        catch (e: ValueSetException) {
+            val message = "Value set with URL $url and version $valueSetVersion not found"
+            logger.warn(message)
+            logger.debug(e.stackTraceToString())
+            val opOutcome = generateOperationOutcomeString(
+                OperationOutcome.IssueSeverity.ERROR,
+                OperationOutcome.IssueType.NOTFOUND,
+                e.message,
+                jsonParser
+            )
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(opOutcome)
+        }
+        catch(e: Exception){
+            val message = "Search for ValueSet instances [url = $url, version = $valueSetVersion] failed"
+            logger.warn(message)
+            logger.debug(e.stackTraceToString())
+            throw ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                message
+            )
         }
     }
 
