@@ -121,8 +121,8 @@ class ValueSetController(
 
     }
 
-    @GetMapping(params = ["url"])
-    @ResponseBody
+    //@GetMapping(params = ["url"])
+    //@ResponseBody
     fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
         logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
         try{
