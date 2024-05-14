@@ -1,0 +1,96 @@
+2024-05-14 14:28:17.060  INFO 22060 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.10 on LAPTOP-MO7JJJFH with PID 22060 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-05-14 14:28:17.073  INFO 22060 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-05-14 14:28:19.583  INFO 22060 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-05-14 14:28:19.612  INFO 22060 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-05-14 14:28:19.613  INFO 22060 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-05-14 14:28:19.874  INFO 22060 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-05-14 14:28:19.875  INFO 22060 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2562 ms
+2024-05-14 14:28:20.345  INFO 22060 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-05-14 14:28:20.353  INFO 22060 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-05-14 14:28:21.448  INFO 22060 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-05-14 14:28:21.475  INFO 22060 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 5.386 seconds (JVM running for 6.917)
+2024-05-14 14:28:45.848  INFO 22060 --- [http-nio-8083-exec-2] o.a.c.h.Http11Processor                  : Error parsing HTTP request header
+ Note: further occurrences of HTTP request parsing errors will be logged at DEBUG level.
+
+java.lang.IllegalArgumentException: Invalid character found in method name [0x160x030x010x070x120x010x000x070x0e0x030x030xa80x970xee0xf4?z>0xd6^0xc0i0x860xed0xb90x8c+)0x0d0x7f0xa8:0x140xa20x070xd90x9db0xfcN$0x880xf1 ]. HTTP method names must be tokens
+	at org.apache.coyote.http11.Http11InputBuffer.parseRequestLine(Http11InputBuffer.java:419) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:271) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:889) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1743) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+
+2024-05-14 14:28:45.848  INFO 22060 --- [http-nio-8083-exec-1] o.a.c.h.Http11Processor                  : Error parsing HTTP request header
+ Note: further occurrences of HTTP request parsing errors will be logged at DEBUG level.
+
+java.lang.IllegalArgumentException: Invalid character found in method name [0x160x030x010x060xf20x010x000x060xee0x030x030xb190xf90x160x90d0xe60xb40x880x04r0xcaU0x9d=90x0b0xe40x8b0xea0xad0xd5T=0xaeS0xa6l0xb4#0xa50xdc ]. HTTP method names must be tokens
+	at org.apache.coyote.http11.Http11InputBuffer.parseRequestLine(Http11InputBuffer.java:419) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:271) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:889) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1743) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+
+2024-05-14 14:30:35.119  INFO 10360 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.10 on LAPTOP-MO7JJJFH with PID 10360 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-05-14 14:30:35.140  INFO 10360 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-05-14 14:30:38.275  WARN 10360 --- [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Unable to start web server; nested exception is org.springframework.boot.web.server.WebServerException: Could not load key store 'classpath:keystore/termite.p12'
+2024-05-14 14:30:38.304  INFO 10360 --- [main] ConditionEvaluationReportLoggingListener : 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2024-05-14 14:30:38.344  WARN 10360 --- [main] o.s.b.d.FailureAnalyzers                 : FailureAnalyzers [org.springframework.boot.autoconfigure.jooq.NoDslContextBeanFailureAnalyzer,org.springframework.boot.autoconfigure.diagnostics.analyzer.NoSuchBeanDefinitionFailureAnalyzer,org.springframework.boot.autoconfigure.jdbc.DataSourceBeanCreationFailureAnalyzer,org.springframework.boot.autoconfigure.r2dbc.ConnectionFactoryBeanCreationFailureAnalyzer] implement BeanFactoryAware or EnvironmentAware. Support for these interfaces on FailureAnalyzers is deprecated, and will be removed in a future release. Instead provide a constructor that accepts BeanFactory or Environment parameters.
+2024-05-14 14:30:38.349 ERROR 10360 --- [main] o.s.b.SpringApplication                  : Application run failed
+
+org.springframework.context.ApplicationContextException: Unable to start web server; nested exception is org.springframework.boot.web.server.WebServerException: Could not load key store 'classpath:keystore/termite.p12'
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:165) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:577) ~[spring-context-5.3.18.jar:5.3.18]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:147) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:734) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:408) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:308) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295) ~[spring-boot-2.7.4.jar:2.7.4]
+	at de.itcr.termite.TermiteKt.main(Termite.kt:27) ~[main/:?]
+Caused by: org.springframework.boot.web.server.WebServerException: Could not load key store 'classpath:keystore/termite.p12'
+	at org.springframework.boot.web.embedded.tomcat.SslConnectorCustomizer.configureSslKeyStore(SslConnectorCustomizer.java:146) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.SslConnectorCustomizer.configureSsl(SslConnectorCustomizer.java:102) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.SslConnectorCustomizer.customize(SslConnectorCustomizer.java:60) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.customizeSsl(TomcatServletWebServerFactory.java:364) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.customizeConnector(TomcatServletWebServerFactory.java:342) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:203) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:184) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:162) ~[spring-boot-2.7.4.jar:2.7.4]
+	... 8 more
+Caused by: java.io.FileNotFoundException: class path resource [keystore/termite.p12] cannot be resolved to URL because it does not exist
+	at org.springframework.util.ResourceUtils.getURL(ResourceUtils.java:137) ~[spring-core-5.3.18.jar:5.3.18]
+	at org.springframework.boot.web.embedded.tomcat.SslConnectorCustomizer.configureSslKeyStore(SslConnectorCustomizer.java:143) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.SslConnectorCustomizer.configureSsl(SslConnectorCustomizer.java:102) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.SslConnectorCustomizer.customize(SslConnectorCustomizer.java:60) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.customizeSsl(TomcatServletWebServerFactory.java:364) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.customizeConnector(TomcatServletWebServerFactory.java:342) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:203) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:184) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:162) ~[spring-boot-2.7.4.jar:2.7.4]
+	... 8 more
+
+2024-05-14 14:31:25.941  INFO 3952 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.10 on LAPTOP-MO7JJJFH with PID 3952 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-05-14 14:31:25.953  INFO 3952 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-05-14 14:31:28.740  INFO 3952 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (https)
+2024-05-14 14:31:28.763  INFO 3952 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-05-14 14:31:28.764  INFO 3952 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-05-14 14:31:29.070  INFO 3952 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-05-14 14:31:29.070  INFO 3952 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2962 ms
+2024-05-14 14:31:29.554  INFO 3952 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-05-14 14:31:29.566  INFO 3952 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-05-14 14:31:30.878  INFO 3952 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (https) with context path ''
+2024-05-14 14:31:30.898  INFO 3952 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 6.122 seconds (JVM running for 7.799)
+2024-05-14 14:31:48.692  INFO 3952 --- [https-jsse-nio-8083-exec-2] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-05-14 14:31:48.692  INFO 3952 --- [https-jsse-nio-8083-exec-2] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-05-14 14:31:48.704  INFO 3952 --- [https-jsse-nio-8083-exec-2] o.s.w.s.DispatcherServlet                : Completed initialization in 12 ms
