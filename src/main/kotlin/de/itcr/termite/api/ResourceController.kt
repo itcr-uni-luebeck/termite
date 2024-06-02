@@ -12,7 +12,7 @@ import org.springframework.http.RequestEntity
 abstract class ResourceController(protected val database: TerminologyStorage, private val fhirContext: FhirContext) {
 
     protected val parsers: Map<String, Pair<IParser, String>>
-    protected val jsonParser = fhirContext.newJsonParser().setPrettyPrint(true)
+    protected val jsonParser: IParser = fhirContext.newJsonParser().setPrettyPrint(true)
 
     init{
         val json = jsonParser to "json"

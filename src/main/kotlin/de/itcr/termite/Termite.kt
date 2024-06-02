@@ -18,7 +18,7 @@ open class Termite{
     open fun fhirContext(): FhirContext = FhirContext.forR4()
 
     @Bean
-    open fun database(): TerminologyDatabase = TerminologyDatabase("jdbc:sqlite::memory:")
+    open fun database(): TerminologyDatabase = TerminologyDatabase("jdbc:sqlite:database/termite.db")
 
 }
 fun main(args: Array<String>){

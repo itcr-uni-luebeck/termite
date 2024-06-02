@@ -4,3 +4,6 @@
 /.gradle/
 /src/main/resources/db/
 /src/main/kotlin/de/itcr/termite/Test.kt
+
+/database/*
+!/database/.gitkeep
