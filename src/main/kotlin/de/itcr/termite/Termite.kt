@@ -1,15 +1,21 @@
 package de.itcr.termite
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.config.DatabaseProperties
 import de.itcr.termite.database.sql.TerminologyDatabase
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 
 @SpringBootApplication
-open class Termite{
+open class Termite {
+
+    @Autowired
+    private lateinit var databaseProperties: DatabaseProperties
 
     @Bean
     open fun logger(): Logger = LogManager.getLogger(Termite::class.java)
@@ -18,9 +24,10 @@ open class Termite{
     open fun fhirContext(): FhirContext = FhirContext.forR4()
 
     @Bean
-    open fun database(): TerminologyDatabase = TerminologyDatabase("jdbc:sqlite:database/termite.db")
+    open fun database(): TerminologyDatabase = TerminologyDatabase(databaseProperties.connection.url)
 
 }
-fun main(args: Array<String>){
+
+fun main(args: Array<String>) {
     runApplication<Termite>(*args)
 }

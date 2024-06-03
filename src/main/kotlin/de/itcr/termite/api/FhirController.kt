@@ -1,6 +1,7 @@
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.config.DatabaseProperties
 import de.itcr.termite.database.sql.TerminologyDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity

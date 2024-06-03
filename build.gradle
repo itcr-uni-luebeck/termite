@@ -1,11 +1,10 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.6.10'
     id("org.springframework.boot") version "2.6.6"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
 }
-
-compileJava.options.fork = true
-compileJava.options.forkOptions.executable = 'C:\\Users\\Confi Dential\\.jdks\\corretto-11.0.23'
 
 group 'org.example'
 version '1.0-SNAPSHOT'
@@ -14,37 +13,63 @@ repositories {
     mavenCentral()
 }
 
+compileKotlin {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
+compileJava {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
 dependencies {
     //Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
 
     //Spring Boot
-    implementation 'org.springframework.boot:spring-boot:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-configuration-processor:2.7.4'
-    implementation 'org.springframework.boot:spring-boot-starter-log4j2:2.7.4'
+    //implementation 'org.springframework:spring-core:6.1.8'
+    //implementation 'org.springframework:spring-beans:6.1.8'
+    //implementation 'org.springframework:spring-context:6.1.8'
+    //implementation 'org.springframework:spring-expression:6.1.8'
+    implementation 'org.springframework.boot:spring-boot'
+    //implementation 'org.springframework.boot:spring-boot-starter:3.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 
     //JDBC SQLite
-    implementation 'org.xerial:sqlite-jdbc:3.39.3.0'
+    implementation 'org.xerial:sqlite-jdbc:3.41.2.2'
 
     //RocksDB
     implementation 'org.rocksdb:rocksdbjni:7.6.0'
 
     //Log4J
-    //implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+
+    //SLF4J
+    implementation 'org.slf4j:slf4j-api:1.7.0'
+    testImplementation 'org.slf4j:slf4j-simple:1.7.0'
 
     //HAPI FHIR
-    implementation 'ca.uhn.hapi.fhir:hapi-fhir-base:6.1.1'
-    implementation 'ca.uhn.hapi.fhir:hapi-fhir-structures-r4:6.1.1'
-    implementation 'ca.uhn.hapi.fhir:hapi-fhir-validation:6.1.1'
-    implementation 'ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r4:6.1.1'
-    implementation 'ca.uhn.hapi.fhir:hapi-fhir-client:6.1.1'
+    implementation 'ca.uhn.hapi.fhir:hapi-fhir-base:7.2.0'
+    implementation 'ca.uhn.hapi.fhir:hapi-fhir-structures-r4:7.2.0'
+    implementation 'ca.uhn.hapi.fhir:hapi-fhir-validation:7.2.0'
+    implementation 'ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r4:7.2.0'
+    implementation 'ca.uhn.hapi.fhir:hapi-fhir-client:7.2.0'
 }
 
 configurations {
-    all {
+    configureEach {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
+}
+
+tasks.withType(KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 

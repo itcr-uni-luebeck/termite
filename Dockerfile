@@ -1,15 +1,24 @@
 # Build jar using Gradle
-FROM gradle:6.9.2-jdk11-alpine AS gradle_build
+FROM gradle:7.2.0-jdk17-alpine AS gradle_build
 COPY . /home/abide_validation/termite
 WORKDIR /home/abide_validation/termite
 # Create jar
-RUN gradle bootJar --no-daemon
+RUN gradle clean build bootJar --no-daemon
 
 # Copy jar to new image for running terminology service
 FROM openjdk:17
 COPY --from=gradle_build /home/abide_validation/termite/build/libs/termite.jar /app/termite.jar
-COPY /src/main/resources/config/log4j2.xml /app/log4j2.xml
+COPY /config/application.properties /app/config/application.properties
+COPY /config/log4j2.xml /app/config/log4j2.xml
 COPY upload.sh /app/upload.sh
+
+# Default certificates
+RUN mkdir -p /app/security/keystore
+COPY /security/keystore /app/security/keystore
+
+RUN mkdir /app/database
+
 WORKDIR /app
 
-ENTRYPOINT sh upload.sh
+#ENTRYPOINT sh upload.sh
+ENTRYPOINT java -Dserver.port=8083 -jar termite.jar -Dlog4j.configurationFile=/app/config/log4j2.xml

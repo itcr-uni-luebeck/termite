@@ -1,17 +1,13 @@
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
-import ca.uhn.fhir.parser.DataFormatException
-import ca.uhn.fhir.parser.IParser
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.ValueSetException
 import de.itcr.termite.util.generateOperationOutcomeString
 import de.itcr.termite.util.generateParametersString
 import de.itcr.termite.util.parseParameters
-import okhttp3.Response
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -121,8 +117,8 @@ class ValueSetController(
 
     }
 
-    //@GetMapping(params = ["url"])
-    //@ResponseBody
+    @GetMapping(params = ["url"])
+    @ResponseBody
     fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
         logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
         try{
