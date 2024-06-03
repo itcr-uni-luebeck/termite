@@ -1,0 +1,1 @@
+Directory representing template for deployment of Termite as a Docker Compose project. 

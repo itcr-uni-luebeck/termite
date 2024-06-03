@@ -1,0 +1,35 @@
+services:
+  termite:
+    image: ghcr.io/itcr-uni-luebeck/termite:latest
+    ports:
+      - 9083:8083
+    environment:
+      - SSL_ENABLED=false
+      - KEY_STORE_TYPE=PKCS12
+      - KEY_STORE=security/keystore/termite.p12
+      - KEY_STORE_PASSWORD=changeme
+      - KEY_ALIAS=termite
+      - DATABASE_CONN_URL:jdbc:psql://termite:termite@postgres:5432/termite
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=termite
+      - POSTGRES_PASSWORD=termite
+      - POSTGRES_DB=termite
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "termite" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  postgres-data:
