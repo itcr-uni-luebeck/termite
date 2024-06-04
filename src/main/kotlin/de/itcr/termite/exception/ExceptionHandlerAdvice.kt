@@ -2,7 +2,7 @@ package de.itcr.termite.exception
 
 import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.util.generateOperationOutcomeString
-import org.hl7.fhir.r4.model.OperationOutcome
+import org.hl7.fhir.r4b.model.OperationOutcome
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
