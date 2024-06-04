@@ -15,6 +15,9 @@ import org.springframework.stereotype.Controller
 import java.net.URI
 import java.time.Instant
 import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.findAnnotations
 
 object MetadataCompiler {
 
@@ -34,7 +37,7 @@ object MetadataCompiler {
         return TerminologyCapabilities()
     }
 
-    private fun compileCapabilitiesFromAnnotations(classes: Collection<Class<*>>, baseUrl: URI):
+    private fun compileCapabilitiesFromAnnotations(classes: Collection<KClass<*>>, baseUrl: URI):
             Pair<CapabilityStatement, Array<OperationDefinition>>
     {
         val capabilityStatement = CapabilityStatement()
@@ -47,7 +50,7 @@ object MetadataCompiler {
             experimental = false
             date = Date.from(Instant.now())
             kind = Enumerations.CapabilityStatementKind.INSTANCE
-            fhirVersion = Enumerations.FHIRVersion._4_3_0CIBUILD
+            fhirVersion = Enumerations.FHIRVersion._4_3_0_CIBUILD
             format = listOf(CodeType("xml"), CodeType("json"))
         }
 
@@ -55,10 +58,9 @@ object MetadataCompiler {
         val resources: MutableMap<ResourceType, CapabilityStatementRestResourceComponent> = mutableMapOf()
         val restComponent = capabilityStatement.addRest()
 
-        val servletClasses = classes.filter { clazz -> clazz.getDeclaredAnnotation(Controller::class.java) != null }
+        val servletClasses = classes.filter { clazz -> clazz.findAnnotation<Controller>() != null }
         servletClasses.forEach { servletClass ->
-            println(servletClass.simpleName)
-            val forResource = servletClass.getDeclaredAnnotation(ForResource::class.java)
+            val forResource = servletClass.findAnnotation<ForResource>()
             // Check if there is already a component for the resource type and add one if not
             if (forResource != null) {
                 val resourceType = ResourceType.fromCode(forResource.type)
@@ -68,24 +70,23 @@ object MetadataCompiler {
 
             val resourceType = if (forResource != null) ResourceType.fromCode(forResource.type) else null
 
-            servletClass.annotations.filterIsInstance<SupportsOperation>().forEach { ann ->
-                println(ann.name)
+            servletClass.findAnnotations<SupportsOperation>().forEach { ann ->
                 val operationList =
                     if (resourceType != null) resources[resourceType]!!.operation else restComponent.operation
                 addOperation(ann, baseUrl, operationList, operationDefinitions)
             }
-            if (servletClass.isAnnotationPresent(SupportsInteraction::class.java)) {
-                val ann = servletClass.getAnnotation(SupportsInteraction::class.java)
+            val supportInteraction = servletClass.findAnnotation<SupportsInteraction>()
+            if (supportInteraction != null) {
                 if (forResource != null) {
                     val resourceComponent = resources[ResourceType.fromCode(forResource.type)]!!
-                    addAllResourceInteractions(ann, resourceComponent)
+                    addAllResourceInteractions(supportInteraction, resourceComponent)
                 }
                 else {
-                    addAllSystemInteractions(ann, restComponent)
+                    addAllSystemInteractions(supportInteraction, restComponent)
                 }
             }
             else {
-                logger.debug("Servlet class ${servletClass.name} is ignored due to lack of annotation")
+                logger.debug("Servlet class ${servletClass.qualifiedName} is ignored due to lack of annotation")
             }
         }
 
@@ -117,7 +118,7 @@ object MetadataCompiler {
                              operationList: MutableList<CapabilityStatement.CapabilityStatementRestResourceOperationComponent>,
                              operationDefinitions: MutableList<OperationDefinition>)
     {
-        val opDefUrl = "$baseURL/OperationDefinition/${ann.name.replace("/", "-")}"
+        val opDefUrl = "$baseURL/OperationDefinition/${ann.resource.joinToString("-") { it.lowercase() }}-${ann.code}"
         operationList.add(CapabilityStatement.CapabilityStatementRestResourceOperationComponent().apply {
             name = ann.name
             definition = opDefUrl
@@ -129,6 +130,7 @@ object MetadataCompiler {
     private fun getOperationDefinition(ann: SupportsOperation, opDefUrl: String): OperationDefinition
     {
         return OperationDefinition().apply {
+            id = opDefUrl.split("/").last()
             url = opDefUrl
             version = "1.0.0"
             name = ann.name

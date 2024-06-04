@@ -1,6 +1,7 @@
 package de.itcr.termite.util
 
 import org.apache.logging.log4j.LogManager
+import kotlin.reflect.KClass
 
 class ResourceUtils {
 
@@ -8,7 +9,7 @@ class ResourceUtils {
 
         private val logger = LogManager.getLogger(ResourceUtils::class.java)
 
-        fun findClassesInPackage(packageName: String, classLoader: ClassLoader): Set<Class<*>>
+        fun findClassesInPackage(packageName: String, classLoader: ClassLoader): Set<KClass<*>>
         {
             logger.debug("Loading classes in package $packageName")
             val stream = classLoader.getResourceAsStream(packageName.replace("[.]".toRegex(), "/"))
@@ -17,7 +18,7 @@ class ResourceUtils {
                 return setOf()
             }
 
-            val classSet: MutableSet<Class<*>> = mutableSetOf()
+            val classSet: MutableSet<KClass<*>> = mutableSetOf()
             stream.bufferedReader().forEachLine { line ->
                 // Load class if extension is .class
                 if (line.endsWith(".class")) getClass(line, packageName)?.let { clazz -> classSet.add(clazz) }
@@ -27,11 +28,11 @@ class ResourceUtils {
             return classSet.toSet()
         }
 
-        private fun getClass(className: String, packageName: String): Class<*>?
+        private fun getClass(className: String, packageName: String): KClass<*>?
         {
             val fullClassName = "$packageName.${className.substring(0, className.lastIndexOf('.'))}"
             return try {
-                Class.forName(fullClassName)
+                Class.forName(fullClassName).kotlin
             } catch (exception: ClassNotFoundException) {
                 logger.debug("Could not load class $fullClassName", exception)
                 null

@@ -34,6 +34,8 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID INTEGER PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP), " +
                           "UNIQUE(URL, VERSION)")
          */
+        logger.debug("Creating OperationDefinition table ...")
+        super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID INTEGER PRIMARY KEY, RESOURCE TEXT NOT NULL)")
         logger.debug("Creating Membership table ...")
         super.execute("CREATE TABLE IF NOT EXISTS Membership (VS_ID INTEGER, SYSTEM TEXT NOT NULL, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
                           "UNIQUE(VS_ID, SYSTEM, CODE, DISPLAY), " +

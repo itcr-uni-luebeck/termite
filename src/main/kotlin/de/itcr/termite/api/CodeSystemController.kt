@@ -55,7 +55,7 @@ import java.util.*
     experimental = false,
     description = "Checks whether a given concept is in a code system",
     affectState = false,
-    code = "CodeSystem-lookup",
+    code = "lookup",
     resource = ["CodeSystem"],
     system = false,
     type = true,

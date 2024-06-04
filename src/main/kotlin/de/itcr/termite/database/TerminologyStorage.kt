@@ -1,6 +1,7 @@
 package de.itcr.termite.database
 
 import org.hl7.fhir.r4b.model.CodeSystem
+import org.hl7.fhir.r4b.model.OperationDefinition
 import org.hl7.fhir.r4b.model.ValueSet
 import java.sql.Timestamp
 

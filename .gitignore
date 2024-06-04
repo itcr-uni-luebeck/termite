@@ -5,5 +5,7 @@
 /src/main/resources/db/
 /src/main/kotlin/de/itcr/termite/Test.kt
 
+logging.log
+
 /database/*
 !/database/.gitkeep
