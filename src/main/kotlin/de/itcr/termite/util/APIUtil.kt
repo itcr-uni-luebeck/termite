@@ -1,8 +1,8 @@
 package de.itcr.termite.util
 
 import ca.uhn.fhir.parser.IParser
-import org.hl7.fhir.r4.model.OperationOutcome
-import org.hl7.fhir.r4.model.Parameters
+import org.hl7.fhir.r4b.model.OperationOutcome
+import org.hl7.fhir.r4b.model.Parameters
 
 fun generateOperationOutcome(severity: OperationOutcome.IssueSeverity, code: OperationOutcome.IssueType, diagnostics: String?): OperationOutcome {
     val opOutcome = OperationOutcome.OperationOutcomeIssueComponent()

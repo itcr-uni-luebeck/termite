@@ -2,6 +2,8 @@ package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.database.sql.TerminologyDatabase
+import de.itcr.termite.metadata.MetadataCompiler
+import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
@@ -17,11 +19,10 @@ import java.nio.file.Path
 @Controller
 @RequestMapping("fhir")
 class FhirController (
-    @Autowired val database: TerminologyDatabase,
-    @Autowired val fhirContext: FhirContext
-) {
-
-    private val capabilityStatement: String = loadCapabilityStatement(Path.of("fhir", "metadata.json"))
+    @Autowired database: TerminologyDatabase,
+    @Autowired fhirContext: FhirContext,
+    @Autowired val capabilityStatement: CapabilityStatement
+): ResourceController(database, fhirContext) {
 
     /**
      * Returns CapabilityStatement instance of this terminology service
@@ -30,16 +31,10 @@ class FhirController (
     @GetMapping("metadata")
     @ResponseBody
     fun getCapabilityStatement(): ResponseEntity<String>{
-        //TODO: Proper ETag
-        return ResponseEntity.ok().eTag("W/0").header("Content-Type", "application/json").body(capabilityStatement)
-    }
-
-    /**
-     * Load the content of the JSON file containing the CapabilityStatement instance from the class path
-     * @return String instance containing the CapabilityStatement instance in JSON format
-     */
-    private fun loadCapabilityStatement(path: Path): String {
-        return this::class.java.classLoader.getResource(path.toString()).readText()
+        return ResponseEntity.ok()
+            .eTag("W/\"0\"")
+            .header("Content-Type", "application/json")
+            .body(jsonParser.encodeResourceToString(capabilityStatement))
     }
 
 }

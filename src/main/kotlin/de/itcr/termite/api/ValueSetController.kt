@@ -5,14 +5,15 @@ import ca.uhn.fhir.parser.DataFormatException
 import ca.uhn.fhir.parser.IParser
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.ValueSetException
+import de.itcr.termite.metadata.annotation.*
+import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.util.generateOperationOutcomeString
 import de.itcr.termite.util.generateParametersString
 import de.itcr.termite.util.parseParameters
 import okhttp3.Response
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.hl7.fhir.instance.model.api.IBaseResource
-import org.hl7.fhir.r4.model.*
+import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -30,10 +31,120 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URI
 import java.util.*
 import kotlin.Exception
+import kotlin.math.min
 
 /**
  * Handles request regarding instances of the ValueSet resource
  */
+@ForResource(
+    type = "ValueSet",
+    versioning = "no-version",
+    readHistory = false,
+    updateCreate = false,
+    conditionalCreate = false,
+    conditionalRead = "not-supported",
+    conditionalUpdate = false,
+    conditionalDelete = "not-supported",
+    referencePolicy = [],
+    searchInclude = [],
+    searchRevInclude = [],
+    searchParam = [
+        SearchParameter(
+            name = "url",
+            type = "uri",
+            documentation = "URL of the resource to locate"
+        )
+    ]
+)
+@SupportsInteraction(["create", "search-type"])
+@SupportsOperation(
+    name = "ValueSet-lookup",
+    title = "ValueSet-lookup",
+    status = "active",
+    kind = "operation",
+    experimental = false,
+    description = "Checks whether a given concept is in a value set",
+    affectState = false,
+    code = "ValueSet-lookup",
+    resource = ["ValueSet"],
+    system = false,
+    type = true,
+    instance = false,
+    parameter = [
+        Parameter(
+            name = "url",
+            use = "in",
+            min = 1,
+            max = "1",
+            documentation = "URL of the ValueSet instance",
+            type = "uri"
+        ),
+        Parameter(
+            name = "valueSetVersion",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "Version of the ValueSet instance",
+            type = "string"
+        ),
+        Parameter(
+            name = "code",
+            use = "in",
+            min = 1,
+            max = "1",
+            documentation = "Code of the coding to be located",
+            type = "code"
+        ),
+        Parameter(
+            name = "system",
+            use = "in",
+            min = 1,
+            max = "1",
+            documentation = "System from which the code originates",
+            type = "uri"
+        ),
+        Parameter(
+            name = "display",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "Display value of the concept",
+            type = "uri"
+        )
+    ]
+)
+@SupportsOperation(
+    name = "ValueSet-expand",
+    title = "ValueSet-expand",
+    status = "active",
+    kind = "operation",
+    experimental = false,
+    description = "Expands a value set, returning an explicit list of all codings it contains",
+    affectState = false,
+    code = "ValueSet-expand",
+    resource = ["ValueSet"],
+    system = false,
+    type = true,
+    instance = false,
+    parameter = [
+        Parameter(
+            name = "url",
+            use = "in",
+            min = 1,
+            max = "1",
+            documentation = "URL of the ValueSet instance",
+            type = "uri"
+        ),
+        Parameter(
+            name = "valueSetVersion",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "Version of the ValueSet instance",
+            type = "string"
+        )
+    ]
+)
 @Controller
 @RequestMapping("fhir/ValueSet")
 class ValueSetController(
@@ -121,8 +232,8 @@ class ValueSetController(
 
     }
 
-    //@GetMapping(params = ["url"])
-    //@ResponseBody
+    @GetMapping(params = ["url"])
+    @ResponseBody
     fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
         logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
         try{
@@ -178,8 +289,8 @@ class ValueSetController(
             val (result, version) = database.validateCodeVS(mutableUrl, valueSetVersion, system, code, display)
             val body = generateParametersString(
                 jsonParser,
-                Parameters.ParametersParameterComponent(StringType("result")).setValue(BooleanType(result)),
-                Parameters.ParametersParameterComponent(StringType("message")).setValue(StringType(
+                Parameters.ParametersParameterComponent("result").setValue(BooleanType(result)),
+                Parameters.ParametersParameterComponent("message").setValue(StringType(
                     "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
                             "[url = $mutableUrl and version = $version]"
                 ))

@@ -2,8 +2,8 @@ package de.itcr.termite.database.nosql
 
 import de.itcr.termite.database.TerminologyStorage
 import org.apache.logging.log4j.LogManager
-import org.hl7.fhir.r4.model.CodeSystem
-import org.hl7.fhir.r4.model.ValueSet
+import org.hl7.fhir.r4b.model.CodeSystem
+import org.hl7.fhir.r4b.model.ValueSet
 import java.nio.file.Path
 import java.sql.Timestamp
 

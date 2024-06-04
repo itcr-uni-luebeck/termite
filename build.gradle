@@ -1,11 +1,13 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.6.10'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.0'
     id("org.springframework.boot") version "2.6.6"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
 }
 
-compileJava.options.fork = true
-compileJava.options.forkOptions.executable = 'C:\\Users\\Confi Dential\\.jdks\\corretto-11.0.23'
+//compileJava.options.fork = true
+//compileJava.options.forkOptions.executable = 'C:\\Users\\Confi Dential\\.jdks\\corretto-11.0.23'
 
 group 'org.example'
 version '1.0-SNAPSHOT'
@@ -43,7 +45,7 @@ dependencies {
 }
 
 configurations {
-    all {
+    configureEach {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
     }
 }

@@ -105,3 +105,308 @@ Caused by: java.io.FileNotFoundException: class path resource [keystore/termite.
 2024-06-02 21:47:39.101  INFO 5436 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
 2024-06-02 21:47:39.524  INFO 5436 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
 2024-06-02 21:47:39.535  INFO 5436 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 3.618 seconds (JVM running for 4.486)
+2024-06-04 10:28:21.313  INFO 19140 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 19140 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:28:21.328  INFO 19140 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:28:23.368  INFO 19140 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:28:23.391  INFO 19140 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:28:23.392  INFO 19140 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:28:23.565  INFO 19140 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:28:23.565  INFO 19140 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2094 ms
+2024-06-04 10:28:23.753  INFO 19140 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:28:23.940  WARN 19140 --- [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'termite': Instantiation of bean failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$5ba27fa]: Constructor threw exception; nested exception is org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+2024-06-04 10:28:23.940  INFO 19140 --- [main] o.a.c.c.StandardService                  : Stopping service [Tomcat]
+2024-06-04 10:28:23.971  INFO 19140 --- [main] ConditionEvaluationReportLoggingListener : 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2024-06-04 10:28:24.003  WARN 19140 --- [main] o.s.b.d.FailureAnalyzers                 : FailureAnalyzers [org.springframework.boot.autoconfigure.jooq.NoDslContextBeanFailureAnalyzer,org.springframework.boot.autoconfigure.diagnostics.analyzer.NoSuchBeanDefinitionFailureAnalyzer,org.springframework.boot.autoconfigure.jdbc.DataSourceBeanCreationFailureAnalyzer,org.springframework.boot.autoconfigure.r2dbc.ConnectionFactoryBeanCreationFailureAnalyzer] implement BeanFactoryAware or EnvironmentAware. Support for these interfaces on FailureAnalyzers is deprecated, and will be removed in a future release. Instead provide a constructor that accepts BeanFactory or Environment parameters.
+2024-06-04 10:28:24.003 ERROR 19140 --- [main] o.s.b.SpringApplication                  : Application run failed
+
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'termite': Instantiation of bean failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$5ba27fa]: Constructor threw exception; nested exception is org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateBean(AbstractAutowireCapableBeanFactory.java:1334) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:582) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:953) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:918) ~[spring-context-5.3.18.jar:5.3.18]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583) ~[spring-context-5.3.18.jar:5.3.18]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:147) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:734) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:408) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:308) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295) ~[spring-boot-2.7.4.jar:2.7.4]
+	at de.itcr.termite.TermiteKt.main(Termite.kt:48) ~[main/:?]
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$5ba27fa]: Constructor threw exception; nested exception is org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+	at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:224) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:87) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateBean(AbstractAutowireCapableBeanFactory.java:1326) ~[spring-beans-5.3.18.jar:5.3.18]
+	... 17 more
+Caused by: org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+	at org.hl7.fhir.r4b.model.CapabilityStatement$ResourceVersionPolicy.fromCode(CapabilityStatement.java:662) ~[org.hl7.fhir.r4b-5.6.36.jar:?]
+	at de.itcr.termite.metadata.MetadataCompiler.addRestResourceComponent(MetadataCompiler.kt:104) ~[main/:?]
+	at de.itcr.termite.metadata.MetadataCompiler.compileCapabilitiesFromAnnotations(MetadataCompiler.kt:65) ~[main/:?]
+	at de.itcr.termite.metadata.MetadataCompiler.compileStaticFhirServerMetadata(MetadataCompiler.kt:29) ~[main/:?]
+	at de.itcr.termite.Termite.<init>(Termite.kt:24) ~[main/:?]
+	at de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$5ba27fa.<init>(<generated>) ~[main/:?]
+	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
+	at java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499) ~[?:?]
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:480) ~[?:?]
+	at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:211) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:87) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateBean(AbstractAutowireCapableBeanFactory.java:1326) ~[spring-beans-5.3.18.jar:5.3.18]
+	... 17 more
+
+2024-06-04 10:37:47.124  INFO 13252 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 13252 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:37:47.135  INFO 13252 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:37:48.934  INFO 13252 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:37:48.949  INFO 13252 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:37:48.949  INFO 13252 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:37:49.115  INFO 13252 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:37:49.115  INFO 13252 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1815 ms
+2024-06-04 10:37:49.322  INFO 13252 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:37:49.460  WARN 13252 --- [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'termite': Instantiation of bean failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$111ae823]: Constructor threw exception; nested exception is org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+2024-06-04 10:37:49.467  INFO 13252 --- [main] o.a.c.c.StandardService                  : Stopping service [Tomcat]
+2024-06-04 10:37:49.492  INFO 13252 --- [main] ConditionEvaluationReportLoggingListener : 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2024-06-04 10:37:49.519  WARN 13252 --- [main] o.s.b.d.FailureAnalyzers                 : FailureAnalyzers [org.springframework.boot.autoconfigure.jooq.NoDslContextBeanFailureAnalyzer,org.springframework.boot.autoconfigure.diagnostics.analyzer.NoSuchBeanDefinitionFailureAnalyzer,org.springframework.boot.autoconfigure.jdbc.DataSourceBeanCreationFailureAnalyzer,org.springframework.boot.autoconfigure.r2dbc.ConnectionFactoryBeanCreationFailureAnalyzer] implement BeanFactoryAware or EnvironmentAware. Support for these interfaces on FailureAnalyzers is deprecated, and will be removed in a future release. Instead provide a constructor that accepts BeanFactory or Environment parameters.
+2024-06-04 10:37:49.523 ERROR 13252 --- [main] o.s.b.SpringApplication                  : Application run failed
+
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'termite': Instantiation of bean failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$111ae823]: Constructor threw exception; nested exception is org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateBean(AbstractAutowireCapableBeanFactory.java:1334) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1232) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:582) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:953) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:918) ~[spring-context-5.3.18.jar:5.3.18]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583) ~[spring-context-5.3.18.jar:5.3.18]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:147) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:734) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:408) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:308) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1306) ~[spring-boot-2.7.4.jar:2.7.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1295) ~[spring-boot-2.7.4.jar:2.7.4]
+	at de.itcr.termite.TermiteKt.main(Termite.kt:47) ~[main/:?]
+Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$111ae823]: Constructor threw exception; nested exception is org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+	at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:224) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:87) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateBean(AbstractAutowireCapableBeanFactory.java:1326) ~[spring-beans-5.3.18.jar:5.3.18]
+	... 17 more
+Caused by: org.hl7.fhir.exceptions.FHIRException: Unknown ResourceVersionPolicy code 'no-versioning'
+	at org.hl7.fhir.r4b.model.CapabilityStatement$ResourceVersionPolicy.fromCode(CapabilityStatement.java:662) ~[org.hl7.fhir.r4b-5.6.36.jar:?]
+	at de.itcr.termite.metadata.MetadataCompiler.addRestResourceComponent(MetadataCompiler.kt:104) ~[main/:?]
+	at de.itcr.termite.metadata.MetadataCompiler.compileCapabilitiesFromAnnotations(MetadataCompiler.kt:65) ~[main/:?]
+	at de.itcr.termite.metadata.MetadataCompiler.compileStaticFhirServerMetadata(MetadataCompiler.kt:29) ~[main/:?]
+	at de.itcr.termite.Termite.<init>(Termite.kt:23) ~[main/:?]
+	at de.itcr.termite.Termite$$EnhancerBySpringCGLIB$$111ae823.<init>(<generated>) ~[main/:?]
+	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
+	at java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499) ~[?:?]
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:480) ~[?:?]
+	at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:211) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:87) ~[spring-beans-5.3.18.jar:5.3.18]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateBean(AbstractAutowireCapableBeanFactory.java:1326) ~[spring-beans-5.3.18.jar:5.3.18]
+	... 17 more
+
+2024-06-04 10:40:41.874  INFO 30924 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 30924 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:40:41.886  INFO 30924 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:40:43.750  INFO 30924 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:40:43.767  INFO 30924 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:40:43.768  INFO 30924 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:40:43.940  INFO 30924 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:40:43.940  INFO 30924 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1936 ms
+2024-06-04 10:40:44.152  INFO 30924 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:40:44.289  WARN 30924 --- [main] k.j.i.ClassReference                     : Servlet class de.itcr.termite.api.FhirController is ignored due to lack of annotation
+2024-06-04 10:40:44.600  INFO 30924 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 10:40:44.605  INFO 30924 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-06-04 10:40:44.639  WARN 30924 --- [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'fhirController' defined in file [D:\Users\Paul\projects\termite\build\classes\kotlin\main\de\itcr\termite\api\FhirController.class]: Unsatisfied dependency expressed through constructor parameter 2; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.hl7.fhir.r4.model.CapabilityStatement' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {@org.springframework.beans.factory.annotation.Autowired(required=true)}
+2024-06-04 10:40:44.645  INFO 30924 --- [main] o.a.c.c.StandardService                  : Stopping service [Tomcat]
+2024-06-04 10:40:44.659  INFO 30924 --- [main] ConditionEvaluationReportLoggingListener : 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2024-06-04 10:40:44.693  WARN 30924 --- [main] o.s.b.d.FailureAnalyzers                 : FailureAnalyzers [org.springframework.boot.autoconfigure.jooq.NoDslContextBeanFailureAnalyzer,org.springframework.boot.autoconfigure.diagnostics.analyzer.NoSuchBeanDefinitionFailureAnalyzer,org.springframework.boot.autoconfigure.jdbc.DataSourceBeanCreationFailureAnalyzer,org.springframework.boot.autoconfigure.r2dbc.ConnectionFactoryBeanCreationFailureAnalyzer] implement BeanFactoryAware or EnvironmentAware. Support for these interfaces on FailureAnalyzers is deprecated, and will be removed in a future release. Instead provide a constructor that accepts BeanFactory or Environment parameters.
+2024-06-04 10:40:44.701 ERROR 30924 --- [main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 2 of constructor in de.itcr.termite.api.FhirController required a bean of type 'org.hl7.fhir.r4.model.CapabilityStatement' that could not be found.
+
+The injection point has the following annotations:
+	- @org.springframework.beans.factory.annotation.Autowired(required=true)
+
+
+Action:
+
+Consider defining a bean of type 'org.hl7.fhir.r4.model.CapabilityStatement' in your configuration.
+
+2024-06-04 10:41:14.057  INFO 6256 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 6256 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:41:14.076  INFO 6256 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:41:15.409  INFO 6256 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:41:15.422  INFO 6256 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:41:15.423  INFO 6256 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:41:15.570  INFO 6256 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:41:15.571  INFO 6256 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1396 ms
+2024-06-04 10:41:15.793  INFO 6256 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:41:15.942  WARN 6256 --- [main] k.j.i.ClassReference                     : Servlet class de.itcr.termite.api.FhirController is ignored due to lack of annotation
+2024-06-04 10:41:16.263  INFO 6256 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 10:41:16.270  INFO 6256 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R4]
+2024-06-04 10:41:17.085  INFO 6256 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 10:41:17.104  INFO 6256 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 3.642 seconds (JVM running for 4.487)
+2024-06-04 10:41:37.782  INFO 6256 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-06-04 10:41:37.782  INFO 6256 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-06-04 10:41:37.782  INFO 6256 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 0 ms
+2024-06-04 10:41:37.817 ERROR 6256 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[.[dispatcherServlet]      : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed; nested exception is java.lang.IllegalArgumentException: HAPI-1829: This parser is for FHIR version R4 - Can not encode a structure for version R5] with root cause
+
+java.lang.IllegalArgumentException: HAPI-1829: This parser is for FHIR version R4 - Can not encode a structure for version R5
+	at ca.uhn.fhir.parser.BaseParser.encodeResourceToWriter(BaseParser.java:292) ~[hapi-fhir-base-6.1.1.jar:?]
+	at ca.uhn.fhir.parser.BaseParser.encodeResourceToWriter(BaseParser.java:283) ~[hapi-fhir-base-6.1.1.jar:?]
+	at ca.uhn.fhir.parser.BaseParser.encodeResourceToString(BaseParser.java:272) ~[hapi-fhir-base-6.1.1.jar:?]
+	at de.itcr.termite.api.FhirController.getCapabilityStatement(FhirController.kt:37) ~[main/:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1067) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:963) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:898) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:655) ~[tomcat-embed-core-9.0.60.jar:4.0.FR]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883) ~[spring-webmvc-5.3.18.jar:5.3.18]
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:764) ~[tomcat-embed-core-9.0.60.jar:4.0.FR]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:227) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:162) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53) ~[tomcat-embed-websocket-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:189) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:162) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:189) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:162) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:189) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:162) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117) ~[spring-web-5.3.18.jar:5.3.18]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:189) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:162) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:197) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:97) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:541) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:135) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:78) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:360) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:399) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:889) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1743) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) ~[tomcat-embed-core-9.0.60.jar:9.0.60]
+	at java.lang.Thread.run(Thread.java:840) ~[?:?]
+
+2024-06-04 10:42:24.778  INFO 11972 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 11972 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:42:24.796  INFO 11972 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:42:26.082  INFO 11972 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:42:26.092  INFO 11972 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:42:26.092  INFO 11972 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:42:26.212  INFO 11972 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:42:26.212  INFO 11972 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1338 ms
+2024-06-04 10:42:26.333  INFO 11972 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:42:26.449  WARN 11972 --- [main] k.j.i.ClassReference                     : Servlet class de.itcr.termite.api.FhirController is ignored due to lack of annotation
+2024-06-04 10:42:26.703  INFO 11972 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 10:42:26.709  INFO 11972 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R5]
+2024-06-04 10:42:27.257  INFO 11972 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 10:42:27.267  INFO 11972 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 3.066 seconds (JVM running for 3.881)
+2024-06-04 10:42:31.772  INFO 11972 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-06-04 10:42:31.772  INFO 11972 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-06-04 10:42:31.773  INFO 11972 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 1 ms
+2024-06-04 10:46:32.704  INFO 11444 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 11444 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:46:32.713  INFO 11444 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:46:34.045  INFO 11444 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:46:34.067  INFO 11444 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:46:34.068  INFO 11444 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:46:34.210  INFO 11444 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:46:34.210  INFO 11444 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1415 ms
+2024-06-04 10:46:34.349  INFO 11444 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:46:34.679  INFO 11444 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 10:46:34.685  INFO 11444 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R5]
+2024-06-04 10:46:35.250  INFO 11444 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 10:46:35.261  INFO 11444 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 3.151 seconds (JVM running for 4.006)
+2024-06-04 10:46:40.912  INFO 11444 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-06-04 10:46:40.912  INFO 11444 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-06-04 10:46:40.914  INFO 11444 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 1 ms
+2024-06-04 10:47:11.957  INFO 25488 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 25488 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:47:11.967  INFO 25488 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:47:13.804  INFO 25488 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:47:13.818  INFO 25488 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:47:13.819  INFO 25488 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:47:13.982  INFO 25488 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:47:13.982  INFO 25488 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1917 ms
+2024-06-04 10:47:14.146  INFO 25488 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:47:14.602  INFO 25488 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 10:47:14.607  INFO 25488 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R5]
+2024-06-04 10:47:15.350  INFO 25488 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 10:47:15.368  INFO 25488 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 4.187 seconds (JVM running for 5.107)
+2024-06-04 10:47:19.052  INFO 25488 --- [http-nio-8083-exec-1] o.a.c.c.C.[.[.[/]                        : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-06-04 10:47:19.052  INFO 25488 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Initializing Servlet 'dispatcherServlet'
+2024-06-04 10:47:19.053  INFO 25488 --- [http-nio-8083-exec-1] o.s.w.s.DispatcherServlet                : Completed initialization in 1 ms
+2024-06-04 10:48:49.633  INFO 14532 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 14532 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 10:48:49.641  INFO 14532 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 10:48:50.937  INFO 14532 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 10:48:50.946  INFO 14532 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 10:48:50.946  INFO 14532 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 10:48:51.050  INFO 14532 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 10:48:51.051  INFO 14532 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1294 ms
+2024-06-04 10:48:51.169  INFO 14532 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 10:48:51.590  INFO 14532 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 10:48:51.596  INFO 14532 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R5]
+2024-06-04 10:48:52.348  INFO 14532 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 10:48:52.367  INFO 14532 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 3.316 seconds (JVM running for 4.142)
+2024-06-04 11:08:13.933  INFO 26556 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 26556 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 11:08:13.947  INFO 26556 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 11:08:15.833  INFO 26556 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 11:08:15.846  INFO 26556 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 11:08:15.847  INFO 26556 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 11:08:16.004  INFO 26556 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 11:08:16.004  INFO 26556 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1936 ms
+2024-06-04 11:08:16.174  INFO 26556 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 11:08:16.632  INFO 26556 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 11:08:16.637  INFO 26556 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R5]
+2024-06-04 11:08:17.378  INFO 26556 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 11:08:17.402  INFO 26556 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 4.25 seconds (JVM running for 5.446)
+2024-06-04 11:09:20.668  INFO 12200 --- [main] d.i.t.TermiteKt                          : Starting TermiteKt using Java 17.0.11 on LAPTOP-MO7JJJFH with PID 12200 (D:\Users\Paul\projects\termite\build\classes\kotlin\main started by Paul in D:\Users\Paul\projects\termite)
+2024-06-04 11:09:20.678  INFO 12200 --- [main] d.i.t.TermiteKt                          : No active profile set, falling back to 1 default profile: "default"
+2024-06-04 11:09:22.021  INFO 12200 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat initialized with port(s): 8083 (http)
+2024-06-04 11:09:22.034  INFO 12200 --- [main] o.a.c.c.StandardService                  : Starting service [Tomcat]
+2024-06-04 11:09:22.035  INFO 12200 --- [main] o.a.c.c.StandardEngine                   : Starting Servlet engine: [Apache Tomcat/9.0.60]
+2024-06-04 11:09:22.197  INFO 12200 --- [main] o.a.c.c.C.[.[.[/]                        : Initializing Spring embedded WebApplicationContext
+2024-06-04 11:09:22.197  INFO 12200 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1436 ms
+2024-06-04 11:09:22.411  INFO 12200 --- [main] k.j.i.ClassReference                     : Compiling static FHIR terminology server capabilities (CapabilityStatement)
+2024-06-04 11:09:22.903  INFO 12200 --- [main] c.u.f.u.VersionUtil                      : HAPI FHIR version 6.1.1 - Rev af3fcda0af
+2024-06-04 11:09:22.910  INFO 12200 --- [main] c.u.f.c.FhirContext                      : Creating new FHIR context for FHIR version [R5]
+2024-06-04 11:09:23.682  INFO 12200 --- [main] o.s.b.w.e.t.TomcatWebServer              : Tomcat started on port(s): 8083 (http) with context path ''
+2024-06-04 11:09:23.705  INFO 12200 --- [main] d.i.t.TermiteKt                          : Started TermiteKt in 3.649 seconds (JVM running for 4.455)

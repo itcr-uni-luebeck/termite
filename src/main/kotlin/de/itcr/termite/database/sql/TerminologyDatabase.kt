@@ -5,7 +5,7 @@ import de.itcr.termite.exception.AmbiguousValueSetVersionException
 import de.itcr.termite.exception.CodeSystemException
 import de.itcr.termite.exception.ValueSetException
 import org.apache.logging.log4j.LogManager
-import org.hl7.fhir.r4.model.*
+import org.hl7.fhir.r4b.model.*
 import java.lang.System
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -312,8 +312,8 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         return vs
     }
 
-    private fun tagAsSummarized(metadataResource: MetadataResource) {
-        metadataResource.meta.addTag(Coding(
+    private fun tagAsSummarized(canonicalResource: CanonicalResource) {
+        canonicalResource.meta.addTag(Coding(
             "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
             "SUBSETTED",
             "subsetted"
