@@ -1,8 +1,6 @@
 package de.itcr.termite.database
 
-import org.hl7.fhir.r4b.model.CodeSystem
-import org.hl7.fhir.r4b.model.OperationDefinition
-import org.hl7.fhir.r4b.model.ValueSet
+import org.hl7.fhir.r4b.model.*
 import java.sql.Timestamp
 
 /**
@@ -23,6 +21,8 @@ interface TerminologyStorage {
     fun addValueSet(valueSet: ValueSet): Triple<Int, Int, Timestamp>
 
     fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp>
+
+    fun addConceptMap(conceptMap: ConceptMap): Triple<Int, Int, Timestamp>
 
     /**
      * Validates if the given code is in the given value set
@@ -51,8 +51,12 @@ interface TerminologyStorage {
 
     fun searchCodeSystem(url: String): List<CodeSystem>
 
+    fun searchConceptMap(url: String): List<ConceptMap>
+
     fun validateCodeCS(code: String, display: String?, url: String): Boolean
 
     fun expandValueSet(url: String, version: String?): ValueSet
+
+    fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>>
 
 }

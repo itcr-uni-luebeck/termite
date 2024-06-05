@@ -365,6 +365,17 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         }
     }
 
+    override fun addConceptMap(conceptMap: ConceptMap): Triple<Int, Int, Timestamp> {
+        TODO("Not yet implemented")
+    }
+
+    override fun searchConceptMap(url: String): List<ConceptMap> {
+        TODO("Not yet implemented")
+    }
+
+    override fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>> {
+        TODO("Not yet implemented")
+    }
 }
 
 data class System(val url: String)
