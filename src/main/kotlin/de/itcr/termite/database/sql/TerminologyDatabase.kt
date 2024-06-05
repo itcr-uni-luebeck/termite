@@ -54,9 +54,14 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
 
             if(vsIds.isNotEmpty()){
                 //Create database entries for codes if not already present and retrieve keys
-                if(valueSet.expansion.contains.isEmpty()) throw ValueSetException("Value set is empty or not expanded")
-                val codes = valueSet.expansion.contains.distinct()
-                    .map { coding -> Triple(coding.system, coding.code, coding.display) }
+                val codes = mutableListOf<Triple<String, String, String>>()
+                valueSet.compose.include.forEach { include ->
+                    val system = include.system
+                    codes.addAll(include.concept.map { concept -> Triple(system, concept.code, concept.display) })
+                }
+                codes.addAll(valueSet.expansion.contains.distinct().map { concept ->
+                    Triple(concept.system, concept.code, concept.display)
+                })
                 insertCodes(vsIds[0], codes)
             }
             else{

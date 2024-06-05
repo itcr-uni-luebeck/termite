@@ -3,6 +3,8 @@ package de.itcr.termite.database.nosql
 import de.itcr.termite.database.TerminologyStorage
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CodeSystem
+import org.hl7.fhir.r4b.model.Coding
+import org.hl7.fhir.r4b.model.ConceptMap
 import org.hl7.fhir.r4b.model.ValueSet
 import java.nio.file.Path
 import java.sql.Timestamp
@@ -54,4 +56,15 @@ class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("
         TODO("Not yet implemented")
     }
 
+    override fun addConceptMap(conceptMap: ConceptMap): Triple<Int, Int, Timestamp> {
+        TODO("Not yet implemented")
+    }
+
+    override fun searchConceptMap(url: String): List<ConceptMap> {
+        TODO("Not yet implemented")
+    }
+
+    override fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>> {
+        TODO("Not yet implemented")
+    }
 }
