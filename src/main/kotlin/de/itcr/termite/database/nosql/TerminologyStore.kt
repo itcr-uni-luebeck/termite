@@ -20,14 +20,11 @@ class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("
         logger.debug("Creating key value store for value sets")
     }
 
-    override fun addValueSet(valueSet: ValueSet): Triple<Int, Int, Timestamp> {
-        val url = valueSet.url
-        val version = valueSet.version
-        logger.debug("Adding value set with url $url and version $version to key value store")
-        return Triple(0, 0, Timestamp(0))
+    override fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp> {
+        TODO("Not yet implemented")
     }
 
-    override fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp> {
+    override fun addCodeSystem(codeSystem: CodeSystem): Triple<CodeSystem, Int, Timestamp> {
         TODO("Not yet implemented")
     }
 
@@ -56,7 +53,7 @@ class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("
         TODO("Not yet implemented")
     }
 
-    override fun addConceptMap(conceptMap: ConceptMap): Triple<Int, Int, Timestamp> {
+    override fun addConceptMap(conceptMap: ConceptMap): Triple<ConceptMap, Int, Timestamp> {
         TODO("Not yet implemented")
     }
 
@@ -65,6 +62,18 @@ class TerminologyStore constructor(dbPath: Path): KeyValueStore(dbPath, listOf("
     }
 
     override fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun readValueSet(id: String): ValueSet {
+        TODO("Not yet implemented")
+    }
+
+    override fun readCodeSystem(id: String): CodeSystem {
+        TODO("Not yet implemented")
+    }
+
+    override fun readConceptMap(id: String): ConceptMap {
         TODO("Not yet implemented")
     }
 }

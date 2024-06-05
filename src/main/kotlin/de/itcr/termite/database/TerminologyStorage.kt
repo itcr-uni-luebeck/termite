@@ -18,11 +18,17 @@ interface TerminologyStorage {
      * @return Triple containing in the following oder the internal ID of the value set, the internal version ID of the
      *         value set and last-updated timestamp
      */
-    fun addValueSet(valueSet: ValueSet): Triple<Int, Int, Timestamp>
+    fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp>
 
-    fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp>
+    fun addCodeSystem(codeSystem: CodeSystem): Triple<CodeSystem, Int, Timestamp>
 
-    fun addConceptMap(conceptMap: ConceptMap): Triple<Int, Int, Timestamp>
+    fun addConceptMap(conceptMap: ConceptMap): Triple<ConceptMap, Int, Timestamp>
+
+    fun readValueSet(id: String): ValueSet
+
+    fun readCodeSystem(id: String): CodeSystem
+
+    fun readConceptMap(id: String): ConceptMap
 
     /**
      * Validates if the given code is in the given value set

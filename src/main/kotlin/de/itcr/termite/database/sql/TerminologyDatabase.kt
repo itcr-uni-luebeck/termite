@@ -3,6 +3,7 @@ package de.itcr.termite.database.sql
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.AmbiguousValueSetVersionException
 import de.itcr.termite.exception.CodeSystemException
+import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.ValueSetException
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.*
@@ -27,15 +28,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     init {
         //Create tables and indices
         logger.debug("Creating ValueSets table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID INTEGER PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                          "UNIQUE(URL, VERSION))")
+        super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)")
         logger.debug("Creating CodeSystems table ...")
-        /*
-        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID INTEGER PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP), " +
-                          "UNIQUE(URL, VERSION)")
-         */
+        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)")
         logger.debug("Creating OperationDefinition table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID INTEGER PRIMARY KEY, RESOURCE TEXT NOT NULL)")
+        super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID BIGSERIAL PRIMARY KEY, RESOURCE TEXT NOT NULL)")
         logger.debug("Creating Membership table ...")
         super.execute("CREATE TABLE IF NOT EXISTS Membership (VS_ID INTEGER, SYSTEM TEXT NOT NULL, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
                           "UNIQUE(VS_ID, SYSTEM, CODE, DISPLAY), " +
@@ -44,7 +41,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         super.execute("CREATE INDEX IF NOT EXISTS Idx_Membership ON Membership(VS_ID, SYSTEM, CODE, DISPLAY)")
     }
 
-    override fun addValueSet(valueSet: ValueSet): Triple<Int, Int, Timestamp> {
+    override fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp> {
         try{
             //Retrieve ValueSet information and create database entry if not already present
             val url: String = valueSet.url
@@ -70,19 +67,19 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
 
             val rs = super.executeQuery("SELECT VERSION_ID, LAST_UPDATED FROM ValueSets WHERE VS_ID = ${vsIds[0]}")
             if(rs.next()){
-                val info = Triple(vsIds[0], rs.getInt(1), rs.getTimestamp(2))
+                val info = Triple(buildValueSet(vsIds[0].toString(), true), rs.getInt(1), rs.getTimestamp(2))
                 logger.debug("Finished adding ValueSet with URL $url and version $version to database")
                 return info
             }
             else{
-                throw Exception("Couldn't retrieve VERSION_ID and LAST_UPDATED for ValueSet with URL $url and version $version from database")
+                throw ValueSetException("Couldn't retrieve VERSION_ID and LAST_UPDATED for ValueSet with URL $url and version $version from database")
             }
         }
         catch (e: ValueSetException){
             throw e
         }
         catch (e: Exception){
-            val message = "Couldn't add ValueSet to database"
+            val message = "Error during addition of ValueSet instance to database"
             logger.error(message)
             logger.error(e.stackTraceToString())
             throw Exception(message, e)
@@ -99,7 +96,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
      */
     private fun insertValueSets(entries: List<ValueSet>): List<Int>{
         logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "ValueSet" else "ValueSets"} ...")
-        val sql = "INSERT OR IGNORE INTO ValueSets (URL, VERSION, VERSION_ID) VALUES (?, ?, 0)"
+        val sql = "INSERT INTO ValueSets (URL, VERSION, VERSION_ID) VALUES (?, ?, 0) ON CONFLICT DO NOTHING RETURNING VS_ID"
         val transformation = {stmt: PreparedStatement, valueSets: List<ValueSet> -> valueSets.forEach { vs ->
             stmt.setString(1, vs.url)
             stmt.setString(2, vs.version)
@@ -124,7 +121,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
      */
     private fun insertCodes(vsId: Int?, entries: List<Triple<String, String, String>>) {
         logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "Code" else "Codes"} ...")
-        val sql = "INSERT OR IGNORE INTO Membership (VS_ID, SYSTEM, CODE, DISPLAY) VALUES (?, ?, ?, ?)"
+        val sql = "INSERT INTO Membership (VS_ID, SYSTEM, CODE, DISPLAY) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
         val transformation = { stmt: PreparedStatement, codes: List<Triple<String, String, String>> -> codes.forEach { c ->
             if (vsId != null) stmt.setInt(1, vsId) else stmt.setNull(1, java.sql.Types.INTEGER)
             stmt.setString(2, c.first)
@@ -135,19 +132,33 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         super.insert(sql, entries, transformation)
     }
 
-    override fun addCodeSystem(codeSystem: CodeSystem): Triple<Int, Int, Timestamp> {
+    override fun addCodeSystem(codeSystem: CodeSystem): Triple<CodeSystem, Int, Timestamp> {
         try{
             val url = codeSystem.url
+            val version = codeSystem.version
             logger.debug("Adding CodeSystem with URL $url and version to database")
+            val csIds = insertCodeSystems(listOf(codeSystem))
 
-            //Create database entries for codes if not already present and retrieve keys
-            if(codeSystem.concept.isEmpty()) throw CodeSystemException("Code system is empty")
-            val codes = codeSystem.concept.distinct().map { coding -> Triple(url, coding.code, coding.display) }
-            insertCodes(null, codes)
+            if(csIds.isNotEmpty()){
+                //Create database entries for codes if not already present and retrieve keys
+                val codes = codeSystem.concept.distinct().map { coding -> Triple(url, coding.code, coding.display) }
+                insertCodes(null, codes)
 
-            val info = Triple(0, 0, Timestamp(System.currentTimeMillis()))
-            logger.debug("Finished adding CodeSystem with URL $url to database")
-            return info
+                val rs = super.executeQuery("SELECT VERSION_ID, LAST_UPDATED FROM CodeSystems WHERE CS_ID = ${csIds[0]}")
+                if(rs.next()){
+                    val info = Triple(buildCodeSystem(csIds[0].toString(), true), rs.getInt(1), rs.getTimestamp(2))
+                    logger.debug("Finished adding ValueSet with URL $url and version $version to database")
+                    return info
+                }
+                else{
+                    throw Exception("Couldn't retrieve VERSION_ID and LAST_UPDATED for ValueSet with URL $url and version $version from database")
+                }
+            }
+            else{
+                val message = "CodeSystem with URL $url and version $version already exists in database"
+                logger.warn(message)
+                throw ValueSetException(message)
+            }
         }
         catch (e: CodeSystemException){
             throw e
@@ -156,8 +167,33 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
             val message = "Couldn't add CodeSystem to database"
             logger.error(message)
             logger.error(e.stackTraceToString())
-            throw Exception(message, e)
+            throw Exception(e.message, e)
         }
+    }
+
+    /**
+     * Inserts value sets in form of entries into the ValueSets table into the database
+     *
+     * @param entries holds ValueSet instances to be added
+     *
+     * @return list containing the generated VS_IDs in the order in which the ValueSet instances themselves where
+     *         provided
+     */
+    private fun insertCodeSystems(entries: List<CodeSystem>): List<Int>{
+        logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "CodeSystem" else "CodeSystems"} ...")
+        val sql = "INSERT INTO CodeSystems (URL, VERSION, VERSION_ID) VALUES (?, ?, 0) ON CONFLICT DO NOTHING RETURNING CS_ID"
+        val transformation = {stmt: PreparedStatement, codeSystems: List<CodeSystem> -> codeSystems.forEach { cs ->
+            stmt.setString(1, cs.url)
+            stmt.setString(2, cs.version)
+            stmt.addBatch()
+        }}
+        val rs: ResultSet = super.insert(sql, entries, transformation)
+        val generatedKeys: MutableList<Int> = mutableListOf()
+        while(rs.next()){
+            //Returns interesting key values if unique or not null constraint is violated
+            generatedKeys.add(rs.getInt(1))
+        }
+        return generatedKeys
     }
 
     override fun searchValueSet(url: String, version: String?): List<ValueSet>{
@@ -250,43 +286,16 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         }
     }
 
-    //TODO: Implement function (Optional for functionality: Lower Priority)
-    fun getValueSet(vsId: String, versionId: Int): ValueSet{
-        logger.debug("Retrieving ValueSet instance with internal ID $vsId and internal version ID $versionId ...")
-        try{
-            val rs: ResultSet = super.executeQuery(
-                "SELECT * FROM ValueSets WHERE VS_ID = ? AND VERSION_ID = ?",
-                listOf(vsId, versionId)
-            )
-            if(rs.next()){
-                val vs = ValueSet()
-                vs.id = rs.getInt(1).toString()
-                vs.url = rs.getString(2)
-                vs.version = rs.getString(3)
-                return vs
-            }
-            else{
-                throw Exception("ResultSet instance was empty")
-            }
-        }
-        catch (e: Exception){
-            val message = "Retrieving ValueSet instance with internal ID $vsId and internal version ID $versionId failed"
-            logger.error(message)
-            logger.error(e.stackTraceToString())
-            throw Exception(message, e)
-        }
-    }
-
-    //TODO: Implement getValueSet function on which this function relies
-    fun getValueSet(vsId: String): ValueSet{
-        return getValueSet(vsId, 0)
+    override fun readValueSet(id: String): ValueSet {
+        logger.debug("Retrieving value set with ID $id")
+        return buildValueSet(id, true)
     }
 
     private fun buildValueSet(vsId: String, summarized: Boolean): ValueSet{
         logger.debug("Building value set with internal ID $vsId")
         //Retrieve value set metadata
         var query = "SELECT VS_ID, URL, VERSION, VERSION_ID, LAST_UPDATED FROM ValueSets WHERE VS_ID = ?"
-        var rs = super.executeQuery(query, listOf(vsId))
+        var rs = super.executeQuery(query, listOf(vsId.toInt())) { preparedStmt, idList -> preparedStmt.setInt(1, idList[0]) }
         val vs = ValueSet()
         if(rs.next()) {
             vs.id = rs.getString(1)
@@ -296,7 +305,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
             vs.meta.lastUpdated = rs.getTimestamp(5)
         }
         else{
-            throw Exception("Value set corresponding to internal ID $vsId doesn't exist")
+            throw NotFoundException<ValueSet>(Pair("id", vsId))
         }
         if (summarized) {
             tagAsSummarized(vs)
@@ -340,6 +349,46 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         return listOf(cs)
     }
 
+    override fun readCodeSystem(id: String): CodeSystem {
+        logger.debug("Retrieving code system with ID $id")
+        return buildCodeSystem(id, true)
+    }
+
+    private fun buildCodeSystem(csId: String, summarized: Boolean): CodeSystem {
+        logger.debug("Building code system with internal ID $csId")
+        //Retrieve value set metadata
+        var query = "SELECT CS_ID, URL, VERSION, VERSION_ID, LAST_UPDATED FROM CodeSystems WHERE CS_ID = ?"
+        var rs = super.executeQuery(query, listOf(csId)) { preparedStmt, idList -> preparedStmt.setInt(1, idList[0].toInt()) }
+        val cs = CodeSystem()
+        if(rs.next()) {
+            cs.id = rs.getString(1)
+            cs.url = rs.getString(2)
+            cs.version = rs.getString(3)
+            cs.meta.versionId = rs.getInt(4).toString()
+            cs.meta.lastUpdated = rs.getTimestamp(5)
+        }
+        else{
+            throw NotFoundException<CodeSystem>(Pair("id", csId))
+        }
+        if (summarized) {
+            tagAsSummarized(cs)
+        }
+        else{
+            //Retrieve contained concepts
+            val concepts = cs.concept
+            query = "SELECT CODE, DISPLAY FROM Membership WHERE VS_ID = NULL SYSTEM = ?"
+            rs = super.executeQuery(query, listOf(cs.url))
+            while (rs.next()){
+                concepts.add(
+                    CodeSystem.ConceptDefinitionComponent()
+                        .setCode(rs.getString(1))
+                        .setDisplay(rs.getString(2))
+                )
+            }
+        }
+        return cs
+    }
+
     //TODO: Proper display handling: As of now display value will be ignored
     override fun validateCodeCS(code: String, display: String?, url: String): Boolean{
         logger.debug("Validating if code [code = $code, display = $display] is in code system [url = $url]")
@@ -370,7 +419,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         }
     }
 
-    override fun addConceptMap(conceptMap: ConceptMap): Triple<Int, Int, Timestamp> {
+    override fun addConceptMap(conceptMap: ConceptMap): Triple<ConceptMap, Int, Timestamp> {
         TODO("Not yet implemented")
     }
 
@@ -378,11 +427,12 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         TODO("Not yet implemented")
     }
 
+    override fun readConceptMap(id: String): ConceptMap {
+        TODO("Not yet implemented")
+    }
+
     override fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>> {
         TODO("Not yet implemented")
     }
+
 }
-
-data class System(val url: String)
-
-data class Code(val system: String, val code: String, val display: String)

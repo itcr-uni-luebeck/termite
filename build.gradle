@@ -42,6 +42,9 @@ dependencies {
     //JDBC SQLite
     implementation 'org.xerial:sqlite-jdbc:3.41.2.2'
 
+    //JDBC Postgres
+    implementation 'org.postgresql:postgresql:42.7.3'
+
     //RocksDB
     implementation 'org.rocksdb:rocksdbjni:7.6.0'
 

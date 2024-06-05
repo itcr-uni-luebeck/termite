@@ -9,7 +9,7 @@ services:
       - KEY_STORE=security/keystore/termite.p12
       - KEY_STORE_PASSWORD=changeme
       - KEY_ALIAS=termite
-      - DATABASE_CONN_URL:jdbc:psql://termite:termite@postgres:5432/termite
+      - DATABASE_CONN_URL=jdbc:postgresql://postgres:5432/termite?user=termite&password=termite
     depends_on:
       postgres:
         condition: service_healthy
