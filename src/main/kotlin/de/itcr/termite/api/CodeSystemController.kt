@@ -1,6 +1,7 @@
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.api.ValueSetController.Companion
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.metadata.annotation.*
@@ -18,15 +19,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import java.net.URI
 import java.util.*
@@ -35,7 +28,7 @@ import java.util.*
     type = "CodeSystem",
     versioning = "no-version",
     readHistory = false,
-    updateCreate = false,
+    updateCreate = true,
     conditionalCreate = false,
     conditionalRead = "not-supported",
     conditionalUpdate = false,
@@ -48,10 +41,15 @@ import java.util.*
             name = "url",
             type = "uri",
             documentation = "URL of the resource to locate"
+        ),
+        SearchParameter(
+            name = "version",
+            type = "string",
+            documentation = "Version of the resource to locate"
         )
     ]
 )
-@SupportsInteraction(["create", "search-type"])
+@SupportsInteraction(["create", "search-type", "delete"])
 @SupportsOperation(
     name = "CodeSystem-lookup",
     title = "CodeSystem-lookup",
@@ -180,7 +178,7 @@ class CodeSystemController(
 
     @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
-    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
+    fun updateCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
         logger.info("Creating CodeSystem instance if not present")
         try {
             val cs = parseBodyAsResource(requestEntity, contentType)
@@ -354,19 +352,22 @@ class CodeSystemController(
         }
     }
 
-    @GetMapping(params = ["url"])
+    @GetMapping
     @ResponseBody
-    fun search(@RequestParam url: String): ResponseEntity<String>{
+    fun search(
+        @RequestParam url: String,
+        @RequestParam(required = false) version: String?
+    ): ResponseEntity<String>{
         logger.info("Searching for code system [url = $url]")
         try{
-            val csList = database.searchCodeSystem(url)
+            val csList = database.searchCodeSystem(url, version)
             val bundle = Bundle()
             bundle.id = UUID.randomUUID().toString()
             bundle.type = Bundle.BundleType.SEARCHSET
             bundle.total = csList.size
             //Should be faster since otherwise an internal array list would have to resized all the time
             bundle.entry = csList.map { cs -> Bundle.BundleEntryComponent().setResource(cs) }
-            logger.debug("Found ${csList.size} code systems for URL $url")
+            logger.debug("Found ${csList.size} CodeSystem instances for URL $url" + if (version != null) " and version $version" else "")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
         }
         catch (e: Exception){
@@ -382,6 +383,42 @@ class CodeSystemController(
             return ResponseEntity.internalServerError()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
+        }
+    }
+
+    @DeleteMapping("{id}")
+    @ResponseBody
+    fun delete(@PathVariable id: String): ResponseEntity<String> {
+        logger.info("Deleting CodeSystem instance [id = $id]")
+        try {
+            var opOutcome: String
+            try {
+                database.deleteCodeSystem(id)
+                opOutcome = generateOperationOutcomeString(
+                    OperationOutcome.IssueSeverity.INFORMATION,
+                    OperationOutcome.IssueType.INFORMATIONAL,
+                    "Successfully deleted CodeSystem instance [ID = $id]",
+                    jsonParser
+                )
+            }
+            catch (e: NotFoundException) {
+                opOutcome = generateOperationOutcomeString(
+                    OperationOutcome.IssueSeverity.INFORMATION,
+                    OperationOutcome.IssueType.INFORMATIONAL,
+                    "No CodeSystem instance with such an ID [ID = $id]",
+                    jsonParser
+                )
+            }
+            return ResponseEntity.ok().eTag("W/\"0\"").contentType(MediaType.APPLICATION_JSON).body(opOutcome)
+        }
+        catch (e: Exception) {
+            val opOutcome = generateOperationOutcomeString(
+                OperationOutcome.IssueSeverity.ERROR,
+                OperationOutcome.IssueType.PROCESSING,
+                e.message,
+                jsonParser
+            )
+            return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).body(opOutcome)
         }
     }
 

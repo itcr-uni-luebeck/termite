@@ -6,7 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
 }
 
-group 'org.example'
+group 'de.itcr'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -23,9 +23,17 @@ compileJava {
     targetCompatibility = "17"
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir "src"
+        }
+    }
+}
+
 dependencies {
     //Kotlin
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.0"
     implementation "org.jetbrains.kotlin:kotlin-reflect:2.0.0"
 
     //Spring Boot

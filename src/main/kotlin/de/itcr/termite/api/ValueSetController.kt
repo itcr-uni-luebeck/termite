@@ -35,7 +35,7 @@ import kotlin.math.min
     type = "ValueSet",
     versioning = "no-version",
     readHistory = false,
-    updateCreate = false,
+    updateCreate = true,
     conditionalCreate = false,
     conditionalRead = "not-supported",
     conditionalUpdate = false,
@@ -48,10 +48,15 @@ import kotlin.math.min
             name = "url",
             type = "uri",
             documentation = "URL of the resource to locate"
+        ),
+        SearchParameter(
+            name = "version",
+            type = "string",
+            documentation = "Version of the resource to locate"
         )
     ]
 )
-@SupportsInteraction(["create", "search-type"])
+@SupportsInteraction(["create", "search-type", "delete"])
 @SupportsOperation(
     name = "ValueSet-lookup",
     title = "ValueSet-lookup",
@@ -217,7 +222,7 @@ class ValueSetController(
 
     @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
-    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
+    fun updateCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
         logger.info("Creating ValueSet instance if not present")
         try {
             val vs = parseBodyAsResource(requestEntity, contentType)
@@ -350,6 +355,42 @@ class ValueSetController(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 message
             )
+        }
+    }
+
+    @DeleteMapping("{id}")
+    @ResponseBody
+    fun delete(@PathVariable id: String): ResponseEntity<String> {
+        logger.info("Deleting ValueSet instance [id = $id]")
+        try {
+            var opOutcome: String
+            try {
+                database.deleteValueSet(id)
+                opOutcome = generateOperationOutcomeString(
+                    OperationOutcome.IssueSeverity.INFORMATION,
+                    OperationOutcome.IssueType.INFORMATIONAL,
+                    "Successfully deleted ValueSet instance [ID = $id]",
+                    jsonParser
+                )
+            }
+            catch (e: NotFoundException) {
+                opOutcome = generateOperationOutcomeString(
+                    OperationOutcome.IssueSeverity.INFORMATION,
+                    OperationOutcome.IssueType.INFORMATIONAL,
+                    "No ValueSet instance with such an ID [ID = $id]",
+                    jsonParser
+                )
+            }
+            return ResponseEntity.ok().eTag("W/\"0\"").contentType(MediaType.APPLICATION_JSON).body(opOutcome)
+        }
+        catch (e: Exception) {
+            val opOutcome = generateOperationOutcomeString(
+                OperationOutcome.IssueSeverity.ERROR,
+                OperationOutcome.IssueType.PROCESSING,
+                e.message,
+                jsonParser
+            )
+            return ResponseEntity.internalServerError().contentType(MediaType.APPLICATION_JSON).body(opOutcome)
         }
     }
 

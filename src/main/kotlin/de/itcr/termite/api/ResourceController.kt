@@ -20,12 +20,17 @@ abstract class ResourceController(protected val database: TerminologyStorage, pr
         val ndjson = fhirContext.newNDJsonParser() to "ndjson"
         this.parsers = mapOf(
             "application/json" to json,
+            "application/json;charset=utf-8" to json,
             "application/fhir+json" to json,
-            "application/fhir+json; charset=UTF-8" to json,
+            "application/fhir+json;charset=utf-8" to json,
             "application/xml" to xml,
+            "application/xml;charset=utf-8" to xml,
             "application/fhir+xml" to xml,
+            "application/fhir+xml;charset=utf-8" to xml,
             "application/ndjson" to ndjson,
-            "application/fhir+ndjson" to ndjson
+            "application/ndjson;charset=utf-8" to ndjson,
+            "application/fhir+ndjson" to ndjson,
+            "application/fhir+ndjson;charset=utf-8" to ndjson
         )
     }
 
@@ -36,7 +41,7 @@ abstract class ResourceController(protected val database: TerminologyStorage, pr
      */
     protected fun parseBodyAsResource(requestEntity: RequestEntity<String>, contentType: String): IBaseResource {
         try{
-            val (parser, parserFormat) = parsers[contentType] ?: throw Exception("Unsupported content type: $contentType")
+            val (parser, parserFormat) = parsers[contentType.trim().lowercase().replace(" ", "")] ?: throw Exception("Unsupported content type: $contentType")
             try {
                 return parser.parseResource(requestEntity.body)
             } catch (e: DataFormatException) {

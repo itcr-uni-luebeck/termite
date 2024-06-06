@@ -37,7 +37,6 @@ class FhirController (
     @ResponseBody
     fun getCapabilityStatement(): ResponseEntity<String>{
         logger.info("Processing metadata request")
-        logger.info(jsonParser.setPrettyPrint(true).encodeResourceToString(capabilityStatement))
         return ResponseEntity.ok()
             .eTag("W/\"0\"")
             .header("Content-Type", "application/json")
