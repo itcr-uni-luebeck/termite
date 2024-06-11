@@ -1,3 +1,4 @@
+/*
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
@@ -28,9 +29,11 @@ import java.util.*
 import kotlin.Exception
 import kotlin.math.min
 
+*/
 /**
  * Handles request regarding instances of the ValueSet resource
- */
+ *//*
+
 @ForResource(
     type = "ValueSet",
     versioning = "no-version",
@@ -152,10 +155,12 @@ class ValueSetController(
         //private val delegator = Delegator<ValueSetController, ResponseEntity<String>>()
     }
 
-    /**
+    */
+/**
      * Adds a ValueSet instance to the database via the CREATE interaction
      * @see <a href= "https://www.hl7.org/fhir/http.html#create">create interaction</a>
-     */
+     *//*
+
     @PostMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
     fun addValueSet(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
@@ -353,7 +358,8 @@ class ValueSetController(
         }
     }
 
-    /**
+    */
+/**
      * Validates a code with respect to the given value set
      * @see <a href="http://www.hl7.org/FHIR/valueset-operation-validate-code.html">validate-code operation</a>
      *
@@ -362,7 +368,8 @@ class ValueSetController(
      * @param system URI defining the code system to which the code belongs
      * @param code value of the code
      * @param display (optional) display value of the code in the given value set
-     */
+     *//*
+
     @GetMapping(path = ["\$validate-code"])
     @ResponseBody
     fun validateCode(@RequestParam url: String,
@@ -478,3 +485,4 @@ class ValueSetController(
     }
 
 }
+*/

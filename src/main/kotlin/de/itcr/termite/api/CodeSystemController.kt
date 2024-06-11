@@ -1,16 +1,18 @@
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.database.TerminologyStorage
+import com.fasterxml.jackson.databind.ObjectMapper
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
-import de.itcr.termite.util.generateOperationOutcomeString
-import de.itcr.termite.util.generateParametersString
-import de.itcr.termite.util.isPositiveInteger
-import de.itcr.termite.util.parseParameters
+import de.itcr.termite.model.entity.FhirCodeSystemMetadata
+import de.itcr.termite.model.entity.toCodeSystemResource
+import de.itcr.termite.model.entity.toFhirCodeSystemMetadata
+import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
+import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.hl7.fhir.r4b.formats.JsonParserBase
 import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -22,11 +24,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.net.URI
 import java.util.*
@@ -108,12 +109,12 @@ import java.util.*
         )
     ]
 )
-@Controller
+@RestController
 @RequestMapping("fhir/CodeSystem")
 class CodeSystemController(
-    @Autowired database: TerminologyStorage,
+    @Autowired repository: FhirCodeSystemMetadataRepository,
     @Autowired fhirContext: FhirContext
-    ): ResourceController(database, fhirContext) {
+    ): ResourceController<FhirCodeSystemMetadata, FhirCodeSystemMetadataRepository>(repository, fhirContext) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(this)
@@ -126,13 +127,15 @@ class CodeSystemController(
             val cs = parseBodyAsResource(requestEntity, contentType)
             if (cs is CodeSystem) {
                 try {
-                    val (createdCS, versionId, lastUpdated) = database.addCodeSystem(cs)
-                    logger.info("Added code system [url: ${cs.url}, version: ${cs.version}] to database")
-                    return ResponseEntity.created(URI(createdCS.id))
+                    val csMetadata = repository.save(cs.toFhirCodeSystemMetadata())
+                    // FIXME: Might be a bit too much to create another CodeSystem instance?
+                    val createdCs = csMetadata.toCodeSystemResource().tagAsSummarized()
+                    logger.info("Added code system [url: ${createdCs.url}, version: ${createdCs.version}] to database")
+                    return ResponseEntity.created(URI(csMetadata.id.toString()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .eTag("W/\"$versionId\"")
-                        .lastModified(lastUpdated.time)
-                        .body(jsonParser.encodeResourceToString(createdCS))
+                        .eTag("W/\"${csMetadata.versionId}\"")
+                        .lastModified(csMetadata.lastUpdated!!.toInstant())
+                        .body(jsonParser.encodeResourceToString(createdCs))
                 } catch (e: Exception) {
                     val opOutcome = generateOperationOutcomeString(
                         OperationOutcome.IssueSeverity.ERROR,
@@ -140,8 +143,8 @@ class CodeSystemController(
                         e.message,
                         jsonParser
                     )
-                    logger.warn("Adding of CodeSystem instance failed during database access")
-                    logger.debug(e.stackTraceToString())
+                    logger.warn("Addition of CodeSystem instance failed during database access")
+                    logger.info(e.stackTraceToString())
                     return ResponseEntity.unprocessableEntity()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(opOutcome)
@@ -178,7 +181,7 @@ class CodeSystemController(
         }
     }
 
-    @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    /*@PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
     fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
         logger.info("Creating CodeSystem instance if not present")
@@ -383,6 +386,6 @@ class CodeSystemController(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
         }
-    }
+    }*/
 
 }

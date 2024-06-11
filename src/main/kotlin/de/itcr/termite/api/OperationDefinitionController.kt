@@ -1,3 +1,4 @@
+/*
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
@@ -102,4 +103,4 @@ class OperationDefinitionController (
         }
     }
 
-}
+}*/

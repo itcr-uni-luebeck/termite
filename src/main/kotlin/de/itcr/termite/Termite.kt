@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean
 import java.net.URI
 
 @SpringBootApplication
-open class Termite {
+class Termite {
 
     @Autowired
     private lateinit var databaseProperties: DatabaseProperties
@@ -31,19 +31,19 @@ open class Termite {
     }
 
     @Bean
-    open fun logger(): Logger = LogManager.getLogger(Termite::class.java)
+    fun logger(): Logger = LogManager.getLogger(Termite::class.java)
 
     @Bean
-    open fun fhirContext(): FhirContext = FhirContext.forR4B()
+    fun fhirContext(): FhirContext = FhirContext.forR4B()
+
+    //@Bean
+    //fun database(): TerminologyDatabase = TerminologyDatabase(databaseProperties.connection.url)
 
     @Bean
-    open fun database(): TerminologyDatabase = TerminologyDatabase(databaseProperties.connection.url)
+    fun capabilityStatement(): CapabilityStatement = this.capabilityStatement
 
     @Bean
-    open fun capabilityStatement(): CapabilityStatement = this.capabilityStatement
-
-    @Bean
-    open fun operationDefinitions(): List<OperationDefinition> = this.operationDefinitions
+    fun operationDefinitions(): List<OperationDefinition> = this.operationDefinitions
 
 }
 

@@ -1,6 +1,8 @@
 package de.itcr.termite.util
 
 import org.apache.logging.log4j.LogManager
+import org.hl7.fhir.r4b.model.CanonicalResource
+import org.hl7.fhir.r4b.model.Coding
 import kotlin.reflect.KClass
 
 class ResourceUtils {
@@ -41,4 +43,15 @@ class ResourceUtils {
 
     }
 
+}
+
+inline fun <reified T: CanonicalResource> T.tagAsSummarized(): T {
+    meta.addTag(
+        Coding(
+        "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
+        "SUBSETTED",
+        "subsetted"
+        )
+    )
+    return this
 }
