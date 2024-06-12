@@ -21,4 +21,4 @@ RUN mkdir /app/database
 WORKDIR /app
 
 #ENTRYPOINT sh upload.sh
-ENTRYPOINT java -Dserver.port=8083 -jar termite.jar -Dlog4j.configurationFile=/app/config/log4j2.xml
+ENTRYPOINT java -Dserver.port=9083 -jar termite.jar -Dlog4j.configurationFile=/app/config/log4j2.xml

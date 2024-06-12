@@ -215,21 +215,21 @@ class ValueSetController(
         }
     }
 
-    @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    @PutMapping(path = ["{id}"], consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
-    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
+    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String, @PathVariable(name = "id") id: String): ResponseEntity<String> {
         logger.info("Creating ValueSet instance if not present")
         try {
             val vs = parseBodyAsResource(requestEntity, contentType)
             if (vs is ValueSet) {
                 try {
-                    if (vs.id != null && isPositiveInteger(vs.idPart)) {
+                    if (isPositiveInteger(id)) {
                         try {
                             // NotFoundException is thrown if resource is not present
-                            database.readValueSet(vs.idPart)
+                            database.readValueSet(id)
                             return ResponseEntity.ok().build()
                         }
-                        catch (e: NotFoundException) { logger.debug("No ValueSet instance with ID ${vs.idPart} present") }
+                        catch (e: NotFoundException) { logger.debug("No ValueSet instance with ID $id present") }
                     }
                     val (createdVS, versionId, lastUpdated) = database.addValueSet(vs)
                     logger.info("Added ValueSet instance [url: ${vs.url}, version: ${vs.version}] to database")

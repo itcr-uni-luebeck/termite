@@ -1,5 +1,6 @@
 package de.itcr.termite.metadata
 
+import de.itcr.termite.Termite
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.Parameter
 import de.itcr.termite.metadata.annotation.SupportsInteraction
@@ -22,7 +23,7 @@ import kotlin.reflect.full.findAnnotations
 object MetadataCompiler {
 
     private val logger: Logger = LogManager.getLogger(MetadataCompiler::class)
-    private val classLoader: ClassLoader = Thread.currentThread().contextClassLoader
+    private val classLoader: ClassLoader = Termite::class.java.classLoader
 
     fun compileStaticFhirServerMetadata(apiPackageName: String, baseUrl: URI): Pair<CapabilityStatement, Array<OperationDefinition>>
     {

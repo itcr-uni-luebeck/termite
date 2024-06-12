@@ -1,8 +1,9 @@
 services:
   termite:
-    image: ghcr.io/itcr-uni-luebeck/termite:latest
+#    image: ghcr.io/itcr-uni-luebeck/termite:latest
+    image: termite
     ports:
-      - 9083:8083
+      - 9083:9083
     environment:
       - SSL_ENABLED=false
       - KEY_STORE_TYPE=PKCS12

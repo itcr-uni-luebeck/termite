@@ -178,21 +178,21 @@ class CodeSystemController(
         }
     }
 
-    @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    @PutMapping(path = ["{id}"], consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
-    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
+    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String, @PathVariable(name = "id") id: String): ResponseEntity<String> {
         logger.info("Creating CodeSystem instance if not present")
         try {
             val cs = parseBodyAsResource(requestEntity, contentType)
             if (cs is CodeSystem) {
                 try {
-                    if (cs.id != null && isPositiveInteger(cs.idPart)) {
+                    if (isPositiveInteger(id)) {
                         try {
                             // NotFoundException is thrown if resource is not present
-                            database.readCodeSystem(cs.idPart)
+                            database.readCodeSystem(id)
                             return ResponseEntity.ok().build()
                         }
-                        catch (e: NotFoundException) { logger.debug("No CodeSystem instance with ID ${cs.idPart} present") }
+                        catch (e: NotFoundException) { logger.debug("No CodeSystem instance with ID ${id} present") }
                     }
                     val (createdCS, versionId, lastUpdated) = database.addCodeSystem(cs)
                     logger.info("Added CodeSystem instance [url: ${cs.url}, version: ${cs.version}] to database")
@@ -202,7 +202,6 @@ class CodeSystemController(
                         .lastModified(lastUpdated.time)
                         .body(jsonParser.encodeResourceToString(createdCS))
                 } catch (e: Exception) {
-                    println(e.stackTraceToString())
                     val opOutcome = generateOperationOutcomeString(
                         OperationOutcome.IssueSeverity.ERROR,
                         OperationOutcome.IssueType.PROCESSING,
