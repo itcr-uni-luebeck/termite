@@ -25,6 +25,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         private val logger = LogManager.getLogger()
     }
 
+    private enum class FhirType constructor(val dbValue: String) {
+
+        CODE_SYSTEM("CS"), VALUE_SET("VS"), CONCEPT_MAP("CM")
+    }
+
     init {
         //Create tables and indices
         logger.debug("Creating ValueSets table ...")
@@ -34,11 +39,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         logger.debug("Creating OperationDefinition table ...")
         super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID BIGSERIAL PRIMARY KEY, RESOURCE TEXT NOT NULL)")
         logger.debug("Creating Membership table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS Membership (VS_ID INTEGER, SYSTEM TEXT NOT NULL, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
-                          "UNIQUE(VS_ID, SYSTEM, CODE, DISPLAY), " +
-                          "FOREIGN KEY (VS_ID) REFERENCES ValueSets(VS_ID))")
+        super.execute("DO $$ BEGIN CREATE TYPE FHIR_TERM_TYPE AS ENUM ('CS', 'VS', 'CM'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
+        super.execute("CREATE TABLE IF NOT EXISTS Membership (ID BIGINT, TYPE FHIR_TERM_TYPE, SYSTEM TEXT NOT NULL, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
+                          "UNIQUE(ID, TYPE, SYSTEM, CODE, DISPLAY))")
         logger.debug("Creating Membership index ...")
-        super.execute("CREATE INDEX IF NOT EXISTS Idx_Membership ON Membership(VS_ID, SYSTEM, CODE, DISPLAY)")
+        super.execute("CREATE INDEX IF NOT EXISTS Idx_Membership ON Membership(ID, TYPE, SYSTEM, CODE, DISPLAY)")
     }
 
     override fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp> {
@@ -59,7 +64,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
                 codes.addAll(valueSet.expansion.contains.distinct().map { concept ->
                     Triple(concept.system, concept.code, concept.display)
                 })
-                insertCodes(vsIds[0], codes)
+                insertCodes(vsIds[0], FhirType.VALUE_SET, codes)
             }
             else{
                 logger.warn("ValueSet with URL $url and version $version already exists in database")
@@ -114,19 +119,20 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     /**
      * Inserts codes into the Membership table belonging to a certain value set
      *
-     * @param vsId VS_ID by which the value set is represented in the ValueSets table
+     * @param id VS_ID by which the value set is represented in the ValueSets table
      * @param entries list containing all codes contained in the expanded form of the value set: the codes represented
      *                as Triple instances with the system as the first, the code as the second and the display value as
      *                the third element
      */
-    private fun insertCodes(vsId: Int?, entries: List<Triple<String, String, String>>) {
-        logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "Code" else "Codes"} ...")
-        val sql = "INSERT INTO Membership (VS_ID, SYSTEM, CODE, DISPLAY) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING"
+    private fun insertCodes(id: Int, type: FhirType, entries: List<Triple<String, String, String>>) {
+        logger.debug("Inserting ${entries.size} concept(s) ...")
+        val sql = "INSERT INTO Membership (ID, TYPE, SYSTEM, CODE, DISPLAY) VALUES (?, ?::FHIR_TERM_TYPE, ?, ?, ?) ON CONFLICT DO NOTHING"
         val transformation = { stmt: PreparedStatement, codes: List<Triple<String, String, String>> -> codes.forEach { c ->
-            if (vsId != null) stmt.setInt(1, vsId) else stmt.setNull(1, java.sql.Types.INTEGER)
-            stmt.setString(2, c.first)
-            stmt.setString(3, c.second)
-            stmt.setString(4, c.third)
+            stmt.setInt(1, id)
+            stmt.setString(2, type.dbValue)
+            stmt.setString(3, c.first)
+            stmt.setString(4, c.second)
+            stmt.setString(5, c.third)
             stmt.addBatch()
         }}
         super.insert(sql, entries, transformation)
@@ -142,7 +148,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
             if(csIds.isNotEmpty()){
                 //Create database entries for codes if not already present and retrieve keys
                 val codes = codeSystem.concept.distinct().map { coding -> Triple(url, coding.code, coding.display) }
-                insertCodes(null, codes)
+                insertCodes(csIds[0], FhirType.CODE_SYSTEM, codes)
 
                 val rs = super.executeQuery("SELECT VERSION_ID, LAST_UPDATED FROM CodeSystems WHERE CS_ID = ${csIds[0]}")
                 if(rs.next()){
@@ -238,9 +244,9 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     }
 
     private fun validateCodeWithVsVersion(url: String, version: String, system: String, code: String, display: String?): Boolean{
-        val query = "SELECT VS_ID FROM Membership " +
-                "WHERE VS_ID = (SELECT VS_ID FROM ValueSets WHERE URL = ? AND VERSION = ?) " +
-                "AND SYSTEM = ? AND CODE = ? " + if(display != null) "DISPLAY = ?" else ""
+        val query = "SELECT ID FROM Membership " +
+                "WHERE ID = (SELECT VS_ID FROM ValueSets WHERE URL = ? AND VERSION = ?) " +
+                "AND TYPE = 'VS' AND SYSTEM = ? AND CODE = ? " + if(display != null) "DISPLAY = ?" else ""
         val value = mutableListOf(url, version, system, code)
         if(display != null) value.add(display)
         val rs: ResultSet = super.executeQuery(query, value)
@@ -257,7 +263,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     private fun validateCodeWithoutVsVersion(url: String, system: String, code: String, display: String?): Pair<Boolean, String?>{
         val query = "SELECT ValueSetsSlice.VS_ID, ValueSetsSlice.VERSION FROM Membership, " +
                 "(SELECT VS_ID, VERSION FROM ValueSets WHERE URL = ?) AS ValueSetsSlice " +
-                "WHERE Membership.VS_ID = ValueSetsSlice.VS_ID AND Membership.SYSTEM = ? AND Membership.CODE = ? " +
+                "WHERE Membership.ID = ValueSetsSlice.VS_ID AND Membership.TYPE = 'VS' AND Membership.SYSTEM = ? AND Membership.CODE = ? " +
                 if(display != null) "AND Membership.DISPLAY = ?" else ""
         val value = mutableListOf(url, system, code)
         if(display != null) value.add(display)
@@ -314,7 +320,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
             //Retrieve contained codings
             val expansion = vs.expansion
             expansion.timestamp = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())
-            query = "SELECT SYSTEM, CODE, DISPLAY FROM Membership WHERE VS_ID = ?"
+            query = "SELECT SYSTEM, CODE, DISPLAY FROM Membership WHERE TYPE = 'VS' AND ID = ?"
             rs = super.executeQuery(query, listOf(vsId))
             while (rs.next()){
                 expansion.addContains(
@@ -336,17 +342,22 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         ))
     }
 
-    override fun searchCodeSystem(url: String): List<CodeSystem> {
-        logger.debug("Retrieving fragment of code system [url = $url]")
-        val query = "SELECT CODE, DISPLAY FROM Membership WHERE SYSTEM = ? GROUP BY CODE, DISPLAY LIMIT 1"
-        val rs = super.executeQuery(query, listOf(url))
-        if (!rs.isBeforeFirst) return listOf()
-        val cs = CodeSystem()
-        cs.url = url
-        cs.status = Enumerations.PublicationStatus.UNKNOWN
-        cs.content = CodeSystem.CodeSystemContentMode.FRAGMENT
-        tagAsSummarized(cs)
-        return listOf(cs)
+    override fun searchCodeSystem(url: String, version: String?): List<CodeSystem> {
+        val query = "SELECT VS_ID FROM CodeSystems WHERE URL = ? ${if(version != null) "AND VERSION = ?" else ""}"
+        val value = mutableListOf(url)
+        if(version != null) value.add(version)
+        val rs: ResultSet = super.executeQuery(query, value)
+        val csList = mutableListOf<CodeSystem>()
+        try{
+            while(rs.next()){
+                val csId = rs.getString(1)
+                csList.add(buildCodeSystem(csId, true))
+            }
+            return csList
+        } catch (e: Exception){
+            val message = "Failed to search for CodeSystem instances with URL $url and version $version"
+            throw CodeSystemException(message, e)
+        }
     }
 
     override fun readCodeSystem(id: String): CodeSystem {
@@ -376,8 +387,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         else{
             //Retrieve contained concepts
             val concepts = cs.concept
-            query = "SELECT CODE, DISPLAY FROM Membership WHERE VS_ID = NULL SYSTEM = ?"
-            rs = super.executeQuery(query, listOf(cs.url))
+            query = "SELECT CODE, DISPLAY FROM Membership WHERE TYPE = 'CS' AND ID = ? SYSTEM = ?"
+            rs = super.executeQuery(query, listOf(cs.id, cs.url)) { stmt, list ->
+                stmt.setInt(0, list[0].toInt())
+                stmt.setString(1, list[1])
+            }
             while (rs.next()){
                 concepts.add(
                     CodeSystem.ConceptDefinitionComponent()
@@ -392,8 +406,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     //TODO: Proper display handling: As of now display value will be ignored
     override fun validateCodeCS(code: String, display: String?, url: String): Boolean{
         logger.debug("Validating if code [code = $code, display = $display] is in code system [url = $url]")
-        //val query = "SELECT CODE FROM Membership WHERE SYSTEM = ? AND CODE = ?${if(display != null) " AND DISPLAY = ?" else ""}"
-        val query = "SELECT CODE FROM Membership WHERE SYSTEM = ? AND CODE = ?"
+        val query = "SELECT CODE FROM Membership WHERE TYPE = 'CS' SYSTEM = ? AND CODE = ?"
         val parameters = mutableListOf(url, code)
         //if(display != null) parameters.add(display)
         val rs = super.executeQuery(query, parameters)
@@ -423,7 +436,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         TODO("Not yet implemented")
     }
 
-    override fun searchConceptMap(url: String): List<ConceptMap> {
+    override fun searchConceptMap(url: String, version: String?): List<ConceptMap> {
         TODO("Not yet implemented")
     }
 
@@ -431,8 +444,39 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         TODO("Not yet implemented")
     }
 
+    override fun deleteConceptMap(id: String) {
+        TODO("Not yet implemented")
+    }
+
     override fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>> {
         TODO("Not yet implemented")
     }
 
+    override fun deleteValueSet(id: String) {
+        logger.debug("Deleting concepts for ValueSet instance [id = $id]")
+        var query = "DELETE FROM Membership WHERE TYPE = 'VS' AND ID = ?"
+        val transformation = { stmt: PreparedStatement, idList: List<String> -> stmt.setInt(1, idList[0].toInt()) }
+        var affectedRows = super.executeUpdate(query, listOf(id), transformation)
+        logger.trace("Deleted $affectedRows concept(s) from Membership table")
+
+        logger.debug("Deleting ValueSet instance [id = $id]")
+        query = "DELETE FROM ValueSets WHERE VS_ID = ?"
+        affectedRows = super.executeUpdate(query, listOf(id), transformation)
+
+        if (affectedRows <= 0) throw NotFoundException<ValueSet>(Pair("id", id))
+    }
+
+    override fun deleteCodeSystem(id: String) {
+        logger.debug("Deleting concepts for CodeSystem instance [id = $id]")
+        var query = "DELETE FROM Membership WHERE TYPE = 'CS' AND ID = NULL AND SYSTEM"
+        val transformation = { stmt: PreparedStatement, idList: List<String> -> stmt.setInt(1, idList[0].toInt()) }
+        var affectedRows = super.executeUpdate(query, listOf(id), transformation)
+        logger.trace("Deleted $affectedRows concept(s) from Membership table")
+
+        logger.debug("Deleting ValueSet instance [id = $id]")
+        query = "DELETE FROM ValueSets WHERE VS_ID = ?"
+        affectedRows = super.executeUpdate(query, listOf(id), transformation)
+
+        if (affectedRows <= 0) throw NotFoundException<ValueSet>(Pair("id", id))
+    }
 }

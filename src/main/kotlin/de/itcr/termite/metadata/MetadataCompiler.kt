@@ -19,6 +19,8 @@ import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.findAnnotations
+import kotlin.streams.asSequence
+import kotlin.streams.toList
 
 object MetadataCompiler {
 
@@ -30,6 +32,7 @@ object MetadataCompiler {
         logger.info("Compiling static FHIR terminology server capabilities (CapabilityStatement)")
         // Load all classes in API package
         val classes = ResourceUtil.findClassesInPackage(apiPackageName, classLoader)
+        if (classes.isEmpty()) logger.warn("Failed to load API classes in package $apiPackageName. Cannot generate server metadata fully")
         return compileCapabilitiesFromAnnotations(classes, baseUrl)
     }
 
@@ -172,7 +175,7 @@ object MetadataCompiler {
         resourceComponent.interaction.addAll(
             Arrays.stream(ann.value)
                 .map { s -> CapabilityStatement.ResourceInteractionComponent(CapabilityStatement.TypeRestfulInteraction.fromCode(s)) }
-                .toList()
+                .asSequence()
         )
     }
 
@@ -182,7 +185,7 @@ object MetadataCompiler {
         restComponent.interaction.addAll(
             Arrays.stream(ann.value)
                 .map { s -> CapabilityStatement.SystemInteractionComponent(CapabilityStatement.SystemRestfulInteraction.fromCode(s)) }
-                .toList()
+                .asSequence()
         )
     }
 

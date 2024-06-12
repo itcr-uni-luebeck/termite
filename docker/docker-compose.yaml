@@ -1,7 +1,6 @@
 services:
   termite:
-#    image: ghcr.io/itcr-uni-luebeck/termite:latest
-    image: termite
+    image: ghcr.io/itcr-uni-luebeck/termite:latest
     ports:
       - 9083:9083
     environment:
@@ -20,13 +19,14 @@ services:
     expose:
       - 5432
     environment:
+      - PGUSER=termite
       - POSTGRES_USER=termite
       - POSTGRES_PASSWORD=termite
       - POSTGRES_DB=termite
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "-d", "termite" ]
+      test: [ "CMD-SHELL", "pg_isready", "-d", "termite", "-U", "${PGUSER}", "-q" ]
       interval: 10s
       timeout: 10s
       retries: 5

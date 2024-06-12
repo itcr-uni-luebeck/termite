@@ -30,6 +30,12 @@ interface TerminologyStorage {
 
     fun readConceptMap(id: String): ConceptMap
 
+    fun deleteValueSet(id: String)
+
+    fun deleteCodeSystem(id: String)
+
+    fun deleteConceptMap(id: String)
+
     /**
      * Validates if the given code is in the given value set
      *
@@ -55,9 +61,9 @@ interface TerminologyStorage {
      */
     fun searchValueSet(url: String, version: String?): List<ValueSet>
 
-    fun searchCodeSystem(url: String): List<CodeSystem>
+    fun searchCodeSystem(url: String, version: String?): List<CodeSystem>
 
-    fun searchConceptMap(url: String): List<ConceptMap>
+    fun searchConceptMap(url: String, version: String?): List<ConceptMap>
 
     fun validateCodeCS(code: String, display: String?, url: String): Boolean
 

@@ -1,5 +1,5 @@
-package de.itcr.termite.exception;
+package de.itcr.termite.exception
 
-import java.lang.Exception
+class CodeSystemException(message: String, e: Throwable?): Exception(message, e)
 
-class CodeSystemException(message: String): Exception(message)
+fun CodeSystemException(message: String) = CodeSystemException(message, null)

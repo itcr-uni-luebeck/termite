@@ -99,7 +99,7 @@ open class Database constructor(private val url: String) {
      *
      * @return ResultSet object containing the result of the query
      */
-    protected fun <T> executeQuery(sql: String, entries: T, transformation: (stmt: PreparedStatement, entries: T) -> Unit): ResultSet{
+    protected fun <T> executeQuery(sql: String, entries: List<T>, transformation: (stmt: PreparedStatement, entries: List<T>) -> Unit): ResultSet{
         try{
             val stmt = conn?.prepareStatement(sql)
                 ?: throw SQLException("Connection to URL $url was not established!")
@@ -122,6 +122,27 @@ open class Database constructor(private val url: String) {
      */
     protected fun <T> executeQuery(sql: String, entries: List<T>): ResultSet{
         return executeQuery(sql, entries) { stmt: PreparedStatement, entries: List<T> ->
+            entries.forEachIndexed { idx, value -> stmt.setString(idx + 1, value.toString()) }
+        }
+    }
+
+    protected fun <T> executeUpdate(sql: String, entries: List<T>, transformation: (stmt: PreparedStatement, entries: List<T>) -> Unit): Int {
+        try{
+            val stmt = conn?.prepareStatement(sql)
+                ?: throw SQLException("Connection to URL $url was not established!")
+            transformation.invoke(stmt, entries)
+            return stmt.executeUpdate()
+        }
+        catch (e: SQLException){
+            val message = "Update couldn't be executed!"
+            logger.error(message)
+            logger.error(e.stackTraceToString())
+            throw Exception(message, e)
+        }
+    }
+
+    protected fun <T> executeUpdate(sql: String, entries: List<T>): Int {
+        return executeUpdate(sql, entries) { stmt: PreparedStatement, entries: List<T> ->
             entries.forEachIndexed { idx, value -> stmt.setString(idx + 1, value.toString()) }
         }
     }
