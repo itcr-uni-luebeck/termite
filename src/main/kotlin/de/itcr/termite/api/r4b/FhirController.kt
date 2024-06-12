@@ -1,9 +1,8 @@
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.parser.DataFormatException
 import ca.uhn.fhir.parser.IParser
-import org.hl7.fhir.instance.model.api.IBase
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.springframework.http.RequestEntity
 

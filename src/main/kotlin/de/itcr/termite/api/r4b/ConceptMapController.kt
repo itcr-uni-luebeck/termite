@@ -1,4 +1,4 @@
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.SearchParameter

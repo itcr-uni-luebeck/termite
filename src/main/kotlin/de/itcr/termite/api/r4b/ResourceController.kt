@@ -1,4 +1,4 @@
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
 import org.springframework.data.repository.Repository

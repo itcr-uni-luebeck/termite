@@ -1,4 +1,4 @@
-/*
+package de.itcr.termite.api.r4b/*
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext

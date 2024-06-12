@@ -1,12 +1,10 @@
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.database.sql.TerminologyDatabase
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody

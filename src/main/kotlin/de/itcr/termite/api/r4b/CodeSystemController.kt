@@ -1,8 +1,6 @@
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
-import com.fasterxml.jackson.databind.ObjectMapper
-import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.model.entity.FhirCodeSystemMetadata
@@ -12,25 +10,18 @@ import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.hl7.fhir.r4b.formats.JsonParserBase
 import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.net.URI
-import java.util.*
 
 @ForResource(
     type = "CodeSystem",
