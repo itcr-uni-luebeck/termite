@@ -81,6 +81,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.17.1'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1'
     implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.17.1'
+
+    //RocksDB
+    implementation 'org.rocksdb:rocksdbjni:9.2.1'
 }
 
 configurations {

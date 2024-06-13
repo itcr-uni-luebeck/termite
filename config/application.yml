@@ -1,0 +1,31 @@
+logging:
+  file:
+    path: log
+    name: logging.log
+
+server:
+  port: ${TERMINOLOGY_SERVICE_PORT:9083}
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store-type: ${KEY_STORE_TYPE:PKCS12}
+    key-store: ${KEY_STORE:security/keystore/termite.p12}
+    key-store-password: ${KEY_STORE_PASSWORD:changeme}
+    key-alias: ${KEY_ALIAS:termite}
+
+spring:
+  datasource:
+    url: ${DATABASE_CONN_URL:jdbc:postgresql://localhost:5432/termite}
+    username: ${DATABASE_USER:termite}
+    password: ${DATABASE_PASSWORD:termite}
+  jpa:
+    hibernate:
+      ddl-auto: create
+      default_schema: public
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+termite:
+  index:
+    schema:
+      file: config/index/index.json

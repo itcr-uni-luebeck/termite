@@ -1,0 +1,27 @@
+package de.itcr.termite.config
+
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.ConstructorBinding
+import org.springframework.context.annotation.Configuration
+
+@ConstructorBinding
+@ConfigurationProperties(prefix = "termite")
+data class ApplicationConfig (
+    val index: IndexConfig
+) {
+
+    data class IndexConfig(
+        val schema: SchemaConfig
+    ) {
+
+        data class SchemaConfig(
+            file: String = "config/index/index.json"
+        ) {
+
+            private val definition:
+
+        }
+
+    }
+
+}
