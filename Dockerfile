@@ -8,7 +8,7 @@ RUN gradle clean build bootJar --no-daemon
 # Copy jar to new image for running terminology service
 FROM openjdk:17
 COPY --from=gradle_build /home/abide_validation/termite/build/libs/termite.jar /app/termite.jar
-COPY /config/application.properties /app/config/application.properties
+COPY /config/application.properties.ignore /app/config/application.properties
 COPY /config/log4j2.xml /app/config/log4j2.xml
 COPY upload.sh /app/upload.sh
 

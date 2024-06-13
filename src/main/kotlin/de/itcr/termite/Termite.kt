@@ -1,6 +1,7 @@
 package de.itcr.termite
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.config.DatabaseProperties
 import de.itcr.termite.database.sql.TerminologyDatabase
 import de.itcr.termite.metadata.MetadataCompiler
@@ -10,15 +11,19 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.hl7.fhir.r4b.model.OperationDefinition
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import java.net.URI
 
 @SpringBootApplication
+@ConfigurationPropertiesScan
+@EnableConfigurationProperties
 class Termite {
 
     @Autowired
-    private lateinit var databaseProperties: DatabaseProperties
+    private lateinit var properties: ApplicationConfig
 
     private val capabilityStatement: CapabilityStatement
 
@@ -35,9 +40,6 @@ class Termite {
 
     @Bean
     fun fhirContext(): FhirContext = FhirContext.forR4B()
-
-    //@Bean
-    //fun database(): TerminologyDatabase = TerminologyDatabase(databaseProperties.connection.url)
 
     @Bean
     fun capabilityStatement(): CapabilityStatement = this.capabilityStatement

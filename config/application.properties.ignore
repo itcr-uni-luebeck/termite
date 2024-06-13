@@ -21,3 +21,7 @@ spring.datasource.password=${DATABASE_PASSWORD:termite}
 spring.jpa.hibernate.ddl-auto=create
 spring.jpa.hibernate.default_schema=public
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Termite
+
+termite
