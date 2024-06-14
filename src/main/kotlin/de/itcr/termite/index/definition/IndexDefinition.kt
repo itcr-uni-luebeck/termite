@@ -15,11 +15,13 @@ class IndexDefinition(
 
     }
 
-    class IndexNode(private val name: String): Node {
+    class IndexNode<KEY: Any, VALUE: Any>(private val name: String, private val keyComposition: List<KeyTokens>): Node {
+
+        private val children = emptyList<Node>()
 
         override fun name(): String = name
 
-        override fun children(): List<Node> = emptyList()
+        override fun children(): List<Node> = children
 
     }
 
