@@ -3,6 +3,7 @@ package de.itcr.termite.util.r4b
 import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.exception.parsing.JsonParsingException
 import de.itcr.termite.parser.r4b.BackboneElementParser
+import de.itcr.termite.util.associateTrie
 import org.hl7.fhir.instance.model.api.IBase
 import org.hl7.fhir.r4b.formats.JsonParser
 import org.hl7.fhir.r4b.model.DataType
@@ -47,7 +48,7 @@ class JsonUtil {
         fun splitJsonArrayString(string: String): List<String> = splitJsonObjectOrArrayString(string, '[', ']')
 
         fun splitJsonObjectString(string: String) =
-            splitJsonObjectOrArrayString(string, '{', '}').associate { splitJsonKeyValueString(it) }
+            splitJsonObjectOrArrayString(string, '{', '}').associateTrie { splitJsonKeyValueString(it) }
 
         // FIXME: Inefficient for deeply nested structures as many substrings will be read multiple times over multiple
         //        uses of this method on smaller substrings of the original string

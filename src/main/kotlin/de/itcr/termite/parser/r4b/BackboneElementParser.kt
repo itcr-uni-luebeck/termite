@@ -2,6 +2,7 @@ package de.itcr.termite.parser.r4b
 
 import de.itcr.termite.exception.parsing.FhirParsingException
 import de.itcr.termite.util.r4b.JsonUtil
+import org.apache.commons.collections4.trie.PatriciaTrie
 import org.hl7.fhir.r4b.formats.JsonParser
 import org.hl7.fhir.r4b.model.*
 import org.hl7.fhir.r4b.model.Enumerations.FilterOperator
@@ -16,7 +17,9 @@ class BackboneElementParser {
         enum class SupportedTypes(val className: String) {
 
             CODE_SYSTEM_FILTER_COMPONENT("CodeSystem.CodeSystemFilterComponent"),
-            CODE_SYSTEM_PROPERTY_COMPONENT("CodeSystem.PropertyComponent")
+            CODE_SYSTEM_PROPERTY_COMPONENT("CodeSystem.PropertyComponent"),
+            CODE_SYSTEM_CONCEPT_DESIGNATION_COMPONENT("CodeSystem.ConceptDefinitionDesignationComponent"),
+            CODE_SYSTEM_CONCEPT_PROPERTY_COMPONENT("CodeSystem.ConceptDefinitionDesignationComponent")
 
         }
 
@@ -33,6 +36,8 @@ class BackboneElementParser {
             return when (typeName) {
                 SupportedTypes.CODE_SYSTEM_FILTER_COMPONENT.className -> parseCodeSystemFilterComponent(keyValuePairs)
                 SupportedTypes.CODE_SYSTEM_PROPERTY_COMPONENT.className -> parseCodeSystemPropertyComponent(keyValuePairs)
+                SupportedTypes.CODE_SYSTEM_CONCEPT_DESIGNATION_COMPONENT.className -> parseCodeSystemConceptDesignationComponent(keyValuePairs)
+                SupportedTypes.CODE_SYSTEM_CONCEPT_PROPERTY_COMPONENT.className -> parseCodeSystemConceptPropertyComponent(keyValuePairs)
                 else -> throw FhirParsingException("Unsupported BackboneElement type '$typeName'")
             }
         }
@@ -79,6 +84,36 @@ class BackboneElementParser {
         return cspComponent
     }
 
+    private fun parseCodeSystemConceptDesignationComponent(
+        keyValuePairs: Map<String, String>
+    ): CodeSystem.ConceptDefinitionDesignationComponent {
+        val cscdComponent = CodeSystem.ConceptDefinitionDesignationComponent()
+        addBaseElements(cscdComponent, keyValuePairs)
+
+        if ("language" in keyValuePairs) cscdComponent.language = keyValuePairs["language"]
+        if ("use" in keyValuePairs) cscdComponent.use = JsonUtil.deserialize(keyValuePairs["use"], "Coding") as Coding
+
+        if ("value" in keyValuePairs) cscdComponent.value = keyValuePairs["value"]
+        else throw FhirParsingException("BackboneElement instance @ CodeSystem.concept.designation is missing required 'value' element")
+
+        return cscdComponent
+    }
+
+    private fun parseCodeSystemConceptPropertyComponent(
+        keyValuePairs: Map<String, String>
+    ): CodeSystem.ConceptPropertyComponent {
+        val cscpComponent = CodeSystem.ConceptPropertyComponent()
+        addBaseElements(cscpComponent, keyValuePairs)
+
+        if ("value" in keyValuePairs) cscpComponent.code = keyValuePairs["code"]
+        else throw FhirParsingException("BackboneElement instance @ CodeSystem.concept.designation is missing required 'code' element")
+
+        if ("value" in keyValuePairs) cscpComponent.value = parsePolymorphicElement("value", keyValuePairs as PatriciaTrie<String>)
+        else throw FhirParsingException("BackboneElement instance @ CodeSystem.concept.designation is missing required 'value' element")
+
+        return cscpComponent
+    }
+
     private fun addBaseElements(backboneElement: BackboneElement, keyValuePairs: Map<String, String>) {
         if ("id" in keyValuePairs) backboneElement.id = keyValuePairs["id"]
         if ("extension" in keyValuePairs) backboneElement.setExtension(parseExtensions(keyValuePairs["extension"]!!))
@@ -88,6 +123,12 @@ class BackboneElementParser {
     private fun parseExtensions(string: String): List<Extension> {
         val jsonList = JsonUtil.splitJsonArrayString(string)
         return jsonList.map { jsonParser.parseType(string, "Extension") } as List<Extension>
+    }
+
+    private fun parsePolymorphicElement(elementName: String, trie: PatriciaTrie<String>): DataType? {
+        val element = trie.select(elementName)
+        val typeName = element.key.substring(elementName.length)
+        return JsonUtil.deserialize(element.value, typeName)
     }
 
 }

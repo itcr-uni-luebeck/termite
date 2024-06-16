@@ -84,6 +84,10 @@ dependencies {
 
     //RocksDB
     implementation 'org.rocksdb:rocksdbjni:9.2.1'
+
+    // For Patricia trie. Should implement myself later to reduce dependencies
+    implementation 'org.apache.commons:commons-collections4:4.5.0-M1'
+
 }
 
 configurations {
