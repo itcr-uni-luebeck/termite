@@ -9,3 +9,5 @@ logging.log
 
 /database/*
 !/database/.gitkeep
+
+/.commit

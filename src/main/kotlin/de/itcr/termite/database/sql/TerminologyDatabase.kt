@@ -33,9 +33,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     init {
         //Create tables and indices
         logger.debug("Creating ValueSets table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+        super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, METADATA JSONB NOT NULL)")
         logger.debug("Creating CodeSystems table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)")
+        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, METADATA JSONB NOT NULL)")
+        logger.debug("Creating ConceptMap table ...")
+        super.execute("CREATE TABLE IF NOT EXISTS ConceptMaps (CM_ID BIGSERIAL PRIAMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NO NULL DEFAULT CURRENT_TIMESTAMP, METADATA JSONB NOT NULL)")
         logger.debug("Creating OperationDefinition table ...")
         super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID BIGSERIAL PRIMARY KEY, RESOURCE TEXT NOT NULL)")
         logger.debug("Creating Membership table ...")
@@ -44,6 +46,10 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
                           "UNIQUE(ID, TYPE, SYSTEM, CODE, DISPLAY))")
         logger.debug("Creating Membership index ...")
         super.execute("CREATE INDEX IF NOT EXISTS Idx_Membership ON Membership(ID, TYPE, SYSTEM, CODE, DISPLAY)")
+        logger.debug("Creating Translation table ...")
+        super.execute("CREATE TABLE IF NOT EXISTS Translation (CM_ID BIGINT REFERENCES ConceptMaps, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, SOURCE_URL TEXT NOT NULL, SOURCE_VERSION TEXT, TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET JSONB NOT NULL)")
+        logger.debug("Creating Translation index ...")
+        super.execute("CREATE INDEX IF NOT EXISTS Idx_Translation ON Translation(CM_ID, CODE, SOURCE_URL, CODE, SOURCE_VERSION, TARGET_URL, TARGET_VERSION)")
     }
 
     override fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp> {
