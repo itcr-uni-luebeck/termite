@@ -1,5 +1,7 @@
 package de.itcr.termite.index.provider.r4b
 
+import de.itcr.termite.index.FhirIndexStore
+import de.itcr.termite.index.partition.FhirIndexPartitions
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.hl7.fhir.r4b.model.StructureDefinition
@@ -9,22 +11,31 @@ import org.rocksdb.ColumnFamilyOptions
 import org.rocksdb.DBOptions
 import org.rocksdb.Options
 import org.rocksdb.RocksDB
+import org.rocksdb.RocksIterator
+import org.rocksdb.WriteBatch
+import org.rocksdb.WriteOptions
 import org.springframework.beans.factory.annotation.Qualifier
 import java.nio.file.Path
 import java.util.Collections
 import kotlin.io.path.pathString
 
 @Qualifier("RocksDB")
-class RocksDBIndexStore(dbPath: Path, cfDescriptors: List<ColumnFamilyDescriptor>, dbOptions: DBOptions? = null) {
+class RocksDBIndexStore(
+    dbPath: Path, cfDescriptors: List<ColumnFamilyDescriptor>,
+    dbOptions: DBOptions? = null
+): FhirIndexStore {
 
     private val dbOptions: DBOptions
+    private val writeOptions: WriteOptions
     private val database: RocksDB
-    private val columnFamilyHandles: List<ColumnFamilyHandle>
+    private val columnFamilyHandleMap: Map<ByteArray, ColumnFamilyHandle>
 
     init {
         this.dbOptions = dbOptions ?: DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true)
-        this.columnFamilyHandles = listOf()
-        this.database = RocksDB.open(this.dbOptions, dbPath.toAbsolutePath().toString(), cfDescriptors, this.columnFamilyHandles)
+        this.writeOptions = WriteOptions()
+        val columnFamilyHandles = listOf<ColumnFamilyHandle>()
+        this.database = RocksDB.open(this.dbOptions, dbPath.toAbsolutePath().toString(), cfDescriptors, columnFamilyHandles)
+        this.columnFamilyHandleMap = columnFamilyHandles.associateBy { it.name }
     }
 
     companion object {
@@ -91,6 +102,34 @@ class RocksDBIndexStore(dbPath: Path, cfDescriptors: List<ColumnFamilyDescriptor
 
     }
 
+    override fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray) {
+        TODO("Not yet implemented")
+    }
 
+    override fun put(partition: FhirIndexPartitions, batch: List<Pair<ByteArray, ByteArray>>) {
+        TODO("Not yet implemented")
+    }
 
+    override fun <T> put(
+        partition: FhirIndexPartitions,
+        data: Iterable<T>,
+        keySelector: (T) -> ByteArray,
+        valueSelector: (T) -> ByteArray
+    ) {
+        val batch = WriteBatch()
+        data.forEach { batch.put(columnFamilyHandleMap[partition.bytes()], keySelector(it), valueSelector(it)) }
+        database.write(writeOptions, batch)
+    }
+
+    override fun search(partition: FhirIndexPartitions, key: ByteArray) {
+        TODO("Not yet implemented")
+    }
+
+    override fun delete(partition: FhirIndexPartitions, key: ByteArray) {
+        TODO("Not yet implemented")
+    }
+
+    override fun delete(partition: FhirIndexPartitions, batch: List<ByteArray>) {
+        TODO("Not yet implemented")
+    }
 }

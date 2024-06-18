@@ -9,6 +9,8 @@ interface FhirIndexStore {
 
     fun put(partition: FhirIndexPartitions, batch: List<Pair<ByteArray, ByteArray>>)
 
+    fun <T> put(partition: FhirIndexPartitions, data: Iterable<T>, keySelector: (T) -> ByteArray, valueSelector: (T) -> ByteArray)
+
     fun search(partition: FhirIndexPartitions, key: ByteArray)
 
     fun delete(partition: FhirIndexPartitions, key: ByteArray)
