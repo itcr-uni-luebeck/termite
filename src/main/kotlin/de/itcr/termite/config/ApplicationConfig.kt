@@ -15,12 +15,8 @@ data class ApplicationConfig (
     ) {
 
         data class SchemaConfig(
-            file: String = "config/index/index.json"
-        ) {
-
-            private val definition:
-
-        }
+            val file: String = "config/index/index.json"
+        )
 
     }
 

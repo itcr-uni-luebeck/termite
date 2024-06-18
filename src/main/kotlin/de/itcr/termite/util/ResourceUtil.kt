@@ -5,11 +5,11 @@ import org.hl7.fhir.r4b.model.CanonicalResource
 import org.hl7.fhir.r4b.model.Coding
 import kotlin.reflect.KClass
 
-class ResourceUtils {
+class ResourceUtil {
 
     companion object {
 
-        private val logger = LogManager.getLogger(ResourceUtils::class.java)
+        private val logger = LogManager.getLogger(ResourceUtil::class.java)
 
         fun findClassesInPackage(packageName: String, classLoader: ClassLoader): Set<KClass<*>>
         {

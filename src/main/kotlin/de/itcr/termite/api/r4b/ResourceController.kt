@@ -3,5 +3,5 @@ package de.itcr.termite.api.r4b
 import ca.uhn.fhir.context.FhirContext
 import org.springframework.data.repository.Repository
 
-abstract class ResourceController <TYPE, REPOSITORY: Repository<TYPE, Long>>
+abstract class ResourceController <TYPE, REPOSITORY: Repository<TYPE, Int>>
 constructor (val repository: REPOSITORY, fhirContext: FhirContext): FhirController(fhirContext)

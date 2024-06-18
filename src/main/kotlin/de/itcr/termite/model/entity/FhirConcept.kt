@@ -14,6 +14,7 @@ import javax.persistence.*
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 data class FhirConcept (
     @Column(name = "id") @Id @GeneratedValue val id: Long,
+    @ManyToOne(targetEntity = FhirCodeSystemMetadata::class) val csId: Int,
     @Column(name = "code") val code: String,
     @Column(name = "display") val display: String?,
     @Column(name = "definition") val definition: String?,
@@ -21,9 +22,10 @@ data class FhirConcept (
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
 )
 
-fun CodeSystem.ConceptDefinitionComponent.toFhirConcept(): FhirConcept {
+fun CodeSystem.ConceptDefinitionComponent.toFhirConcept(csId: Int): FhirConcept {
     return FhirConcept(
         0,
+        csId,
         code,
         display,
         definition,

@@ -4,7 +4,7 @@ import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.Parameter
 import de.itcr.termite.metadata.annotation.SupportsInteraction
 import de.itcr.termite.metadata.annotation.SupportsOperation
-import de.itcr.termite.util.ResourceUtils
+import de.itcr.termite.util.ResourceUtil
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
@@ -28,7 +28,7 @@ object MetadataCompiler {
     {
         logger.info("Compiling static FHIR terminology server capabilities (CapabilityStatement)")
         // Load all classes in API package
-        val classes = ResourceUtils.findClassesInPackage(apiPackageName, classLoader)
+        val classes = ResourceUtil.findClassesInPackage(apiPackageName, classLoader)
         return compileCapabilitiesFromAnnotations(classes, baseUrl)
     }
 
