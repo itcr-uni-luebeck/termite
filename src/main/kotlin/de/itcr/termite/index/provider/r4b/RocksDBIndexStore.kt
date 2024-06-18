@@ -11,8 +11,8 @@ import org.rocksdb.ColumnFamilyOptions
 import org.rocksdb.DBOptions
 import org.rocksdb.Options
 import org.rocksdb.RocksDB
+import org.rocksdb.RocksIterator
 import org.rocksdb.WriteBatch
-import org.rocksdb.WriteBatchWithIndex
 import org.rocksdb.WriteOptions
 import org.springframework.beans.factory.annotation.Qualifier
 import java.nio.file.Path
@@ -112,6 +112,17 @@ class RocksDBIndexStore(
         val writeBatch = WriteBatch()
         batch.forEach { writeBatch.put(it.first, it.second) }
         database.write(writeOptions, writeBatch)
+    }
+
+    override fun <T> put(
+        partition: FhirIndexPartitions,
+        data: Iterable<T>,
+        keySelector: (T) -> ByteArray,
+        valueSelector: (T) -> ByteArray
+    ) {
+        val batch = WriteBatch()
+        data.forEach { batch.put(columnFamilyHandleMap[partition.bytes()], keySelector(it), valueSelector(it)) }
+        database.write(writeOptions, batch)
     }
 
     override fun search(partition: FhirIndexPartitions, key: ByteArray) {
