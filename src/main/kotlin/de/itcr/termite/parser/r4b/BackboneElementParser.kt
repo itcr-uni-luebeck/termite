@@ -4,6 +4,7 @@ import de.itcr.termite.exception.parsing.FhirParsingException
 import de.itcr.termite.parser.IBackboneElementParser
 import de.itcr.termite.util.r4b.JsonUtil
 import org.apache.commons.collections4.trie.PatriciaTrie
+import org.fhir.ucum.Concept
 import org.hl7.fhir.instance.model.api.IBackboneElement
 import org.hl7.fhir.r4b.formats.JsonParser
 import org.hl7.fhir.r4b.model.*
@@ -16,7 +17,6 @@ class BackboneElementParser: IBackboneElementParser {
     companion object {
 
         private val csfEnumFactory: EnumFactory<FilterOperator> = Enumerations.FilterOperatorEnumFactory()
-        private val cmeEnumFactory: EnumFactory<ConceptMapEquivalence> = ConceptMapEquivalenceEnumFactory()
         private val supportedTypesMap = SupportedTypes.entries.associateBy { it.className }
 
         enum class SupportedTypes(val className: String) {
@@ -132,7 +132,7 @@ class BackboneElementParser: IBackboneElementParser {
         if ("value" in keyValuePairs) cmteComponent.code = keyValuePairs["code"]
         if ("display" in keyValuePairs) cmteComponent.display = keyValuePairs["display"]
 
-        if ("equivalence" in keyValuePairs) cmteComponent.equivalenceElement = Enumeration(cmeEnumFactory, keyValuePairs["equivalence"])
+        if ("equivalence" in keyValuePairs) cmteComponent.equivalence = ConceptMapEquivalence.fromCode(keyValuePairs["equivalence"])
         else throw FhirParsingException("BackboneElement instance @ ConceptMap.group.element.target is missing required 'equivalence' element")
 
         if ("comment" in keyValuePairs) cmteComponent.comment = keyValuePairs["comment"]

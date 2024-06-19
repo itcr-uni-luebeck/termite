@@ -69,6 +69,6 @@ interface TerminologyStorage {
 
     fun expandValueSet(url: String, version: String?): ValueSet
 
-    fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>>
+    fun translate(coding: Coding, targetSystem: String, recursive: Boolean): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>>
 
 }

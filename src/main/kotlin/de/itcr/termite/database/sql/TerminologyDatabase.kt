@@ -8,6 +8,8 @@ import de.itcr.termite.util.r4b.JsonUtil
 import org.apache.logging.log4j.LogManager
 import org.fhir.ucum.Concept
 import org.hl7.fhir.r4b.model.*
+import org.hl7.fhir.r4b.model.ConceptMap.ConceptMapEquivalence
+import org.hl7.fhir.r4b.model.Enumeration
 import org.springframework.data.mapping.toDotPath
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -68,10 +70,11 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
         logger.debug("Creating Translation table ...")
         super.execute("CREATE TABLE IF NOT EXISTS Translation (CM_ID BIGINT REFERENCES ConceptMaps, " +
                 "CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, SOURCE_URL TEXT NOT NULL, SOURCE_VERSION TEXT, " +
-                "TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET JSONB NOT NULL)")
+                "TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET_CODE TEXT NOT NULL, TARGET_DISPLAY TEXT, " +
+                "EQUIVALENCE TEXT NOT NULL, COMMENT TEXT, DEPENDS_ON JSONB)")
         logger.debug("Creating Translation index ...")
         super.execute("CREATE INDEX IF NOT EXISTS Idx_Translation ON Translation(CM_ID, CODE, SOURCE_URL, CODE, " +
-                "SOURCE_VERSION, TARGET_URL, TARGET_VERSION)")
+                "SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET_CODE, EQUIVALENCE)")
     }
 
     override fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp> {
@@ -275,7 +278,7 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
 
     private fun validateCodeWithVsVersion(url: String, version: String, system: String, code: String, display: String?): Boolean{
         val query = "SELECT ID FROM Membership " +
-                "WHERE ID = (SELECT VS_ID FROM ValueSets WHERE URL = ? AND VERSION = ?) " +
+                "WHERE ID IN (SELECT VS_ID FROM ValueSets WHERE URL = ? AND VERSION = ?) " +
                 "AND TYPE = 'VS' AND SYSTEM = ? AND CODE = ? " + if(display != null) "DISPLAY = ?" else ""
         val value = mutableListOf(url, version, system, code)
         if(display != null) value.add(display)
@@ -487,20 +490,16 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
                 throw ConceptMapException(message)
             }
         }
-        catch (e: CodeSystemException){
-            throw e
-        }
+        catch (e: CodeSystemException){ throw e }
         catch (e: Exception){
-            val message = "Couldn't add CodeSystem to database"
-            logger.error(message)
-            logger.error(e.stackTraceToString())
-            throw Exception(e.message, e)
+            val message = "Couldn't add CodeSystem to database. Reason: ${e.message}"
+            throw Exception(message, e)
         }
     }
 
     private fun insertConceptMaps(entries: List<ConceptMap>): List<Int> {
         logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "ConceptMap" else "ConceptMap"} ...")
-        val sql = "INSERT INTO ConceptMap (URL, VERSION, VERSION_ID, METADATA) VALUES (?, ?, 0, ?) ON CONFLICT DO NOTHING RETURNING CM_ID"
+        val sql = "INSERT INTO ConceptMaps (URL, VERSION, VERSION_ID, METADATA) VALUES (?, ?, 0, to_jsonb(?::json)) ON CONFLICT DO NOTHING RETURNING CM_ID"
         val transformation = {stmt: PreparedStatement, conceptMaps: List<ConceptMap> -> conceptMaps.forEach { cm ->
             stmt.setString(1, cm.url)
             stmt.setString(2, cm.version)
@@ -518,22 +517,30 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
 
     private fun insertTranslations(cmId: Int, entries: List<ConceptMap.ConceptMapGroupComponent>) {
         logger.debug("Inserting ${entries.size} translation group(s) ...")
-        val sql = "INSERT INTO Translation (CM_ID, CODE, DISPLAY, SOURCE_URL, SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING"
+        val sql = "INSERT INTO Translation (CM_ID, CODE, DISPLAY, SOURCE_URL, SOURCE_VERSION, TARGET_URL, " +
+                "TARGET_VERSION, TARGET_CODE, TARGET_DISPLAY, EQUIVALENCE, COMMENT, DEPENDS_ON) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, to_jsonb(?::json)) ON CONFLICT DO NOTHING"
         val transformation = { stmt: PreparedStatement, groups: List<ConceptMap.ConceptMapGroupComponent> -> groups.forEach { g ->
             val srcUrl = g.source
             val srcVersion = g.sourceVersion
             val tgtUrl = g.target
             val tgtVersion = g.targetVersion
             g.element.forEach { e ->
-                stmt.setInt(1, cmId)
-                stmt.setString(2, e.code)
-                stmt.setString(3, e.display)
-                stmt.setString(4, srcUrl)
-                stmt.setString(5, srcVersion)
-                stmt.setString(6, tgtUrl)
-                stmt.setString(7, tgtVersion)
-                stmt.setString(8, JsonUtil.serialize(e.target))
-                stmt.addBatch()
+                e.target.forEach { t ->
+                    stmt.setInt(1, cmId)
+                    stmt.setString(2, e.code)
+                    stmt.setString(3, e.display)
+                    stmt.setString(4, srcUrl)
+                    stmt.setString(5, srcVersion)
+                    stmt.setString(6, tgtUrl)
+                    stmt.setString(7, tgtVersion)
+                    stmt.setString(8, t.code)
+                    stmt.setString(9, t.display)
+                    stmt.setString(10, t.equivalence.toCode())
+                    stmt.setString(11, t.comment)
+                    stmt.setString(12, JsonUtil.serialize(t.dependsOn))
+                    stmt.addBatch()
+                }
             }
         }}
         super.insert(sql, entries, transformation)
@@ -560,7 +567,7 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
     private fun buildConceptMap(cmId: String, summarized: Boolean = false): ConceptMap {
         logger.debug("Building ConceptMap instance with internal ID $cmId")
         //Retrieve concept map metadata
-        var query = "SELECT VS_ID, VERSION_ID, LAST_UPDATED, METADATA FROM ConceptMap WHERE CM_ID = ? LIMIT 1"
+        var query = "SELECT CM_ID, VERSION_ID, LAST_UPDATED, METADATA FROM ConceptMaps WHERE CM_ID = ? LIMIT 1"
         var rs = super.executeQuery(query, listOf(cmId.toInt())) { preparedStmt, idList -> preparedStmt.setInt(1, idList[0]) }
         val cm: ConceptMap
         if(rs.next()) {
@@ -577,8 +584,9 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
         }
         else{
             //Retrieve contained translations
-            val groupMap = mutableMapOf<String, ConceptMap.ConceptMapGroupComponent>()
-            query = "SELECT CODE, DISPLAY, SOURCE_URL, SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET FROM Membership WHERE CM_ID = ?"
+            val groupMap = mutableMapOf<String, Pair<ConceptMap.ConceptMapGroupComponent, MutableMap<String, ConceptMap.TargetElementComponent>>>()
+            query = "SELECT CODE, DISPLAY, SOURCE_URL, SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET_CODE, " +
+                    "TARGET_DISPLAY, EQUIVALENCE, COMMENT, DEPENDS_ON FROM Membership WHERE CM_ID = ?"
             rs = super.executeQuery(query, listOf(cmId))
             while (rs.next()){
                 val code = rs.getString(1)
@@ -587,22 +595,34 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
                 val srcVersion = rs.getString(4)
                 val tgtUrl = rs.getString(5)
                 val tgtVersion = rs.getString(6)
-                val targetJson = rs.getString(7)
-                val key = "$srcUrl#$srcVersion#$tgtUrl#$tgtVersion"
-                val group = if (key !in groupMap) ConceptMap.ConceptMapGroupComponent().apply {
+                val tgtCode = rs.getString(7)
+                val tgtDisplay = rs.getString(8)
+                val tgtEquivalence = rs.getString(9)
+                val tgtComment = rs.getString(10)
+                val tgtDependsOnJson = rs.getString(11)
+                val groupKey = "$srcUrl#$srcVersion#$tgtUrl#$tgtVersion"
+                val (group, targetMap) = if (groupKey !in groupMap) Pair(ConceptMap.ConceptMapGroupComponent().apply {
                     source = srcUrl
                     sourceVersion = srcVersion
                     target = tgtUrl
                     targetVersion = tgtVersion
-                    groupMap[key] = this
-                } else groupMap[key]!!
-                group.addElement().apply {
+                    cm.addGroup(this)
+                }, mutableMapOf<String, ConceptMap.TargetElementComponent>()).also { groupMap[groupKey] = it } else groupMap[groupKey]!!
+                val element = group.addElement().apply {
                     this.code = code
                     this.display = display
-                    this.target = JsonUtil.deserializeList<ConceptMap.TargetElementComponent>(targetJson)
+                    group.addElement(this)
                 }
+                val target = if (tgtCode !in targetMap) element.addTarget().apply {
+                    this.code = tgtCode
+                    this.display = tgtDisplay
+                    this.equivalence = ConceptMapEquivalence.fromCode(tgtEquivalence)
+                    this.comment = tgtComment
+                    element.addTarget(this)
+                    targetMap[tgtCode] = this
+                } else targetMap[tgtCode]!!
+                target.dependsOn.addAll(JsonUtil.deserializeList<ConceptMap.OtherElementComponent>(tgtDependsOnJson))
             }
-            cm.group = groupMap.values.toList()
         }
         return cm
     }
@@ -613,21 +633,52 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
     }
 
     override fun deleteConceptMap(id: String) {
-        TODO("Not yet implemented")
+        logger.debug("Deleting translations for ConceptMap instance [ID = $id]")
+        var query = "DELETE FROM Translation WHERE CM_ID = ?"
+        val transformation = { stmt: PreparedStatement, idList: List<String> ->
+            stmt.setInt(1, idList[0].toInt())
+        }
+        var affectedRows = super.executeUpdate(query, listOf(id), transformation)
+        logger.trace("Deleted $affectedRows translation(s) from Translation table")
+
+        logger.debug("Deleting ConceptMap instance metadata [ID = $id]")
+        query = "DELETE FROM ConceptMaps WHERE CM_ID = ?"
+        affectedRows = super.executeUpdate(query, listOf(id), transformation)
+
+        if (affectedRows <= 0) throw NotFoundException<ValueSet>(Pair("id", id))
     }
 
-    override fun translate(coding: Coding, url: String): List<Pair<ConceptMap.ConceptMapEquivalence, Coding>> {
-        TODO("Not yet implemented")
+    override fun translate(coding: Coding, targetSystem: String, recursive: Boolean): List<Pair<ConceptMapEquivalence, Coding>> {
+        val system = coding.system
+        val code = coding.code
+        val version = coding.version
+        logger.debug("Searching for translation of concept [URL = $system, code = $code, version = $version] to target system [URL = $targetSystem]")
+        var query = "SELECT TARGET_CODE, TARGET_VERSION, EQUIVALENCE FROM Translation WHERE SOURCE_URL = ? AND CODE = ? AND TARGET_URL = ?"
+        val params = mutableListOf(system, code, targetSystem)
+        if (version != null) {
+            query += " AND SOURCE_VERSION = ?"
+            params.add(version)
+        }
+        val rs = super.executeQuery(query, params)
+        val results = mutableListOf<Pair<ConceptMapEquivalence, Coding>>()
+        while (rs.next()) {
+            val targetCoding = Coding(targetSystem, rs.getString(1), rs.getString(2))
+            val equivalence = ConceptMapEquivalence.fromCode(rs.getString(3))
+            results.add(Pair(equivalence, targetCoding))
+        }
+        return results
     }
 
     override fun deleteValueSet(id: String) {
-        logger.debug("Deleting concepts for ValueSet instance [id = $id]")
+        logger.debug("Deleting concepts for ValueSet instance [ID = $id]")
         var query = "DELETE FROM Membership WHERE TYPE = 'VS' AND ID = ?"
-        val transformation = { stmt: PreparedStatement, idList: List<String> -> stmt.setInt(1, idList[0].toInt()) }
+        val transformation = { stmt: PreparedStatement, idList: List<String> ->
+            stmt.setInt(1, idList[0].toInt())
+        }
         var affectedRows = super.executeUpdate(query, listOf(id), transformation)
         logger.trace("Deleted $affectedRows concept(s) from Membership table")
 
-        logger.debug("Deleting ValueSet instance [id = $id]")
+        logger.debug("Deleting ValueSet instance metadata [ID = $id]")
         query = "DELETE FROM ValueSets WHERE VS_ID = ?"
         affectedRows = super.executeUpdate(query, listOf(id), transformation)
 
@@ -635,13 +686,15 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
     }
 
     override fun deleteCodeSystem(id: String) {
-        logger.debug("Deleting concepts for CodeSystem instance [id = $id]")
+        logger.debug("Deleting concepts for CodeSystem instance [ID = $id]")
         var query = "DELETE FROM Membership WHERE TYPE = 'CS' AND ID = NULL AND SYSTEM"
-        val transformation = { stmt: PreparedStatement, idList: List<String> -> stmt.setInt(1, idList[0].toInt()) }
+        val transformation = { stmt: PreparedStatement, idList: List<String> ->
+            stmt.setInt(1, idList[0].toInt())
+        }
         var affectedRows = super.executeUpdate(query, listOf(id), transformation)
         logger.trace("Deleted $affectedRows concept(s) from Membership table")
 
-        logger.debug("Deleting ValueSet instance [id = $id]")
+        logger.debug("Deleting ValueSet instance [ID = $id]")
         query = "DELETE FROM ValueSets WHERE VS_ID = ?"
         affectedRows = super.executeUpdate(query, listOf(id), transformation)
 

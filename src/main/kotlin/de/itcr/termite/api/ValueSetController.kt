@@ -1,7 +1,6 @@
 package de.itcr.termite.api
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.api.CodeSystemController.Companion
 import de.itcr.termite.database.TerminologyStorage
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.ValueSetException
@@ -26,7 +25,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URI
 import java.util.*
 import kotlin.Exception
-import kotlin.math.min
 
 /**
  * Handles request regarding instances of the ValueSet resource
@@ -153,8 +151,9 @@ class ValueSetController(
 ): ResourceController(database, fhirContext) {
 
     companion object {
+
         private val logger: Logger = LogManager.getLogger(ValueSetController::class.java)
-        //private val delegator = Delegator<ValueSetController, ResponseEntity<String>>()
+
     }
 
     /**
@@ -163,13 +162,13 @@ class ValueSetController(
      */
     @PostMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
-    fun addValueSet(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
+    fun create(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
         try{
             val vs = parseBodyAsResource(requestEntity, contentType)
             if(vs is ValueSet) {
                 try{
                     val (vsCreated, versionId, lastUpdated) = database.addValueSet(vs)
-                    logger.info("Added value set [url: ${vs.url}, version: ${vs.version}] to database")
+                    logger.info("Added ValueSet [url: ${vs.url}, version: ${vs.version}]")
                     return ResponseEntity.created(URI(vsCreated.id))
                         .contentType(MediaType.APPLICATION_JSON)
                         .eTag("W/\"$versionId\"")
@@ -197,7 +196,7 @@ class ValueSetController(
                     message,
                     jsonParser
                 )
-                logger.warn("Request body contained instance which was not of type ValueSet but ${vs.javaClass.simpleName}")
+                logger.info(message)
                 return ResponseEntity.unprocessableEntity()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(opOutcome)
@@ -205,15 +204,14 @@ class ValueSetController(
         }
         catch (e: Exception){
             if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
+            val message = "No parser was able to handle resource. The HTTP headers were: ${requestEntity.headers}"
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.ERROR,
                 OperationOutcome.IssueType.STRUCTURE,
                 message,
                 jsonParser
             )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
+            logger.info(message)
             return ResponseEntity.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
@@ -244,7 +242,6 @@ class ValueSetController(
                         .lastModified(lastUpdated.time)
                         .body(jsonParser.encodeResourceToString(createdVS))
                 } catch (e: Exception) {
-                    println(e.stackTraceToString())
                     val opOutcome = generateOperationOutcomeString(
                         OperationOutcome.IssueSeverity.ERROR,
                         OperationOutcome.IssueType.PROCESSING,
@@ -266,7 +263,7 @@ class ValueSetController(
                     message,
                     jsonParser
                 )
-                logger.warn(message)
+                logger.info(message)
                 return ResponseEntity.unprocessableEntity()
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(opOutcome)
@@ -274,15 +271,14 @@ class ValueSetController(
         }
         catch (e: Exception){
             if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
+            val message = "No parser was able to handle resource. The HTTP headers were: ${requestEntity.headers}"
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.ERROR,
                 OperationOutcome.IssueType.STRUCTURE,
                 message,
                 jsonParser
             )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
+            logger.info(message)
             return ResponseEntity.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
@@ -291,11 +287,11 @@ class ValueSetController(
 
     @GetMapping("{id}")
     @ResponseBody
-    fun readValueSet(@PathVariable id: String): ResponseEntity<String> {
-        logger.info("Reading code system [id = $id]")
+    fun read(@PathVariable id: String): ResponseEntity<String> {
+        logger.info("Reading ValueSet instance [id = $id]")
         try{
             val vs = database.readValueSet(id)
-            logger.debug("Found value set with ID $id [url = ${vs.url} and version = ${vs.version}]")
+            logger.debug("Found ValueSet instance with ID $id [url = ${vs.url} and version = ${vs.version}]")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(vs))
         }
         catch (e: NotFoundException) {
@@ -305,7 +301,7 @@ class ValueSetController(
                 "No ValueSet instance with ID $id",
                 jsonParser
             )
-            logger.debug(e.message)
+            logger.info(e.message)
             return ResponseEntity.status(404)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
@@ -328,10 +324,10 @@ class ValueSetController(
 
     @GetMapping(params = ["url"])
     @ResponseBody
-    fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
-        logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
+    fun search(@RequestParam url: String, @RequestParam(required = false) version: String?): ResponseEntity<String>{
+        logger.info("Searching for ValueSet instances [url = $url,  version = $version]")
         try{
-            val vsList = database.searchValueSet(url, valueSetVersion)
+            val vsList = database.searchValueSet(url, version)
             val bundle = Bundle()
             bundle.id = UUID.randomUUID().toString()
             bundle.type = Bundle.BundleType.SEARCHSET
@@ -344,11 +340,11 @@ class ValueSetController(
                         .setResource(vs)
                 )
             }
-            logger.debug("Found ${vsList.size} value sets for URL $url and value set version $valueSetVersion")
+            logger.info("Found ${vsList.size} ValueSet instance(s) for URL $url and version $version")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
         }
         catch(e: Exception){
-            val message = "Search for ValueSet instances [url = $url, version = $valueSetVersion] failed"
+            val message = "Search for ValueSet instances [url = $url, version = $version] failed"
             logger.warn(message)
             logger.debug(e.stackTraceToString())
             throw ResponseStatusException(
@@ -377,7 +373,7 @@ class ValueSetController(
                 opOutcome = generateOperationOutcomeString(
                     OperationOutcome.IssueSeverity.INFORMATION,
                     OperationOutcome.IssueType.INFORMATIONAL,
-                    "No ValueSet instance with such an ID [ID = $id]",
+                    "No such ValueSet instance [ID = $id]",
                     jsonParser
                 )
             }
@@ -406,54 +402,55 @@ class ValueSetController(
      */
     @GetMapping(path = ["\$validate-code"])
     @ResponseBody
-    fun validateCode(@RequestParam url: String,
-                     @RequestParam(required = false) valueSetVersion: String?,
-                     @RequestParam system: String,
-                     @RequestParam code: String,
-                     @RequestParam(required = false) display: String?): ResponseEntity<String>{
+    fun validateCode(
+        @RequestParam url: String,
+        @RequestParam(required = false) valueSetVersion: String?,
+        @RequestParam system: String,
+        @RequestParam code: String,
+        @RequestParam(required = false) display: String?
+    ): ResponseEntity<String>{
         var mutableUrl = url
         val urlParts = mutableUrl.split("|")
         mutableUrl = if (urlParts.isNotEmpty()) urlParts[0] else mutableUrl
-        logger.info("Validating code [system=$system, code=$code, display=$display] against value set [url=$mutableUrl, version=$valueSetVersion]")
+        logger.info("Validating code [system=$system, code=$code, display=$display] against ValueSet [url=$mutableUrl, version=$valueSetVersion]")
         try{
             val (result, version) = database.validateCodeVS(mutableUrl, valueSetVersion, system, code, display)
             val body = generateParametersString(
                 jsonParser,
                 Parameters.ParametersParameterComponent("result").setValue(BooleanType(result)),
                 Parameters.ParametersParameterComponent("message").setValue(StringType(
-                    "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
+                    "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in ValueSet " +
                             "[url = $mutableUrl and version = $version]"
                 ))
             )
-            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [url = $mutableUrl, version = $version]: $result")
+            logger.debug("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in ValueSet [url = $mutableUrl, version = $version]: $result")
             return ResponseEntity.ok().body(body)
         }
         catch (e: Exception){
-            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [url = $mutableUrl${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
+            val message = "Validation of code against ValueSet failed. Reason: ${e.message}"
             logger.warn(message)
             logger.debug(e.stackTraceToString())
             throw ResponseStatusException(
-                //TODO: Here INTERNAL_SERVER_ERROR or UNPROCESSABLE_ENTITY?
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 message
             )
         }
     }
 
+    // TODO: Implement more parameters
     @PostMapping(path = ["\$validate-code"])
     @ResponseBody
     fun validateCode(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
-        logger.info("POST: Validating code against value set with request body: ${requestEntity.body}")
+        logger.info("Validating code against ValueSet with request body: ${requestEntity.body}")
         try{
             val parameters = parseBodyAsResource(requestEntity, contentType) as Parameters
             val paramMap = parseParameters(parameters)
-            var url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
+            var url = paramMap["url"] ?: throw Exception("Parameter 'url' has to be provided in Parameters instance")
             val urlParts = url.split("|")
             url = if (urlParts.isNotEmpty()) urlParts[0] else url
-            val system = paramMap["system"] ?: throw Exception("system has to be provided in parameters in request body")
-            val code = paramMap["code"] ?: throw Exception("code has to be provided in parameters in request body")
+            val system = paramMap["system"] ?: throw Exception("Parameter 'system' has to be provided in Parameters instance in request body")
+            val code = paramMap["code"] ?: throw Exception("Parameter 'code' has to be provided in Parameters instance")
             val display = paramMap["display"]
-            //TODO: Implement other parameters like version
             val (result, version) = database.validateCodeVS(url, null, system, code, display)
             val resultParam = generateParametersString(
                 jsonParser,
@@ -461,20 +458,21 @@ class ValueSetController(
                     .setName("result").setValue(BooleanType(result)),
                 Parameters.ParametersParameterComponent()
                     .setName("message").setValue(StringType(
-                        "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
+                        "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in ValueSet " +
                                 "[url = $url and version = $version]"
                     ))
             )
-            logger.debug("Validation result: $resultParam")
+            logger.debug("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in ValueSet [url = $url, version = $version]: $result")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultParam)
         }
         catch (e: Exception){
-            logger.warn("Validation of code against value set failed")
+            val message = "Validation of code against ValueSet failed. Reason: ${e.message}"
+            logger.warn(message)
             logger.debug(e.stackTraceToString())
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.ERROR,
                 OperationOutcome.IssueType.INVALID,
-                e.message,
+                message,
                 jsonParser
             )
             return ResponseEntity.internalServerError()
@@ -486,17 +484,15 @@ class ValueSetController(
     @GetMapping(path = ["\$expand"])
     @ResponseBody
     fun expand(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
-        logger.info("Expanding value set [url = $url,  version = $valueSetVersion]")
+        logger.info("Expanding ValueSet [url = $url,  version = $valueSetVersion]")
         try {
             val vs = database.expandValueSet(url, valueSetVersion)
-            logger.info(jsonParser.encodeResourceToString(vs))
-            logger.debug("Found value set for URL $url and value set version $valueSetVersion")
+            logger.info("Found ValueSet with URL $url and version $valueSetVersion")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(vs))
         }
         catch (e: ValueSetException) {
-            val message = "Value set with URL $url and version $valueSetVersion not found"
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
+            val message = "ValueSet with URL $url and version $valueSetVersion not found"
+            logger.info(message)
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.ERROR,
                 OperationOutcome.IssueType.NOTFOUND,
