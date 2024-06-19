@@ -1,25 +1,27 @@
 package de.itcr.termite.database.sql
 
+import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.database.TerminologyStorage
-import de.itcr.termite.exception.AmbiguousValueSetVersionException
-import de.itcr.termite.exception.CodeSystemException
-import de.itcr.termite.exception.NotFoundException
-import de.itcr.termite.exception.ValueSetException
+import de.itcr.termite.exception.*
+import de.itcr.termite.util.newBackboneElementParser
+import de.itcr.termite.util.r4b.JsonUtil
 import org.apache.logging.log4j.LogManager
+import org.fhir.ucum.Concept
 import org.hl7.fhir.r4b.model.*
-import java.lang.System
+import org.springframework.data.mapping.toDotPath
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
+import kotlin.reflect.KClass
 
 /**
  * Implementation of the ValueSetStorage interface using a relational database
  * @see TerminologyStorage
  */
-class TerminologyDatabase constructor(url: String): Database(url), TerminologyStorage {
+class TerminologyDatabase constructor(private val ctx: FhirContext, url: String): Database(url), TerminologyStorage {
 
     companion object {
         private val logger = LogManager.getLogger()
@@ -28,28 +30,48 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     private enum class FhirType constructor(val dbValue: String) {
 
         CODE_SYSTEM("CS"), VALUE_SET("VS"), CONCEPT_MAP("CM")
+
     }
+
+    private val jsonParser = ctx.newJsonParser().setDontEncodeElements(setOf(
+        "CodeSystem.concept",
+        "ValueSet.compose",
+        "ValueSet.expansion",
+        "ConceptMap.group"
+    ))
+    private val backboneElementParser = ctx.newBackboneElementParser()
 
     init {
         //Create tables and indices
         logger.debug("Creating ValueSets table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, METADATA JSONB NOT NULL)")
+        super.execute("CREATE TABLE IF NOT EXISTS ValueSets (VS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, " +
+                "VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                "METADATA JSONB NOT NULL)")
         logger.debug("Creating CodeSystems table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, METADATA JSONB NOT NULL)")
+        super.execute("CREATE TABLE IF NOT EXISTS CodeSystems (CS_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, " +
+                "VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                "METADATA JSONB NOT NULL)")
         logger.debug("Creating ConceptMap table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS ConceptMaps (CM_ID BIGSERIAL PRIAMARY KEY, URL TEXT NOT NULL, VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NO NULL DEFAULT CURRENT_TIMESTAMP, METADATA JSONB NOT NULL)")
+        super.execute("CREATE TABLE IF NOT EXISTS ConceptMaps (CM_ID BIGSERIAL PRIMARY KEY, URL TEXT NOT NULL, " +
+                "VERSION TEXT, VERSION_ID INTEGER NOT NULL, LAST_UPDATED TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                "METADATA JSONB NOT NULL)")
         logger.debug("Creating OperationDefinition table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID BIGSERIAL PRIMARY KEY, RESOURCE TEXT NOT NULL)")
+        super.execute("CREATE TABLE IF NOT EXISTS OperationDefinitions (OD_ID BIGSERIAL PRIMARY KEY, " +
+                "RESOURCE TEXT NOT NULL)")
         logger.debug("Creating Membership table ...")
-        super.execute("DO $$ BEGIN CREATE TYPE FHIR_TERM_TYPE AS ENUM ('CS', 'VS', 'CM'); EXCEPTION WHEN duplicate_object THEN null; END $$;")
-        super.execute("CREATE TABLE IF NOT EXISTS Membership (ID BIGINT, TYPE FHIR_TERM_TYPE, SYSTEM TEXT NOT NULL, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, " +
-                          "UNIQUE(ID, TYPE, SYSTEM, CODE, DISPLAY))")
+        super.execute("DO $$ BEGIN CREATE TYPE FHIR_TERM_TYPE AS ENUM ('CS', 'VS', 'CM'); " +
+                "EXCEPTION WHEN duplicate_object THEN null; END $$;")
+        super.execute("CREATE TABLE IF NOT EXISTS Membership (ID BIGINT, TYPE FHIR_TERM_TYPE, SYSTEM TEXT NOT NULL, " +
+                "CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, UNIQUE(ID, TYPE, SYSTEM, CODE, DISPLAY))")
         logger.debug("Creating Membership index ...")
         super.execute("CREATE INDEX IF NOT EXISTS Idx_Membership ON Membership(ID, TYPE, SYSTEM, CODE, DISPLAY)")
         logger.debug("Creating Translation table ...")
-        super.execute("CREATE TABLE IF NOT EXISTS Translation (CM_ID BIGINT REFERENCES ConceptMaps, CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, SOURCE_URL TEXT NOT NULL, SOURCE_VERSION TEXT, TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET JSONB NOT NULL)")
+        super.execute("CREATE TABLE IF NOT EXISTS Translation (CM_ID BIGINT REFERENCES ConceptMaps, " +
+                "CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, SOURCE_URL TEXT NOT NULL, SOURCE_VERSION TEXT, " +
+                "TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET JSONB NOT NULL)")
         logger.debug("Creating Translation index ...")
-        super.execute("CREATE INDEX IF NOT EXISTS Idx_Translation ON Translation(CM_ID, CODE, SOURCE_URL, CODE, SOURCE_VERSION, TARGET_URL, TARGET_VERSION)")
+        super.execute("CREATE INDEX IF NOT EXISTS Idx_Translation ON Translation(CM_ID, CODE, SOURCE_URL, CODE, " +
+                "SOURCE_VERSION, TARGET_URL, TARGET_VERSION)")
     }
 
     override fun addValueSet(valueSet: ValueSet): Triple<ValueSet, Int, Timestamp> {
@@ -107,10 +129,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
      */
     private fun insertValueSets(entries: List<ValueSet>): List<Int>{
         logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "ValueSet" else "ValueSets"} ...")
-        val sql = "INSERT INTO ValueSets (URL, VERSION, VERSION_ID) VALUES (?, ?, 0) ON CONFLICT DO NOTHING RETURNING VS_ID"
+        val sql = "INSERT INTO ValueSets (URL, VERSION, VERSION_ID, METADATA) VALUES (?, ?, 0, to_jsonb(?::json)) ON CONFLICT DO NOTHING RETURNING VS_ID"
         val transformation = {stmt: PreparedStatement, valueSets: List<ValueSet> -> valueSets.forEach { vs ->
             stmt.setString(1, vs.url)
             stmt.setString(2, vs.version)
+            stmt.setString(3, jsonParser.encodeToString(vs))
             stmt.addBatch()
         }}
         val rs: ResultSet = super.insert(sql, entries, transformation)
@@ -148,7 +171,7 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
         try{
             val url = codeSystem.url
             val version = codeSystem.version
-            logger.debug("Adding CodeSystem with URL $url and version to database")
+            logger.debug("Adding CodeSystem with URL $url and version $version to database")
             val csIds = insertCodeSystems(listOf(codeSystem))
 
             if(csIds.isNotEmpty()){
@@ -193,10 +216,11 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
      */
     private fun insertCodeSystems(entries: List<CodeSystem>): List<Int>{
         logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "CodeSystem" else "CodeSystems"} ...")
-        val sql = "INSERT INTO CodeSystems (URL, VERSION, VERSION_ID) VALUES (?, ?, 0) ON CONFLICT DO NOTHING RETURNING CS_ID"
+        val sql = "INSERT INTO CodeSystems (URL, VERSION, VERSION_ID, METADATA) VALUES (?, ?, 0, to_jsonb(?::json)) ON CONFLICT DO NOTHING RETURNING CS_ID"
         val transformation = {stmt: PreparedStatement, codeSystems: List<CodeSystem> -> codeSystems.forEach { cs ->
             stmt.setString(1, cs.url)
             stmt.setString(2, cs.version)
+            stmt.setString(3, jsonParser.encodeToString(cs))
             stmt.addBatch()
         }}
         val rs: ResultSet = super.insert(sql, entries, transformation)
@@ -306,15 +330,14 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     private fun buildValueSet(vsId: String, summarized: Boolean): ValueSet{
         logger.debug("Building value set with internal ID $vsId")
         //Retrieve value set metadata
-        var query = "SELECT VS_ID, URL, VERSION, VERSION_ID, LAST_UPDATED FROM ValueSets WHERE VS_ID = ?"
+        var query = "SELECT VS_ID, VERSION_ID, LAST_UPDATED, METADATA FROM ValueSets WHERE VS_ID = ?"
         var rs = super.executeQuery(query, listOf(vsId.toInt())) { preparedStmt, idList -> preparedStmt.setInt(1, idList[0]) }
-        val vs = ValueSet()
+        val vs: ValueSet
         if(rs.next()) {
+            vs = jsonParser.parseResource(rs.getString(4)) as ValueSet
             vs.id = rs.getString(1)
-            vs.url = rs.getString(2)
-            vs.version = rs.getString(3)
-            vs.meta.versionId = rs.getInt(4).toString()
-            vs.meta.lastUpdated = rs.getTimestamp(5)
+            vs.meta.versionId = rs.getInt(2).toString()
+            vs.meta.lastUpdated = rs.getTimestamp(3)
         }
         else{
             throw NotFoundException<ValueSet>(Pair("id", vsId))
@@ -374,15 +397,14 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     private fun buildCodeSystem(csId: String, summarized: Boolean): CodeSystem {
         logger.debug("Building code system with internal ID $csId")
         //Retrieve value set metadata
-        var query = "SELECT CS_ID, URL, VERSION, VERSION_ID, LAST_UPDATED FROM CodeSystems WHERE CS_ID = ?"
+        var query = "SELECT CS_ID, VERSION_ID, LAST_UPDATED, METADATA FROM CodeSystems WHERE CS_ID = ?"
         var rs = super.executeQuery(query, listOf(csId)) { preparedStmt, idList -> preparedStmt.setInt(1, idList[0].toInt()) }
-        val cs = CodeSystem()
+        val cs: CodeSystem
         if(rs.next()) {
+            cs = jsonParser.parseResource(rs.getString(4)) as CodeSystem
             cs.id = rs.getString(1)
-            cs.url = rs.getString(2)
-            cs.version = rs.getString(3)
-            cs.meta.versionId = rs.getInt(4).toString()
-            cs.meta.lastUpdated = rs.getTimestamp(5)
+            cs.meta.versionId = rs.getInt(2).toString()
+            cs.meta.lastUpdated = rs.getTimestamp(3)
         }
         else{
             throw NotFoundException<CodeSystem>(Pair("id", csId))
@@ -439,15 +461,155 @@ class TerminologyDatabase constructor(url: String): Database(url), TerminologySt
     }
 
     override fun addConceptMap(conceptMap: ConceptMap): Triple<ConceptMap, Int, Timestamp> {
-        TODO("Not yet implemented")
+        try{
+            val url = conceptMap.url
+            val version = conceptMap.version
+            logger.debug("Adding ConceptMap with URL $url and version $version to database")
+            val cmIds = insertConceptMaps(listOf(conceptMap))
+
+            if(cmIds.isNotEmpty()){
+                //Create database entries for translation elements
+                insertTranslations(cmIds[0], conceptMap.group)
+
+                val rs = super.executeQuery("SELECT VERSION_ID, LAST_UPDATED FROM ConceptMaps WHERE CM_ID = ${cmIds[0]}")
+                if(rs.next()){
+                    val info = Triple(buildConceptMap(cmIds[0].toString(), true), rs.getInt(1), rs.getTimestamp(2))
+                    logger.debug("Finished adding ConceptMap with URL $url and version $version to database")
+                    return info
+                }
+                else{
+                    throw Exception("Couldn't retrieve VERSION_ID and LAST_UPDATED for ConceptMap with URL $url and version $version from database")
+                }
+            }
+            else{
+                val message = "ConceptMap with URL $url and version $version already exists in database"
+                logger.warn(message)
+                throw ConceptMapException(message)
+            }
+        }
+        catch (e: CodeSystemException){
+            throw e
+        }
+        catch (e: Exception){
+            val message = "Couldn't add CodeSystem to database"
+            logger.error(message)
+            logger.error(e.stackTraceToString())
+            throw Exception(e.message, e)
+        }
+    }
+
+    private fun insertConceptMaps(entries: List<ConceptMap>): List<Int> {
+        logger.debug("Inserting ${entries.size} ${if(entries.size == 1) "ConceptMap" else "ConceptMap"} ...")
+        val sql = "INSERT INTO ConceptMap (URL, VERSION, VERSION_ID, METADATA) VALUES (?, ?, 0, ?) ON CONFLICT DO NOTHING RETURNING CM_ID"
+        val transformation = {stmt: PreparedStatement, conceptMaps: List<ConceptMap> -> conceptMaps.forEach { cm ->
+            stmt.setString(1, cm.url)
+            stmt.setString(2, cm.version)
+            stmt.setString(3, jsonParser.encodeToString(cm))
+            stmt.addBatch()
+        }}
+        val rs: ResultSet = super.insert(sql, entries, transformation)
+        val generatedKeys: MutableList<Int> = mutableListOf()
+        while(rs.next()){
+            //Returns interesting key values if unique or not null constraint is violated
+            generatedKeys.add(rs.getInt(1))
+        }
+        return generatedKeys
+    }
+
+    private fun insertTranslations(cmId: Int, entries: List<ConceptMap.ConceptMapGroupComponent>) {
+        logger.debug("Inserting ${entries.size} translation group(s) ...")
+        val sql = "INSERT INTO Translation (CM_ID, CODE, DISPLAY, SOURCE_URL, SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING"
+        val transformation = { stmt: PreparedStatement, groups: List<ConceptMap.ConceptMapGroupComponent> -> groups.forEach { g ->
+            val srcUrl = g.source
+            val srcVersion = g.sourceVersion
+            val tgtUrl = g.target
+            val tgtVersion = g.targetVersion
+            g.element.forEach { e ->
+                stmt.setInt(1, cmId)
+                stmt.setString(2, e.code)
+                stmt.setString(3, e.display)
+                stmt.setString(4, srcUrl)
+                stmt.setString(5, srcVersion)
+                stmt.setString(6, tgtUrl)
+                stmt.setString(7, tgtVersion)
+                stmt.setString(8, JsonUtil.serialize(e.target))
+                stmt.addBatch()
+            }
+        }}
+        super.insert(sql, entries, transformation)
     }
 
     override fun searchConceptMap(url: String, version: String?): List<ConceptMap> {
-        TODO("Not yet implemented")
+        val query = "SELECT VS_ID FROM ConceptMaps WHERE URL = ?${if(version != null) " AND VERSION = ?" else ""}"
+        val value = mutableListOf(url)
+        if(version != null) value.add(version)
+        val rs: ResultSet = super.executeQuery(query, value)
+        val cmList = mutableListOf<ConceptMap>()
+        try{
+            while(rs.next()){
+                val cmId = rs.getString(1)
+                cmList.add(buildConceptMap(cmId, false))
+            }
+            return cmList
+        } catch (e: Exception){
+            val message = "Failed to search for ConceptMap instances with URL $url and version $version"
+            throw Exception(message, e)
+        }
+    }
+
+    private fun buildConceptMap(cmId: String, summarized: Boolean = false): ConceptMap {
+        logger.debug("Building ConceptMap instance with internal ID $cmId")
+        //Retrieve concept map metadata
+        var query = "SELECT VS_ID, VERSION_ID, LAST_UPDATED, METADATA FROM ConceptMap WHERE CM_ID = ? LIMIT 1"
+        var rs = super.executeQuery(query, listOf(cmId.toInt())) { preparedStmt, idList -> preparedStmt.setInt(1, idList[0]) }
+        val cm: ConceptMap
+        if(rs.next()) {
+            cm = jsonParser.parseResource(rs.getString(4)) as ConceptMap
+            cm.id = rs.getString(1)
+            cm.meta.versionId = rs.getInt(2).toString()
+            cm.meta.lastUpdated = rs.getTimestamp(3)
+        }
+        else{
+            throw NotFoundException<ConceptMap>(Pair("id", cmId))
+        }
+        if (summarized) {
+            tagAsSummarized(cm)
+        }
+        else{
+            //Retrieve contained translations
+            val groupMap = mutableMapOf<String, ConceptMap.ConceptMapGroupComponent>()
+            query = "SELECT CODE, DISPLAY, SOURCE_URL, SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET FROM Membership WHERE CM_ID = ?"
+            rs = super.executeQuery(query, listOf(cmId))
+            while (rs.next()){
+                val code = rs.getString(1)
+                val display = rs.getString(2)
+                val srcUrl = rs.getString(3)
+                val srcVersion = rs.getString(4)
+                val tgtUrl = rs.getString(5)
+                val tgtVersion = rs.getString(6)
+                val targetJson = rs.getString(7)
+                val key = "$srcUrl#$srcVersion#$tgtUrl#$tgtVersion"
+                val group = if (key !in groupMap) ConceptMap.ConceptMapGroupComponent().apply {
+                    source = srcUrl
+                    sourceVersion = srcVersion
+                    target = tgtUrl
+                    targetVersion = tgtVersion
+                    groupMap[key] = this
+                } else groupMap[key]!!
+                group.addElement().apply {
+                    this.code = code
+                    this.display = display
+                    this.target = JsonUtil.deserializeList<ConceptMap.TargetElementComponent>(targetJson)
+                }
+            }
+            cm.group = groupMap.values.toList()
+        }
+        return cm
     }
 
     override fun readConceptMap(id: String): ConceptMap {
-        TODO("Not yet implemented")
+        logger.debug("Retrieving ConceptMap instance with ID $id")
+        return buildConceptMap(id, true)
     }
 
     override fun deleteConceptMap(id: String) {

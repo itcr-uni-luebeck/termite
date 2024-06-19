@@ -37,7 +37,7 @@ open class Termite {
     open fun fhirContext(): FhirContext = FhirContext.forR4B()
 
     @Bean
-    open fun database(): TerminologyDatabase = TerminologyDatabase(databaseProperties.connection.url)
+    open fun database(): TerminologyDatabase = TerminologyDatabase(fhirContext(), databaseProperties.connection.url)
 
     @Bean
     open fun capabilityStatement(): CapabilityStatement = this.capabilityStatement

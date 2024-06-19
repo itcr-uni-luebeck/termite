@@ -152,7 +152,7 @@ class ValueSetController(
     @Autowired fhirContext: FhirContext
 ): ResourceController(database, fhirContext) {
 
-    companion object{
+    companion object {
         private val logger: Logger = LogManager.getLogger(ValueSetController::class.java)
         //private val delegator = Delegator<ValueSetController, ResponseEntity<String>>()
     }
