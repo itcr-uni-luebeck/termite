@@ -1,6 +1,7 @@
 services:
   termite:
     image: ghcr.io/itcr-uni-luebeck/termite:latest
+#    image: termite
     ports:
       - 9083:9083
     environment:
