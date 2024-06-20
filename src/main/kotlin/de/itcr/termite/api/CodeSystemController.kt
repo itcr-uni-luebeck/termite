@@ -49,7 +49,7 @@ import java.util.*
         )
     ]
 )
-@SupportsInteraction(["create", "search-type", "delete"])
+@SupportsInteraction(["create", "update", "read", "search-type", "delete"])
 @SupportsOperation(
     name = "CodeSystem-lookup",
     title = "CodeSystem-lookup",
