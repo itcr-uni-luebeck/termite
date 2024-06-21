@@ -2,6 +2,12 @@ logging:
   file:
     path: log
     name: logging.log
+  level:
+    de.itcr.termite: DEBUG
+    org:
+      springframework:
+        web: INFO
+      hibernate: INFO
 
 server:
   port: ${TERMINOLOGY_SERVICE_PORT:9083}
@@ -27,5 +33,7 @@ spring:
 
 termite:
   index:
+    type: rocksdb
+    path: index
     schema:
       file: config/index/index.json

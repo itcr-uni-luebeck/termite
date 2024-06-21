@@ -11,16 +11,14 @@ data class ApplicationConfig (
 ) {
 
     data class IndexConfig(
+        val type: String = "rocksdb",
+        val path: String = "index",
         val schema: SchemaConfig
     ) {
 
         data class SchemaConfig(
-            file: String = "config/index/index.json"
-        ) {
-
-            private val definition:
-
-        }
+            val file: String = "config/index/index.json"
+        )
 
     }
 

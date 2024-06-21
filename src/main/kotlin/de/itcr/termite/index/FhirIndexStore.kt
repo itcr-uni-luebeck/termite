@@ -2,8 +2,10 @@ package de.itcr.termite.index
 
 import de.itcr.termite.index.partition.FhirIndexPartitions
 import de.itcr.termite.util.serialize
+import org.springframework.stereotype.Component
 
-interface FhirIndexStore {
+@Component
+interface FhirIndexStore: BatchSupport {
 
     fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray)
 

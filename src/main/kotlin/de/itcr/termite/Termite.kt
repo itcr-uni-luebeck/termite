@@ -4,6 +4,8 @@ import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.config.DatabaseProperties
 import de.itcr.termite.database.sql.TerminologyDatabase
+import de.itcr.termite.index.FhirIndexStore
+import de.itcr.termite.index.provider.r4b.RocksDBIndexStore
 import de.itcr.termite.metadata.MetadataCompiler
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -15,7 +17,10 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.ComponentScans
 import java.net.URI
+import java.nio.file.Path
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
@@ -46,6 +51,14 @@ class Termite {
 
     @Bean
     fun operationDefinitions(): List<OperationDefinition> = this.operationDefinitions
+
+    @Bean
+    fun indexStore(): FhirIndexStore {
+        return when (properties.index.type) {
+            "rocksdb" -> RocksDBIndexStore.open(Path.of(properties.index.path), capabilityStatement)
+            else -> throw RuntimeException("Unknown index type '${properties.index.type}'")
+        }
+    }
 
 }
 

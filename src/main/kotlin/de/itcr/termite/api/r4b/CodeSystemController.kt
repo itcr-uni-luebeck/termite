@@ -1,12 +1,14 @@
 package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.model.entity.FhirCodeSystemMetadata
 import de.itcr.termite.model.entity.toCodeSystemResource
 import de.itcr.termite.model.entity.toFhirCodeSystemMetadata
 import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
+import de.itcr.termite.persistence.r4b.codesystem.CodeSystemPersistenceManager
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -15,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
@@ -103,9 +107,9 @@ import java.net.URI
 @RestController
 @RequestMapping("fhir/CodeSystem")
 class CodeSystemController(
-    @Autowired repository: FhirCodeSystemMetadataRepository,
+    @Autowired persistence: CodeSystemPersistenceManager,
     @Autowired fhirContext: FhirContext
-    ): ResourceController<FhirCodeSystemMetadata, FhirCodeSystemMetadataRepository>(repository, fhirContext) {
+    ): ResourceController<CodeSystem, Int>(persistence, fhirContext) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(this)
@@ -118,14 +122,12 @@ class CodeSystemController(
             val cs = parseBodyAsResource(requestEntity, contentType)
             if (cs is CodeSystem) {
                 try {
-                    val csMetadata = repository.save(cs.toFhirCodeSystemMetadata())
-                    // FIXME: Might be a bit too much to create another CodeSystem instance?
-                    val createdCs = csMetadata.toCodeSystemResource().tagAsSummarized()
-                    logger.info("Added code system [url: ${createdCs.url}, version: ${createdCs.version}] to database")
-                    return ResponseEntity.created(URI(csMetadata.id.toString()))
+                    val createdCs = persistence.create(cs)
+                    logger.info("Created CodeSystem instance [id: ${createdCs.id}, url: ${createdCs.url}, version: ${createdCs.version}]")
+                    return ResponseEntity.created(URI(createdCs.id))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .eTag("W/\"${csMetadata.versionId}\"")
-                        .lastModified(csMetadata.lastUpdated!!.toInstant())
+                        .eTag("W/\"${createdCs.meta.versionId}\"")
+                        .lastModified(createdCs.meta.lastUpdated.time)
                         .body(jsonParser.encodeResourceToString(createdCs))
                 } catch (e: Exception) {
                     val opOutcome = generateOperationOutcomeString(
@@ -134,8 +136,8 @@ class CodeSystemController(
                         e.message,
                         jsonParser
                     )
-                    logger.warn("Addition of CodeSystem instance failed during database access")
-                    logger.info(e.stackTraceToString())
+                    logger.warn("Creation of CodeSystem instance failed during database access. Reason: ${e.message}")
+                    logger.debug(e.stackTraceToString())
                     return ResponseEntity.unprocessableEntity()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(opOutcome)
@@ -157,7 +159,7 @@ class CodeSystemController(
         }
         catch (e: Exception){
             if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
+            val message = "No parser was able to handle resource. HTTP headers: ${requestEntity.headers}"
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.ERROR,
                 OperationOutcome.IssueType.STRUCTURE,
@@ -239,31 +241,32 @@ class CodeSystemController(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
         }
-    }
+    }*/
 
     @GetMapping(path = ["{id}"])
     @ResponseBody
     fun read(@PathVariable id: String): ResponseEntity<String> {
         logger.info("Reading CodeSystem instance [id = $id]")
         try{
-            val cs = database.readCodeSystem(id)
-            logger.debug("Found code systems with ID $id [url = ${cs.url} and version = ${cs.version}]")
+            val cs = persistence.read(id.toInt())
+            logger.debug("Found CodeSystem instance [id = $id, url = ${cs.url}, version = ${cs.version}]")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(cs))
         }
         catch (e: NotFoundException) {
+            val message = "No such CodeSystem instance [id = $id]"
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.INFORMATION,
                 OperationOutcome.IssueType.NOTFOUND,
-                "No CodeSystem instance with ID $id",
+                message,
                 jsonParser
             )
-            logger.debug(e.message)
+            logger.debug(message)
             return ResponseEntity.status(404)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
         }
         catch (e: Exception) {
-            val message = e.message
+            val message = "Reading of CodeSystem instance failed during database access. Reason: ${e.message}"
             val opOutcome = generateOperationOutcomeString(
                 OperationOutcome.IssueSeverity.ERROR,
                 OperationOutcome.IssueType.PROCESSING,
@@ -277,7 +280,7 @@ class CodeSystemController(
                 .body(opOutcome)
         }
     }
-
+/*
     @GetMapping(path = ["\$validate-code"])
     @ResponseBody
     fun validateCode(@RequestParam url: String,

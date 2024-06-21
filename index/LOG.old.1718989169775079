@@ -1,0 +1,620 @@
+2024/06/21-18:58:13.698925 3fac RocksDB version: 9.2.1
+2024/06/21-18:58:13.699001 3fac Git sha 08f93221f50700f19f11555fb46abfe708a716d1
+2024/06/21-18:58:13.699024 3fac Compile date 2024-05-23 18:44:44
+2024/06/21-18:58:13.699045 3fac DB SUMMARY
+2024/06/21-18:58:13.699060 3fac Host name (Env):  LAPTOP-MO7JJJFH
+2024/06/21-18:58:13.699073 3fac DB Session ID:  SGV4T93U1R88FVJGRIVR
+2024/06/21-18:58:13.700504 3fac CURRENT file:  CURRENT
+2024/06/21-18:58:13.700528 3fac IDENTITY file:  IDENTITY
+2024/06/21-18:58:13.700612 3fac MANIFEST file:  MANIFEST-000041 size: 298 Bytes
+2024/06/21-18:58:13.700636 3fac SST files in D:\Users\Paul\projects\termite\index dir, Total Num: 0, files: 
+2024/06/21-18:58:13.700651 3fac Write Ahead Log file in D:\Users\Paul\projects\termite\index: 000040.log size: 0 ; 
+2024/06/21-18:58:13.700802 3fac                         Options.error_if_exists: 0
+2024/06/21-18:58:13.700813 3fac                       Options.create_if_missing: 1
+2024/06/21-18:58:13.700819 3fac                         Options.paranoid_checks: 1
+2024/06/21-18:58:13.700823 3fac             Options.flush_verify_memtable_count: 1
+2024/06/21-18:58:13.700828 3fac          Options.compaction_verify_record_count: 1
+2024/06/21-18:58:13.700833 3fac                               Options.track_and_verify_wals_in_manifest: 0
+2024/06/21-18:58:13.700838 3fac        Options.verify_sst_unique_id_in_manifest: 1
+2024/06/21-18:58:13.700842 3fac                                     Options.env: 000002642BE52340
+2024/06/21-18:58:13.700847 3fac                                      Options.fs: WinFS
+2024/06/21-18:58:13.700852 3fac                                Options.info_log: 000002642DB99870
+2024/06/21-18:58:13.700857 3fac                Options.max_file_opening_threads: 16
+2024/06/21-18:58:13.700862 3fac                              Options.statistics: 0000000000000000
+2024/06/21-18:58:13.700867 3fac                               Options.use_fsync: 0
+2024/06/21-18:58:13.700871 3fac                       Options.max_log_file_size: 0
+2024/06/21-18:58:13.700876 3fac                  Options.max_manifest_file_size: 1073741824
+2024/06/21-18:58:13.700881 3fac                   Options.log_file_time_to_roll: 0
+2024/06/21-18:58:13.700886 3fac                       Options.keep_log_file_num: 1000
+2024/06/21-18:58:13.700891 3fac                    Options.recycle_log_file_num: 0
+2024/06/21-18:58:13.700895 3fac                         Options.allow_fallocate: 1
+2024/06/21-18:58:13.700900 3fac                        Options.allow_mmap_reads: 0
+2024/06/21-18:58:13.700905 3fac                       Options.allow_mmap_writes: 0
+2024/06/21-18:58:13.700910 3fac                        Options.use_direct_reads: 0
+2024/06/21-18:58:13.700914 3fac                        Options.use_direct_io_for_flush_and_compaction: 0
+2024/06/21-18:58:13.700919 3fac          Options.create_missing_column_families: 1
+2024/06/21-18:58:13.700924 3fac                              Options.db_log_dir: 
+2024/06/21-18:58:13.700928 3fac                                 Options.wal_dir: 
+2024/06/21-18:58:13.700933 3fac                Options.table_cache_numshardbits: 6
+2024/06/21-18:58:13.700938 3fac                         Options.WAL_ttl_seconds: 0
+2024/06/21-18:58:13.700942 3fac                       Options.WAL_size_limit_MB: 0
+2024/06/21-18:58:13.700947 3fac                        Options.max_write_batch_group_size_bytes: 1048576
+2024/06/21-18:58:13.700952 3fac             Options.manifest_preallocation_size: 4194304
+2024/06/21-18:58:13.700957 3fac                     Options.is_fd_close_on_exec: 1
+2024/06/21-18:58:13.700962 3fac                   Options.advise_random_on_open: 1
+2024/06/21-18:58:13.700966 3fac                    Options.db_write_buffer_size: 0
+2024/06/21-18:58:13.700971 3fac                    Options.write_buffer_manager: 000002642BE538D0
+2024/06/21-18:58:13.700976 3fac           Options.random_access_max_buffer_size: 1048576
+2024/06/21-18:58:13.700980 3fac                      Options.use_adaptive_mutex: 0
+2024/06/21-18:58:13.700985 3fac                            Options.rate_limiter: 0000000000000000
+2024/06/21-18:58:13.701033 3fac     Options.sst_file_manager.rate_bytes_per_sec: 0
+2024/06/21-18:58:13.701041 3fac                       Options.wal_recovery_mode: 2
+2024/06/21-18:58:13.701046 3fac                  Options.enable_thread_tracking: 0
+2024/06/21-18:58:13.701051 3fac                  Options.enable_pipelined_write: 0
+2024/06/21-18:58:13.701055 3fac                  Options.unordered_write: 0
+2024/06/21-18:58:13.701059 3fac         Options.allow_concurrent_memtable_write: 1
+2024/06/21-18:58:13.701064 3fac      Options.enable_write_thread_adaptive_yield: 1
+2024/06/21-18:58:13.701068 3fac             Options.write_thread_max_yield_usec: 100
+2024/06/21-18:58:13.701073 3fac            Options.write_thread_slow_yield_usec: 3
+2024/06/21-18:58:13.701078 3fac                               Options.row_cache: None
+2024/06/21-18:58:13.701082 3fac                              Options.wal_filter: None
+2024/06/21-18:58:13.701087 3fac             Options.avoid_flush_during_recovery: 0
+2024/06/21-18:58:13.701091 3fac             Options.allow_ingest_behind: 0
+2024/06/21-18:58:13.701095 3fac             Options.two_write_queues: 0
+2024/06/21-18:58:13.701100 3fac             Options.manual_wal_flush: 0
+2024/06/21-18:58:13.701104 3fac             Options.wal_compression: 0
+2024/06/21-18:58:13.701109 3fac             Options.atomic_flush: 0
+2024/06/21-18:58:13.701113 3fac             Options.avoid_unnecessary_blocking_io: 0
+2024/06/21-18:58:13.701117 3fac                 Options.persist_stats_to_disk: 0
+2024/06/21-18:58:13.701122 3fac                 Options.write_dbid_to_manifest: 0
+2024/06/21-18:58:13.701126 3fac                 Options.log_readahead_size: 0
+2024/06/21-18:58:13.701131 3fac                 Options.file_checksum_gen_factory: Unknown
+2024/06/21-18:58:13.701135 3fac                 Options.best_efforts_recovery: 0
+2024/06/21-18:58:13.701140 3fac                Options.max_bgerror_resume_count: 2147483647
+2024/06/21-18:58:13.701145 3fac            Options.bgerror_resume_retry_interval: 1000000
+2024/06/21-18:58:13.701149 3fac             Options.allow_data_in_errors: 0
+2024/06/21-18:58:13.701153 3fac             Options.db_host_id: __hostname__
+2024/06/21-18:58:13.701158 3fac             Options.enforce_single_del_contracts: true
+2024/06/21-18:58:13.701163 3fac             Options.max_background_jobs: 2
+2024/06/21-18:58:13.701167 3fac             Options.max_background_compactions: -1
+2024/06/21-18:58:13.701172 3fac             Options.max_subcompactions: 1
+2024/06/21-18:58:13.701176 3fac             Options.avoid_flush_during_shutdown: 0
+2024/06/21-18:58:13.701180 3fac           Options.writable_file_max_buffer_size: 1048576
+2024/06/21-18:58:13.701185 3fac             Options.delayed_write_rate : 16777216
+2024/06/21-18:58:13.701189 3fac             Options.max_total_wal_size: 0
+2024/06/21-18:58:13.701194 3fac             Options.delete_obsolete_files_period_micros: 21600000000
+2024/06/21-18:58:13.701199 3fac                   Options.stats_dump_period_sec: 600
+2024/06/21-18:58:13.701203 3fac                 Options.stats_persist_period_sec: 600
+2024/06/21-18:58:13.701208 3fac                 Options.stats_history_buffer_size: 1048576
+2024/06/21-18:58:13.701212 3fac                          Options.max_open_files: -1
+2024/06/21-18:58:13.701217 3fac                          Options.bytes_per_sync: 0
+2024/06/21-18:58:13.701221 3fac                      Options.wal_bytes_per_sync: 0
+2024/06/21-18:58:13.701226 3fac                   Options.strict_bytes_per_sync: 0
+2024/06/21-18:58:13.701230 3fac       Options.compaction_readahead_size: 2097152
+2024/06/21-18:58:13.701235 3fac                  Options.max_background_flushes: -1
+2024/06/21-18:58:13.701239 3fac Options.daily_offpeak_time_utc: 
+2024/06/21-18:58:13.701249 3fac Compression algorithms supported:
+2024/06/21-18:58:13.701260 3fac 	kZSTD supported: 1
+2024/06/21-18:58:13.701265 3fac 	kSnappyCompression supported: 1
+2024/06/21-18:58:13.701269 3fac 	kBZip2Compression supported: 0
+2024/06/21-18:58:13.701274 3fac 	kZlibCompression supported: 1
+2024/06/21-18:58:13.701278 3fac 	kLZ4Compression supported: 1
+2024/06/21-18:58:13.701302 3fac 	kXpressCompression supported: 0
+2024/06/21-18:58:13.701308 3fac 	kLZ4HCCompression supported: 1
+2024/06/21-18:58:13.701313 3fac 	kZSTDNotFinalCompression supported: 1
+2024/06/21-18:58:13.701325 3fac Fast CRC32 supported: Not supported on x86
+2024/06/21-18:58:13.701330 3fac DMutex implementation: std::mutex
+2024/06/21-18:58:13.701335 3fac Jemalloc supported: 0
+2024/06/21-18:58:13.702497 3fac [db\version_set.cc:6029] Recovering from manifest file: D:\Users\Paul\projects\termite\index/MANIFEST-000041
+2024/06/21-18:58:13.702764 3fac [db\column_family.cc:363] level_compaction_dynamic_level_bytes only makes sense for level-based compaction
+2024/06/21-18:58:13.702898 3fac [db\column_family.cc:628] --------------- Options for column family [default]:
+2024/06/21-18:58:13.702912 3fac               Options.comparator: leveldb.BytewiseComparator
+2024/06/21-18:58:13.702918 3fac           Options.merge_operator: None
+2024/06/21-18:58:13.702922 3fac        Options.compaction_filter: None
+2024/06/21-18:58:13.702927 3fac        Options.compaction_filter_factory: None
+2024/06/21-18:58:13.702931 3fac  Options.sst_partitioner_factory: None
+2024/06/21-18:58:13.702936 3fac         Options.memtable_factory: SkipListFactory
+2024/06/21-18:58:13.702940 3fac            Options.table_factory: BlockBasedTable
+2024/06/21-18:58:13.702987 3fac            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (000002642E80A670)
+  cache_index_and_filter_blocks: 0
+  cache_index_and_filter_blocks_with_high_priority: 1
+  pin_l0_filter_and_index_blocks_in_cache: 0
+  pin_top_level_index_and_filter: 1
+  index_type: 0
+  data_block_index_type: 0
+  index_shortening: 1
+  data_block_hash_table_util_ratio: 0.750000
+  checksum: 4
+  no_block_cache: 0
+  block_cache: 000002642BE53CA0
+  block_cache_name: LRUCache
+  block_cache_options:
+    capacity : 33554432
+    num_shard_bits : 6
+    strict_capacity_limit : 0
+    memory_allocator : None
+    high_pri_pool_ratio: 0.500
+    low_pri_pool_ratio: 0.000
+  persistent_cache: 0000000000000000
+  block_size: 4096
+  block_size_deviation: 10
+  block_restart_interval: 16
+  index_block_restart_interval: 1
+  metadata_block_size: 4096
+  partition_filters: 0
+  use_delta_encoding: 1
+  filter_policy: nullptr
+  whole_key_filtering: 1
+  verify_compression: 0
+  read_amp_bytes_per_bit: 0
+  format_version: 6
+  enable_index_compression: 1
+  block_align: 0
+  max_auto_readahead_size: 262144
+  prepopulate_block_cache: 0
+  initial_auto_readahead_size: 8192
+  num_file_reads_for_auto_readahead: 2
+2024/06/21-18:58:13.702995 3fac        Options.write_buffer_size: 134217728
+2024/06/21-18:58:13.703000 3fac  Options.max_write_buffer_number: 6
+2024/06/21-18:58:13.703010 3fac          Options.compression: Snappy
+2024/06/21-18:58:13.703015 3fac                  Options.bottommost_compression: Disabled
+2024/06/21-18:58:13.703020 3fac       Options.prefix_extractor: nullptr
+2024/06/21-18:58:13.703024 3fac   Options.memtable_insert_with_hint_prefix_extractor: nullptr
+2024/06/21-18:58:13.703034 3fac             Options.num_levels: 7
+2024/06/21-18:58:13.703038 3fac        Options.min_write_buffer_number_to_merge: 2
+2024/06/21-18:58:13.703043 3fac     Options.max_write_buffer_number_to_maintain: 0
+2024/06/21-18:58:13.703047 3fac     Options.max_write_buffer_size_to_maintain: 0
+2024/06/21-18:58:13.703052 3fac            Options.bottommost_compression_opts.window_bits: -14
+2024/06/21-18:58:13.703056 3fac                  Options.bottommost_compression_opts.level: 32767
+2024/06/21-18:58:13.703061 3fac               Options.bottommost_compression_opts.strategy: 0
+2024/06/21-18:58:13.703066 3fac         Options.bottommost_compression_opts.max_dict_bytes: 0
+2024/06/21-18:58:13.703070 3fac         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
+2024/06/21-18:58:13.703075 3fac         Options.bottommost_compression_opts.parallel_threads: 1
+2024/06/21-18:58:13.703079 3fac                  Options.bottommost_compression_opts.enabled: false
+2024/06/21-18:58:13.703084 3fac         Options.bottommost_compression_opts.max_dict_buffer_bytes: 0
+2024/06/21-18:58:13.703127 3fac         Options.bottommost_compression_opts.use_zstd_dict_trainer: true
+2024/06/21-18:58:13.703135 3fac            Options.compression_opts.window_bits: -14
+2024/06/21-18:58:13.703140 3fac                  Options.compression_opts.level: 32767
+2024/06/21-18:58:13.703144 3fac               Options.compression_opts.strategy: 0
+2024/06/21-18:58:13.703149 3fac         Options.compression_opts.max_dict_bytes: 0
+2024/06/21-18:58:13.703153 3fac         Options.compression_opts.zstd_max_train_bytes: 0
+2024/06/21-18:58:13.703158 3fac         Options.compression_opts.use_zstd_dict_trainer: true
+2024/06/21-18:58:13.703162 3fac         Options.compression_opts.parallel_threads: 1
+2024/06/21-18:58:13.703167 3fac                  Options.compression_opts.enabled: false
+2024/06/21-18:58:13.703171 3fac         Options.compression_opts.max_dict_buffer_bytes: 0
+2024/06/21-18:58:13.703176 3fac      Options.level0_file_num_compaction_trigger: 4
+2024/06/21-18:58:13.703180 3fac          Options.level0_slowdown_writes_trigger: 20
+2024/06/21-18:58:13.703185 3fac              Options.level0_stop_writes_trigger: 36
+2024/06/21-18:58:13.703189 3fac                   Options.target_file_size_base: 67108864
+2024/06/21-18:58:13.703194 3fac             Options.target_file_size_multiplier: 1
+2024/06/21-18:58:13.703198 3fac                Options.max_bytes_for_level_base: 268435456
+2024/06/21-18:58:13.703203 3fac Options.level_compaction_dynamic_level_bytes: 0
+2024/06/21-18:58:13.703207 3fac          Options.max_bytes_for_level_multiplier: 10.000000
+2024/06/21-18:58:13.703213 3fac Options.max_bytes_for_level_multiplier_addtl[0]: 1
+2024/06/21-18:58:13.703218 3fac Options.max_bytes_for_level_multiplier_addtl[1]: 1
+2024/06/21-18:58:13.703223 3fac Options.max_bytes_for_level_multiplier_addtl[2]: 1
+2024/06/21-18:58:13.703227 3fac Options.max_bytes_for_level_multiplier_addtl[3]: 1
+2024/06/21-18:58:13.703232 3fac Options.max_bytes_for_level_multiplier_addtl[4]: 1
+2024/06/21-18:58:13.703236 3fac Options.max_bytes_for_level_multiplier_addtl[5]: 1
+2024/06/21-18:58:13.703241 3fac Options.max_bytes_for_level_multiplier_addtl[6]: 1
+2024/06/21-18:58:13.703245 3fac       Options.max_sequential_skip_in_iterations: 8
+2024/06/21-18:58:13.703250 3fac                    Options.max_compaction_bytes: 1677721600
+2024/06/21-18:58:13.703254 3fac                        Options.arena_block_size: 1048576
+2024/06/21-18:58:13.703259 3fac   Options.soft_pending_compaction_bytes_limit: 68719476736
+2024/06/21-18:58:13.703263 3fac   Options.hard_pending_compaction_bytes_limit: 274877906944
+2024/06/21-18:58:13.703268 3fac                Options.disable_auto_compactions: 0
+2024/06/21-18:58:13.703273 3fac                        Options.compaction_style: kCompactionStyleUniversal
+2024/06/21-18:58:13.703279 3fac                          Options.compaction_pri: kMinOverlappingRatio
+2024/06/21-18:58:13.703284 3fac Options.compaction_options_universal.size_ratio: 1
+2024/06/21-18:58:13.703288 3fac Options.compaction_options_universal.min_merge_width: 2
+2024/06/21-18:58:13.703293 3fac Options.compaction_options_universal.max_merge_width: 4294967295
+2024/06/21-18:58:13.703297 3fac Options.compaction_options_universal.max_size_amplification_percent: 200
+2024/06/21-18:58:13.703302 3fac Options.compaction_options_universal.compression_size_percent: 80
+2024/06/21-18:58:13.703307 3fac Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
+2024/06/21-18:58:13.703312 3fac Options.compaction_options_fifo.max_table_files_size: 1073741824
+2024/06/21-18:58:13.703316 3fac Options.compaction_options_fifo.allow_compaction: 0
+2024/06/21-18:58:13.703323 3fac                   Options.table_properties_collectors: 
+2024/06/21-18:58:13.703327 3fac                   Options.inplace_update_support: 0
+2024/06/21-18:58:13.703332 3fac                 Options.inplace_update_num_locks: 10000
+2024/06/21-18:58:13.703337 3fac               Options.memtable_prefix_bloom_size_ratio: 0.000000
+2024/06/21-18:58:13.703343 3fac               Options.memtable_whole_key_filtering: 0
+2024/06/21-18:58:13.703348 3fac   Options.memtable_huge_page_size: 0
+2024/06/21-18:58:13.703353 3fac                           Options.bloom_locality: 0
+2024/06/21-18:58:13.703357 3fac                    Options.max_successive_merges: 0
+2024/06/21-18:58:13.703363 3fac             Options.strict_max_successive_merges: 0
+2024/06/21-18:58:13.703370 3fac                Options.optimize_filters_for_hits: 0
+2024/06/21-18:58:13.703456 3fac                Options.paranoid_file_checks: 0
+2024/06/21-18:58:13.703474 3fac                Options.force_consistency_checks: 1
+2024/06/21-18:58:13.703488 3fac                Options.report_bg_io_stats: 0
+2024/06/21-18:58:13.703497 3fac                               Options.ttl: 2592000
+2024/06/21-18:58:13.703504 3fac          Options.periodic_compaction_seconds: 2592000
+2024/06/21-18:58:13.703514 3fac                        Options.default_temperature: kUnknown
+2024/06/21-18:58:13.703521 3fac  Options.preclude_last_level_data_seconds: 0
+2024/06/21-18:58:13.703528 3fac    Options.preserve_internal_time_seconds: 0
+2024/06/21-18:58:13.703534 3fac                       Options.enable_blob_files: false
+2024/06/21-18:58:13.703541 3fac                           Options.min_blob_size: 0
+2024/06/21-18:58:13.703547 3fac                          Options.blob_file_size: 268435456
+2024/06/21-18:58:13.703554 3fac                   Options.blob_compression_type: NoCompression
+2024/06/21-18:58:13.703561 3fac          Options.enable_blob_garbage_collection: false
+2024/06/21-18:58:13.703570 3fac      Options.blob_garbage_collection_age_cutoff: 0.250000
+2024/06/21-18:58:13.703580 3fac Options.blob_garbage_collection_force_threshold: 1.000000
+2024/06/21-18:58:13.703588 3fac          Options.blob_compaction_readahead_size: 0
+2024/06/21-18:58:13.703595 3fac                Options.blob_file_starting_level: 0
+2024/06/21-18:58:13.703603 3fac         Options.experimental_mempurge_threshold: 0.000000
+2024/06/21-18:58:13.703610 3fac            Options.memtable_max_range_deletions: 0
+2024/06/21-18:58:13.704026 3fac [db\column_family.cc:363] level_compaction_dynamic_level_bytes only makes sense for level-based compaction
+2024/06/21-18:58:13.704089 3fac [db\column_family.cc:628] --------------- Options for column family [ConceptMap.crud]:
+2024/06/21-18:58:13.704100 3fac               Options.comparator: leveldb.BytewiseComparator
+2024/06/21-18:58:13.704107 3fac           Options.merge_operator: None
+2024/06/21-18:58:13.704114 3fac        Options.compaction_filter: None
+2024/06/21-18:58:13.704121 3fac        Options.compaction_filter_factory: None
+2024/06/21-18:58:13.704127 3fac  Options.sst_partitioner_factory: None
+2024/06/21-18:58:13.704134 3fac         Options.memtable_factory: SkipListFactory
+2024/06/21-18:58:13.704141 3fac            Options.table_factory: BlockBasedTable
+2024/06/21-18:58:13.704199 3fac            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (000002642E80A670)
+  cache_index_and_filter_blocks: 0
+  cache_index_and_filter_blocks_with_high_priority: 1
+  pin_l0_filter_and_index_blocks_in_cache: 0
+  pin_top_level_index_and_filter: 1
+  index_type: 0
+  data_block_index_type: 0
+  index_shortening: 1
+  data_block_hash_table_util_ratio: 0.750000
+  checksum: 4
+  no_block_cache: 0
+  block_cache: 000002642BE53CA0
+  block_cache_name: LRUCache
+  block_cache_options:
+    capacity : 33554432
+    num_shard_bits : 6
+    strict_capacity_limit : 0
+    memory_allocator : None
+    high_pri_pool_ratio: 0.500
+    low_pri_pool_ratio: 0.000
+  persistent_cache: 0000000000000000
+  block_size: 4096
+  block_size_deviation: 10
+  block_restart_interval: 16
+  index_block_restart_interval: 1
+  metadata_block_size: 4096
+  partition_filters: 0
+  use_delta_encoding: 1
+  filter_policy: nullptr
+  whole_key_filtering: 1
+  verify_compression: 0
+  read_amp_bytes_per_bit: 0
+  format_version: 6
+  enable_index_compression: 1
+  block_align: 0
+  max_auto_readahead_size: 262144
+  prepopulate_block_cache: 0
+  initial_auto_readahead_size: 8192
+  num_file_reads_for_auto_readahead: 2
+2024/06/21-18:58:13.704216 3fac        Options.write_buffer_size: 134217728
+2024/06/21-18:58:13.704225 3fac  Options.max_write_buffer_number: 6
+2024/06/21-18:58:13.704233 3fac          Options.compression: Snappy
+2024/06/21-18:58:13.704240 3fac                  Options.bottommost_compression: Disabled
+2024/06/21-18:58:13.704247 3fac       Options.prefix_extractor: nullptr
+2024/06/21-18:58:13.704254 3fac   Options.memtable_insert_with_hint_prefix_extractor: nullptr
+2024/06/21-18:58:13.704261 3fac             Options.num_levels: 7
+2024/06/21-18:58:13.704267 3fac        Options.min_write_buffer_number_to_merge: 2
+2024/06/21-18:58:13.704274 3fac     Options.max_write_buffer_number_to_maintain: 0
+2024/06/21-18:58:13.704281 3fac     Options.max_write_buffer_size_to_maintain: 0
+2024/06/21-18:58:13.704288 3fac            Options.bottommost_compression_opts.window_bits: -14
+2024/06/21-18:58:13.704296 3fac                  Options.bottommost_compression_opts.level: 32767
+2024/06/21-18:58:13.704303 3fac               Options.bottommost_compression_opts.strategy: 0
+2024/06/21-18:58:13.704311 3fac         Options.bottommost_compression_opts.max_dict_bytes: 0
+2024/06/21-18:58:13.704318 3fac         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
+2024/06/21-18:58:13.704325 3fac         Options.bottommost_compression_opts.parallel_threads: 1
+2024/06/21-18:58:13.704332 3fac                  Options.bottommost_compression_opts.enabled: false
+2024/06/21-18:58:13.704339 3fac         Options.bottommost_compression_opts.max_dict_buffer_bytes: 0
+2024/06/21-18:58:13.704347 3fac         Options.bottommost_compression_opts.use_zstd_dict_trainer: true
+2024/06/21-18:58:13.704354 3fac            Options.compression_opts.window_bits: -14
+2024/06/21-18:58:13.704361 3fac                  Options.compression_opts.level: 32767
+2024/06/21-18:58:13.704368 3fac               Options.compression_opts.strategy: 0
+2024/06/21-18:58:13.704375 3fac         Options.compression_opts.max_dict_bytes: 0
+2024/06/21-18:58:13.704381 3fac         Options.compression_opts.zstd_max_train_bytes: 0
+2024/06/21-18:58:13.704388 3fac         Options.compression_opts.use_zstd_dict_trainer: true
+2024/06/21-18:58:13.704394 3fac         Options.compression_opts.parallel_threads: 1
+2024/06/21-18:58:13.704401 3fac                  Options.compression_opts.enabled: false
+2024/06/21-18:58:13.704422 3fac         Options.compression_opts.max_dict_buffer_bytes: 0
+2024/06/21-18:58:13.704429 3fac      Options.level0_file_num_compaction_trigger: 4
+2024/06/21-18:58:13.704436 3fac          Options.level0_slowdown_writes_trigger: 20
+2024/06/21-18:58:13.704442 3fac              Options.level0_stop_writes_trigger: 36
+2024/06/21-18:58:13.704448 3fac                   Options.target_file_size_base: 67108864
+2024/06/21-18:58:13.704455 3fac             Options.target_file_size_multiplier: 1
+2024/06/21-18:58:13.704463 3fac                Options.max_bytes_for_level_base: 268435456
+2024/06/21-18:58:13.704471 3fac Options.level_compaction_dynamic_level_bytes: 0
+2024/06/21-18:58:13.704479 3fac          Options.max_bytes_for_level_multiplier: 10.000000
+2024/06/21-18:58:13.704489 3fac Options.max_bytes_for_level_multiplier_addtl[0]: 1
+2024/06/21-18:58:13.704498 3fac Options.max_bytes_for_level_multiplier_addtl[1]: 1
+2024/06/21-18:58:13.704505 3fac Options.max_bytes_for_level_multiplier_addtl[2]: 1
+2024/06/21-18:58:13.704513 3fac Options.max_bytes_for_level_multiplier_addtl[3]: 1
+2024/06/21-18:58:13.704521 3fac Options.max_bytes_for_level_multiplier_addtl[4]: 1
+2024/06/21-18:58:13.704530 3fac Options.max_bytes_for_level_multiplier_addtl[5]: 1
+2024/06/21-18:58:13.704538 3fac Options.max_bytes_for_level_multiplier_addtl[6]: 1
+2024/06/21-18:58:13.704547 3fac       Options.max_sequential_skip_in_iterations: 8
+2024/06/21-18:58:13.704555 3fac                    Options.max_compaction_bytes: 1677721600
+2024/06/21-18:58:13.704564 3fac                        Options.arena_block_size: 1048576
+2024/06/21-18:58:13.704572 3fac   Options.soft_pending_compaction_bytes_limit: 68719476736
+2024/06/21-18:58:13.704583 3fac   Options.hard_pending_compaction_bytes_limit: 274877906944
+2024/06/21-18:58:13.704593 3fac                Options.disable_auto_compactions: 0
+2024/06/21-18:58:13.704601 3fac                        Options.compaction_style: kCompactionStyleUniversal
+2024/06/21-18:58:13.704610 3fac                          Options.compaction_pri: kMinOverlappingRatio
+2024/06/21-18:58:13.704618 3fac Options.compaction_options_universal.size_ratio: 1
+2024/06/21-18:58:13.704628 3fac Options.compaction_options_universal.min_merge_width: 2
+2024/06/21-18:58:13.704639 3fac Options.compaction_options_universal.max_merge_width: 4294967295
+2024/06/21-18:58:13.704646 3fac Options.compaction_options_universal.max_size_amplification_percent: 200
+2024/06/21-18:58:13.704651 3fac Options.compaction_options_universal.compression_size_percent: 80
+2024/06/21-18:58:13.704657 3fac Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
+2024/06/21-18:58:13.704662 3fac Options.compaction_options_fifo.max_table_files_size: 1073741824
+2024/06/21-18:58:13.704666 3fac Options.compaction_options_fifo.allow_compaction: 0
+2024/06/21-18:58:13.704673 3fac                   Options.table_properties_collectors: 
+2024/06/21-18:58:13.704678 3fac                   Options.inplace_update_support: 0
+2024/06/21-18:58:13.704683 3fac                 Options.inplace_update_num_locks: 10000
+2024/06/21-18:58:13.704687 3fac               Options.memtable_prefix_bloom_size_ratio: 0.000000
+2024/06/21-18:58:13.704693 3fac               Options.memtable_whole_key_filtering: 0
+2024/06/21-18:58:13.704697 3fac   Options.memtable_huge_page_size: 0
+2024/06/21-18:58:13.704702 3fac                           Options.bloom_locality: 0
+2024/06/21-18:58:13.704706 3fac                    Options.max_successive_merges: 0
+2024/06/21-18:58:13.704711 3fac             Options.strict_max_successive_merges: 0
+2024/06/21-18:58:13.704715 3fac                Options.optimize_filters_for_hits: 0
+2024/06/21-18:58:13.704720 3fac                Options.paranoid_file_checks: 0
+2024/06/21-18:58:13.704724 3fac                Options.force_consistency_checks: 1
+2024/06/21-18:58:13.704729 3fac                Options.report_bg_io_stats: 0
+2024/06/21-18:58:13.704733 3fac                               Options.ttl: 2592000
+2024/06/21-18:58:13.704738 3fac          Options.periodic_compaction_seconds: 2592000
+2024/06/21-18:58:13.704743 3fac                        Options.default_temperature: kUnknown
+2024/06/21-18:58:13.704747 3fac  Options.preclude_last_level_data_seconds: 0
+2024/06/21-18:58:13.704752 3fac    Options.preserve_internal_time_seconds: 0
+2024/06/21-18:58:13.704756 3fac                       Options.enable_blob_files: false
+2024/06/21-18:58:13.704761 3fac                           Options.min_blob_size: 0
+2024/06/21-18:58:13.704766 3fac                          Options.blob_file_size: 268435456
+2024/06/21-18:58:13.704770 3fac                   Options.blob_compression_type: NoCompression
+2024/06/21-18:58:13.704775 3fac          Options.enable_blob_garbage_collection: false
+2024/06/21-18:58:13.704780 3fac      Options.blob_garbage_collection_age_cutoff: 0.250000
+2024/06/21-18:58:13.704785 3fac Options.blob_garbage_collection_force_threshold: 1.000000
+2024/06/21-18:58:13.704791 3fac          Options.blob_compaction_readahead_size: 0
+2024/06/21-18:58:13.704795 3fac                Options.blob_file_starting_level: 0
+2024/06/21-18:58:13.704800 3fac         Options.experimental_mempurge_threshold: 0.000000
+2024/06/21-18:58:13.704804 3fac            Options.memtable_max_range_deletions: 0
+2024/06/21-18:58:13.704935 3fac [db\column_family.cc:363] level_compaction_dynamic_level_bytes only makes sense for level-based compaction
+2024/06/21-18:58:13.705004 3fac [db\column_family.cc:628] --------------- Options for column family [ConceptMap.translate]:
+2024/06/21-18:58:13.705012 3fac               Options.comparator: leveldb.BytewiseComparator
+2024/06/21-18:58:13.705017 3fac           Options.merge_operator: None
+2024/06/21-18:58:13.705021 3fac        Options.compaction_filter: None
+2024/06/21-18:58:13.705030 3fac        Options.compaction_filter_factory: None
+2024/06/21-18:58:13.705036 3fac  Options.sst_partitioner_factory: None
+2024/06/21-18:58:13.705041 3fac         Options.memtable_factory: SkipListFactory
+2024/06/21-18:58:13.705046 3fac            Options.table_factory: BlockBasedTable
+2024/06/21-18:58:13.705080 3fac            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (000002642E80A670)
+  cache_index_and_filter_blocks: 0
+  cache_index_and_filter_blocks_with_high_priority: 1
+  pin_l0_filter_and_index_blocks_in_cache: 0
+  pin_top_level_index_and_filter: 1
+  index_type: 0
+  data_block_index_type: 0
+  index_shortening: 1
+  data_block_hash_table_util_ratio: 0.750000
+  checksum: 4
+  no_block_cache: 0
+  block_cache: 000002642BE53CA0
+  block_cache_name: LRUCache
+  block_cache_options:
+    capacity : 33554432
+    num_shard_bits : 6
+    strict_capacity_limit : 0
+    memory_allocator : None
+    high_pri_pool_ratio: 0.500
+    low_pri_pool_ratio: 0.000
+  persistent_cache: 0000000000000000
+  block_size: 4096
+  block_size_deviation: 10
+  block_restart_interval: 16
+  index_block_restart_interval: 1
+  metadata_block_size: 4096
+  partition_filters: 0
+  use_delta_encoding: 1
+  filter_policy: nullptr
+  whole_key_filtering: 1
+  verify_compression: 0
+  read_amp_bytes_per_bit: 0
+  format_version: 6
+  enable_index_compression: 1
+  block_align: 0
+  max_auto_readahead_size: 262144
+  prepopulate_block_cache: 0
+  initial_auto_readahead_size: 8192
+  num_file_reads_for_auto_readahead: 2
+2024/06/21-18:58:13.705086 3fac        Options.write_buffer_size: 134217728
+2024/06/21-18:58:13.705091 3fac  Options.max_write_buffer_number: 6
+2024/06/21-18:58:13.705096 3fac          Options.compression: Snappy
+2024/06/21-18:58:13.705100 3fac                  Options.bottommost_compression: Disabled
+2024/06/21-18:58:13.705105 3fac       Options.prefix_extractor: nullptr
+2024/06/21-18:58:13.705109 3fac   Options.memtable_insert_with_hint_prefix_extractor: nullptr
+2024/06/21-18:58:13.705114 3fac             Options.num_levels: 7
+2024/06/21-18:58:13.705118 3fac        Options.min_write_buffer_number_to_merge: 2
+2024/06/21-18:58:13.705123 3fac     Options.max_write_buffer_number_to_maintain: 0
+2024/06/21-18:58:13.705128 3fac     Options.max_write_buffer_size_to_maintain: 0
+2024/06/21-18:58:13.705132 3fac            Options.bottommost_compression_opts.window_bits: -14
+2024/06/21-18:58:13.705137 3fac                  Options.bottommost_compression_opts.level: 32767
+2024/06/21-18:58:13.705141 3fac               Options.bottommost_compression_opts.strategy: 0
+2024/06/21-18:58:13.705146 3fac         Options.bottommost_compression_opts.max_dict_bytes: 0
+2024/06/21-18:58:13.705151 3fac         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
+2024/06/21-18:58:13.705155 3fac         Options.bottommost_compression_opts.parallel_threads: 1
+2024/06/21-18:58:13.705160 3fac                  Options.bottommost_compression_opts.enabled: false
+2024/06/21-18:58:13.705164 3fac         Options.bottommost_compression_opts.max_dict_buffer_bytes: 0
+2024/06/21-18:58:13.705169 3fac         Options.bottommost_compression_opts.use_zstd_dict_trainer: true
+2024/06/21-18:58:13.705174 3fac            Options.compression_opts.window_bits: -14
+2024/06/21-18:58:13.705178 3fac                  Options.compression_opts.level: 32767
+2024/06/21-18:58:13.705183 3fac               Options.compression_opts.strategy: 0
+2024/06/21-18:58:13.705187 3fac         Options.compression_opts.max_dict_bytes: 0
+2024/06/21-18:58:13.705191 3fac         Options.compression_opts.zstd_max_train_bytes: 0
+2024/06/21-18:58:13.705196 3fac         Options.compression_opts.use_zstd_dict_trainer: true
+2024/06/21-18:58:13.705201 3fac         Options.compression_opts.parallel_threads: 1
+2024/06/21-18:58:13.705205 3fac                  Options.compression_opts.enabled: false
+2024/06/21-18:58:13.705210 3fac         Options.compression_opts.max_dict_buffer_bytes: 0
+2024/06/21-18:58:13.705214 3fac      Options.level0_file_num_compaction_trigger: 4
+2024/06/21-18:58:13.705264 3fac          Options.level0_slowdown_writes_trigger: 20
+2024/06/21-18:58:13.705271 3fac              Options.level0_stop_writes_trigger: 36
+2024/06/21-18:58:13.705276 3fac                   Options.target_file_size_base: 67108864
+2024/06/21-18:58:13.705281 3fac             Options.target_file_size_multiplier: 1
+2024/06/21-18:58:13.705285 3fac                Options.max_bytes_for_level_base: 268435456
+2024/06/21-18:58:13.705290 3fac Options.level_compaction_dynamic_level_bytes: 0
+2024/06/21-18:58:13.705294 3fac          Options.max_bytes_for_level_multiplier: 10.000000
+2024/06/21-18:58:13.705300 3fac Options.max_bytes_for_level_multiplier_addtl[0]: 1
+2024/06/21-18:58:13.705304 3fac Options.max_bytes_for_level_multiplier_addtl[1]: 1
+2024/06/21-18:58:13.705309 3fac Options.max_bytes_for_level_multiplier_addtl[2]: 1
+2024/06/21-18:58:13.705314 3fac Options.max_bytes_for_level_multiplier_addtl[3]: 1
+2024/06/21-18:58:13.705318 3fac Options.max_bytes_for_level_multiplier_addtl[4]: 1
+2024/06/21-18:58:13.705323 3fac Options.max_bytes_for_level_multiplier_addtl[5]: 1
+2024/06/21-18:58:13.705327 3fac Options.max_bytes_for_level_multiplier_addtl[6]: 1
+2024/06/21-18:58:13.705332 3fac       Options.max_sequential_skip_in_iterations: 8
+2024/06/21-18:58:13.705336 3fac                    Options.max_compaction_bytes: 1677721600
+2024/06/21-18:58:13.705341 3fac                        Options.arena_block_size: 1048576
+2024/06/21-18:58:13.705345 3fac   Options.soft_pending_compaction_bytes_limit: 68719476736
+2024/06/21-18:58:13.705350 3fac   Options.hard_pending_compaction_bytes_limit: 274877906944
+2024/06/21-18:58:13.705355 3fac                Options.disable_auto_compactions: 0
+2024/06/21-18:58:13.705360 3fac                        Options.compaction_style: kCompactionStyleUniversal
+2024/06/21-18:58:13.705365 3fac                          Options.compaction_pri: kMinOverlappingRatio
+2024/06/21-18:58:13.705370 3fac Options.compaction_options_universal.size_ratio: 1
+2024/06/21-18:58:13.705375 3fac Options.compaction_options_universal.min_merge_width: 2
+2024/06/21-18:58:13.705379 3fac Options.compaction_options_universal.max_merge_width: 4294967295
+2024/06/21-18:58:13.705384 3fac Options.compaction_options_universal.max_size_amplification_percent: 200
+2024/06/21-18:58:13.705388 3fac Options.compaction_options_universal.compression_size_percent: 80
+2024/06/21-18:58:13.705393 3fac Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
+2024/06/21-18:58:13.705398 3fac Options.compaction_options_fifo.max_table_files_size: 1073741824
+2024/06/21-18:58:13.705403 3fac Options.compaction_options_fifo.allow_compaction: 0
+2024/06/21-18:58:13.705409 3fac                   Options.table_properties_collectors: 
+2024/06/21-18:58:13.705414 3fac                   Options.inplace_update_support: 0
+2024/06/21-18:58:13.705418 3fac                 Options.inplace_update_num_locks: 10000
+2024/06/21-18:58:13.705423 3fac               Options.memtable_prefix_bloom_size_ratio: 0.000000
+2024/06/21-18:58:13.705428 3fac               Options.memtable_whole_key_filtering: 0
+2024/06/21-18:58:13.705432 3fac   Options.memtable_huge_page_size: 0
+2024/06/21-18:58:13.705437 3fac                           Options.bloom_locality: 0
+2024/06/21-18:58:13.705441 3fac                    Options.max_successive_merges: 0
+2024/06/21-18:58:13.705446 3fac             Options.strict_max_successive_merges: 0
+2024/06/21-18:58:13.705450 3fac                Options.optimize_filters_for_hits: 0
+2024/06/21-18:58:13.705455 3fac                Options.paranoid_file_checks: 0
+2024/06/21-18:58:13.705459 3fac                Options.force_consistency_checks: 1
+2024/06/21-18:58:13.705464 3fac                Options.report_bg_io_stats: 0
+2024/06/21-18:58:13.705468 3fac                               Options.ttl: 2592000
+2024/06/21-18:58:13.705473 3fac          Options.periodic_compaction_seconds: 2592000
+2024/06/21-18:58:13.705478 3fac                        Options.default_temperature: kUnknown
+2024/06/21-18:58:13.705482 3fac  Options.preclude_last_level_data_seconds: 0
+2024/06/21-18:58:13.705490 3fac    Options.preserve_internal_time_seconds: 0
+2024/06/21-18:58:13.705496 3fac                       Options.enable_blob_files: false
+2024/06/21-18:58:13.705500 3fac                           Options.min_blob_size: 0
+2024/06/21-18:58:13.705505 3fac                          Options.blob_file_size: 268435456
+2024/06/21-18:58:13.705509 3fac                   Options.blob_compression_type: NoCompression
+2024/06/21-18:58:13.705514 3fac          Options.enable_blob_garbage_collection: false
+2024/06/21-18:58:13.705519 3fac      Options.blob_garbage_collection_age_cutoff: 0.250000
+2024/06/21-18:58:13.705524 3fac Options.blob_garbage_collection_force_threshold: 1.000000
+2024/06/21-18:58:13.705529 3fac          Options.blob_compaction_readahead_size: 0
+2024/06/21-18:58:13.705534 3fac                Options.blob_file_starting_level: 0
+2024/06/21-18:58:13.705538 3fac         Options.experimental_mempurge_threshold: 0.000000
+2024/06/21-18:58:13.705543 3fac            Options.memtable_max_range_deletions: 0
+2024/06/21-18:58:13.712309 3fac [db\version_set.cc:6086] Recovered from manifest file:D:\Users\Paul\projects\termite\index/MANIFEST-000041 succeeded,manifest_file_number is 41, next_file_number is 43, last_sequence is 0, log_number is 37,prev_log_number is 0,max_column_family is 2,min_log_number_to_keep is 37
+2024/06/21-18:58:13.712331 3fac [db\version_set.cc:6095] Column family [default] (ID 0), log number is 37
+2024/06/21-18:58:13.712338 3fac [db\version_set.cc:6095] Column family [ConceptMap.crud] (ID 1), log number is 37
+2024/06/21-18:58:13.712343 3fac [db\version_set.cc:6095] Column family [ConceptMap.translate] (ID 2), log number is 37
+2024/06/21-18:58:13.712860 3fac [db\db_impl\db_impl_open.cc:661] DB ID: 64a1e725-2f42-11ef-930b-8c1645bd5e17
+2024/06/21-18:58:13.715096 3fac EVENT_LOG_v1 {"time_micros": 1718989093715058, "job": 1, "event": "recovery_started", "wal_files": [40]}
+2024/06/21-18:58:13.715118 3fac [db\db_impl\db_impl_open.cc:1164] Recovering log #40 mode 2
+2024/06/21-18:58:13.716991 3fac EVENT_LOG_v1 {"time_micros": 1718989093716982, "job": 1, "event": "recovery_finished"}
+2024/06/21-18:58:13.717566 3fac [db\version_set.cc:5521] Creating manifest 45
+2024/06/21-18:58:13.747480 3fac [db\db_impl\db_impl_open.cc:2237] SstFileManager instance 000002642AB9B0F0
+2024/06/21-18:58:13.749979 3fac [file\delete_scheduler.cc:79] Deleted file D:\Users\Paul\projects\termite\index/000040.log immediately, rate_bytes_per_sec 0, total_trash_size 0, total_size 0, max_trash_db_ratio 0.250000
+2024/06/21-18:58:13.750334 3fac DB pointer 000002642AD16400
+2024/06/21-18:58:13.751392 4ff4 [db\db_impl\db_impl.cc:1181] ------- DUMPING STATS -------
+2024/06/21-18:58:13.751431 4ff4 [db\db_impl\db_impl.cc:1182] 
+** DB Stats **
+Uptime(secs): 0.0 total, 0.0 interval
+Cumulative writes: 0 writes, 0 keys, 0 commit groups, 0.0 writes per commit group, ingest: 0.00 GB, 0.00 MB/s
+Cumulative WAL: 0 writes, 0 syncs, 0.00 writes per sync, written: 0.00 GB, 0.00 MB/s
+Cumulative stall: 00:00:0.000 H:M:S, 0.0 percent
+Interval writes: 0 writes, 0 keys, 0 commit groups, 0.0 writes per commit group, ingest: 0.00 MB, 0.00 MB/s
+Interval WAL: 0 writes, 0 syncs, 0.00 writes per sync, written: 0.00 GB, 0.00 MB/s
+Interval stall: 00:00:0.000 H:M:S, 0.0 percent
+Write Stall (count): write-buffer-manager-limit-stops: 0
+
+** Compaction Stats [default] **
+Level    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop Rblob(GB) Wblob(GB)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sum      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0       0.0       0.0
+ Int      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0       0.0       0.0
+
+** Compaction Stats [default] **
+Priority    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop Rblob(GB) Wblob(GB)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Blob file count: 0, total size: 0.0 GB, garbage size: 0.0 GB, space amp: 0.0
+
+Uptime(secs): 0.0 total, 0.0 interval
+Flush(GB): cumulative 0.000, interval 0.000
+AddFile(GB): cumulative 0.000, interval 0.000
+AddFile(Total Files): cumulative 0, interval 0
+AddFile(L0 Files): cumulative 0, interval 0
+AddFile(Keys): cumulative 0, interval 0
+Cumulative compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Interval compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Estimated pending compaction bytes: 0
+Write Stall (count): cf-l0-file-count-limit-delays-with-ongoing-compaction: 0, cf-l0-file-count-limit-stops-with-ongoing-compaction: 0, l0-file-count-limit-delays: 0, l0-file-count-limit-stops: 0, memtable-limit-delays: 0, memtable-limit-stops: 0, pending-compaction-bytes-delays: 0, pending-compaction-bytes-stops: 0, total-delays: 0, total-stops: 0
+Block cache LRUCache@000002642BE53CA0#27656 capacity: 32.00 MB seed: 1492990118 usage: 0.08 KB table_size: 1024 occupancy: 1 collections: 1 last_copies: 2 last_secs: 0.000108 secs_since: 0
+Block cache entry stats(count,size,portion): Misc(1,0.00 KB,0%)
+
+** File Read Latency Histogram By Level [default] **
+
+** Compaction Stats [ConceptMap.crud] **
+Level    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop Rblob(GB) Wblob(GB)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sum      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0       0.0       0.0
+ Int      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0       0.0       0.0
+
+** Compaction Stats [ConceptMap.crud] **
+Priority    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop Rblob(GB) Wblob(GB)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Blob file count: 0, total size: 0.0 GB, garbage size: 0.0 GB, space amp: 0.0
+
+Uptime(secs): 0.0 total, 0.0 interval
+Flush(GB): cumulative 0.000, interval 0.000
+AddFile(GB): cumulative 0.000, interval 0.000
+AddFile(Total Files): cumulative 0, interval 0
+AddFile(L0 Files): cumulative 0, interval 0
+AddFile(Keys): cumulative 0, interval 0
+Cumulative compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Interval compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Estimated pending compaction bytes: 0
+Write Stall (count): cf-l0-file-count-limit-delays-with-ongoing-compaction: 0, cf-l0-file-count-limit-stops-with-ongoing-compaction: 0, l0-file-count-limit-delays: 0, l0-file-count-limit-stops: 0, memtable-limit-delays: 0, memtable-limit-stops: 0, pending-compaction-bytes-delays: 0, pending-compaction-bytes-stops: 0, total-delays: 0, total-stops: 0
+Block cache LRUCache@000002642BE53CA0#27656 capacity: 32.00 MB seed: 1492990118 usage: 0.08 KB table_size: 1024 occupancy: 1 collections: 1 last_copies: 2 last_secs: 0.000108 secs_since: 0
+Block cache entry stats(count,size,portion): Misc(1,0.00 KB,0%)
+
+** File Read Latency Histogram By Level [ConceptMap.crud] **
+
+** Compaction Stats [ConceptMap.translate] **
+Level    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop Rblob(GB) Wblob(GB)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sum      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0       0.0       0.0
+ Int      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0       0.0       0.0
+
+** Compaction Stats [ConceptMap.translate] **
+Priority    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop Rblob(GB) Wblob(GB)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Blob file count: 0, total size: 0.0 GB, garbage size: 0.0 GB, space amp: 0.0
+
+Uptime(secs): 0.0 total, 0.0 interval
+Flush(GB): cumulative 0.000, interval 0.000
+AddFile(GB): cumulative 0.000, interval 0.000
+AddFile(Total Files): cumulative 0, interval 0
+AddFile(L0 Files): cumulative 0, interval 0
+AddFile(Keys): cumulative 0, interval 0
+Cumulative compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Interval compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Estimated pending compaction bytes: 0
+Write Stall (count): cf-l0-file-count-limit-delays-with-ongoing-compaction: 0, cf-l0-file-count-limit-stops-with-ongoing-compaction: 0, l0-file-count-limit-delays: 0, l0-file-count-limit-stops: 0, memtable-limit-delays: 0, memtable-limit-stops: 0, pending-compaction-bytes-delays: 0, pending-compaction-bytes-stops: 0, total-delays: 0, total-stops: 0
+Block cache LRUCache@000002642BE53CA0#27656 capacity: 32.00 MB seed: 1492990118 usage: 0.08 KB table_size: 1024 occupancy: 1 collections: 1 last_copies: 2 last_secs: 0.000108 secs_since: 0
+Block cache entry stats(count,size,portion): Misc(1,0.00 KB,0%)
+
+** File Read Latency Histogram By Level [ConceptMap.translate] **

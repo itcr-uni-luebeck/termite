@@ -30,7 +30,7 @@ dependencies {
     //Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     implementation "org.jetbrains.kotlin:kotlin-reflect:2.0.0"
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0'
 
     //Spring Boot
     //implementation 'org.springframework:spring-core:6.1.8'

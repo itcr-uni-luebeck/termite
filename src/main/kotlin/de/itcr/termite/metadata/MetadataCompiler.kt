@@ -12,6 +12,7 @@ import org.hl7.fhir.r4b.model.CapabilityStatement.CapabilityStatementRestCompone
 import org.hl7.fhir.r4b.model.CapabilityStatement.CapabilityStatementRestResourceComponent
 import org.hl7.fhir.r4b.model.OperationDefinition.OperationDefinitionParameterComponent
 import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 import java.time.Instant
 import java.util.*
@@ -58,7 +59,9 @@ object MetadataCompiler {
         val resources: MutableMap<ResourceType, CapabilityStatementRestResourceComponent> = mutableMapOf()
         val restComponent = capabilityStatement.addRest()
 
-        val servletClasses = classes.filter { clazz -> clazz.findAnnotation<Controller>() != null }
+        val servletClasses = classes.filter {
+            clazz -> clazz.findAnnotation<Controller>() != null || clazz.findAnnotation<RestController>() != null
+        }
         servletClasses.forEach { servletClass ->
             val forResource = servletClass.findAnnotation<ForResource>()
             // Check if there is already a component for the resource type and add one if not
