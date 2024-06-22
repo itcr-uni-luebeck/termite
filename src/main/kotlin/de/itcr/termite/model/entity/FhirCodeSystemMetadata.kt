@@ -13,8 +13,8 @@ import org.hibernate.annotations.UpdateTimestamp
 @Table(name = "fhir_code_system_metadata", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 data class FhirCodeSystemMetadata(
-    @Column(name = "id") @Id @GeneratedValue val id: Int,
-    @Column(name = "version_id") @Version val versionId: Int,
+    @Column(name = "id", nullable = false) @Id @GeneratedValue val id: Int,
+    @Column(name = "version_id", nullable = false) @Version val versionId: Int,
     @Column(name = "last_updated") @Temporal(TemporalType.TIMESTAMP) @UpdateTimestamp val lastUpdated: Date?,
     @Column(name = "source") val source: String?,
     @Column(name = "profile") @ElementCollection val profile: List<String?>,

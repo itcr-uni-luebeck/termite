@@ -7,10 +7,18 @@ import org.springframework.context.annotation.Configuration
 @ConstructorBinding
 @ConfigurationProperties(prefix = "termite")
 data class ApplicationConfig (
+    val api: APIConfig,
     val index: IndexConfig
 ) {
 
+    data class APIConfig(
+        val packageName: String,
+        val baseUrl: String
+    )
+
     data class IndexConfig(
+        val type: String = "rocksdb",
+        val path: String = "index",
         val schema: SchemaConfig
     ) {
 

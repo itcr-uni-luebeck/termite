@@ -1,7 +1,12 @@
 package de.itcr.termite.index.provider.r4b
 
+import de.itcr.termite.index.BatchSupport
 import de.itcr.termite.index.FhirIndexStore
+import de.itcr.termite.index.IBatch
 import de.itcr.termite.index.partition.FhirIndexPartitions
+import de.itcr.termite.persistence.r4b.codesystem.CodeSystemIndexPartitions
+import de.itcr.termite.persistence.r4b.conceptmap.ConceptMapIndexPartitions
+import de.itcr.termite.persistence.r4b.valueset.ValueSetIndexPartitions
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.hl7.fhir.r4b.model.StructureDefinition
@@ -24,7 +29,7 @@ class RocksDBIndexStore(
     dbPath: Path,
     cfDescriptors: List<ColumnFamilyDescriptor>,
     dbOptions: DBOptions? = null
-): FhirIndexStore {
+): FhirIndexStore, BatchSupport {
 
     private val dbOptions: DBOptions
     private val writeOptions: WriteOptions
@@ -34,7 +39,7 @@ class RocksDBIndexStore(
     init {
         this.dbOptions = dbOptions ?: DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true)
         this.writeOptions = WriteOptions()
-        val columnFamilyHandles = listOf<ColumnFamilyHandle>()
+        val columnFamilyHandles = mutableListOf<ColumnFamilyHandle>()
         this.database = RocksDB.open(this.dbOptions, dbPath.toAbsolutePath().toString(), cfDescriptors, columnFamilyHandles)
         this.columnFamilyHandleMap = columnFamilyHandles.associateBy { it.name }
     }
@@ -49,56 +54,28 @@ class RocksDBIndexStore(
             // Column family definition
             val cfOptions = ColumnFamilyOptions().optimizeUniversalStyleCompaction()
             val cfList = createCfDescriptors(capabilityStmt, cfOptions)
+            println(cfList.joinToString(", ") { it.name.decodeToString() })
             return RocksDBIndexStore(dbPath, cfList)
         }
 
         private fun createCfDescriptors(
             capabilityStmt: CapabilityStatement,
             cfOptions: ColumnFamilyOptions
-        ): List<ColumnFamilyDescriptor> =
-            capabilityStmt.rest[0].resource.map { createCfDescriptorsForFhirType(it, cfOptions) }.flatten()
+        ): List<ColumnFamilyDescriptor> {
+            val list = capabilityStmt.rest[0].resource
+                .map { createCfDescriptorsForFhirType(it, cfOptions) }
+                .flatten() as MutableList
+            list.add(ColumnFamilyDescriptor("default".toByteArray(Charsets.UTF_8), cfOptions))
+            return list
+        }
 
         private fun createCfDescriptorsForFhirType(
             restResourceComponent: CapabilityStatement.CapabilityStatementRestResourceComponent,
             cfOptions: ColumnFamilyOptions
         ): List<ColumnFamilyDescriptor> {
-            val cfList = mutableListOf<ColumnFamilyDescriptor>()
             val type = restResourceComponent.type
-            // Add column families for CRUD
-            cfList.add(ColumnFamilyDescriptor("$type.crud".toByteArray(), cfOptions))
-            // Add column families for supported search parameters
-            restResourceComponent.searchParam.forEach { param ->
-                cfList.add(ColumnFamilyDescriptor("$type.search.$param".toByteArray(), cfOptions))
-            }
-            // Delegate creation of type specific indices
-            cfList.addAll(when (type) {
-                "CodeSystem" -> createCfDescriptorsForCodeSystem(cfOptions)
-                "ValueSet" -> createCfDescriptorsForValueSet(cfOptions)
-                "ConceptMap" -> createCfDescriptorsForConceptMap(cfOptions)
-                else -> emptyList()
-            })
-            return cfList
-        }
-
-        private fun createCfDescriptorsForCodeSystem(cfOptions: ColumnFamilyOptions): List<ColumnFamilyDescriptor> {
-            return listOf(
-                // CodeSystem-validate-code and CodeSystem-lookup
-                ColumnFamilyDescriptor("CodeSystem.lookup".toByteArray(), cfOptions),
-            )
-        }
-
-        private fun createCfDescriptorsForValueSet(cfOptions: ColumnFamilyOptions): List<ColumnFamilyDescriptor> {
-            return listOf(
-                // ValueSet-validate-code
-                ColumnFamilyDescriptor("ValueSet.validate-code".toByteArray(), cfOptions)
-            )
-        }
-
-        private fun createCfDescriptorsForConceptMap(cfOptions: ColumnFamilyOptions): List<ColumnFamilyDescriptor> {
-            return listOf(
-                // ConceptMap-translate
-                ColumnFamilyDescriptor("ConceptMap.translate".toByteArray(), cfOptions)
-            )
+            println(type)
+            return getIndexPartitionsForType(type).map { ColumnFamilyDescriptor(it.bytes(), cfOptions) }
         }
 
     }
@@ -135,6 +112,29 @@ class RocksDBIndexStore(
 
     override fun delete(partition: FhirIndexPartitions, batch: List<ByteArray>) {
         TODO("Not yet implemented")
+    }
+
+    override fun createBatch(): IBatch = Batch()
+
+    override fun processBatch(batch: IBatch) = database.write(writeOptions, (batch as Batch).batch)
+
+    inner class Batch: IBatch {
+
+        val batch = WriteBatch()
+
+        override fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray) =
+            batch.put(columnFamilyHandleMap[partition.bytes()], key, value)
+
+        override fun <T> put(
+            partition: FhirIndexPartitions,
+            data: Iterable<T>,
+            keySelector: (T) -> ByteArray,
+            valueSelector: (T) -> ByteArray
+        ) = data.forEach {
+            println(partition.bytes().decodeToString())
+            batch.put(columnFamilyHandleMap[partition.bytes()], keySelector(it), valueSelector(it))
+        }
+
     }
 
 }

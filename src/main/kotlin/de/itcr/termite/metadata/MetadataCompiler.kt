@@ -1,5 +1,6 @@
 package de.itcr.termite.metadata
 
+import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.Parameter
 import de.itcr.termite.metadata.annotation.SupportsInteraction
@@ -11,7 +12,10 @@ import org.hl7.fhir.r4b.model.*
 import org.hl7.fhir.r4b.model.CapabilityStatement.CapabilityStatementRestComponent
 import org.hl7.fhir.r4b.model.CapabilityStatement.CapabilityStatementRestResourceComponent
 import org.hl7.fhir.r4b.model.OperationDefinition.OperationDefinitionParameterComponent
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 import java.time.Instant
 import java.util.*
@@ -19,17 +23,19 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.findAnnotations
 
+@Component
 object MetadataCompiler {
 
     private val logger: Logger = LogManager.getLogger(MetadataCompiler::class)
     private val classLoader: ClassLoader = Thread.currentThread().contextClassLoader
 
-    fun compileStaticFhirServerMetadata(apiPackageName: String, baseUrl: URI): Pair<CapabilityStatement, Array<OperationDefinition>>
+    @Bean
+    fun compileStaticFhirServerMetadata(config: ApplicationConfig): Pair<CapabilityStatement, Array<OperationDefinition>>
     {
         logger.info("Compiling static FHIR terminology server capabilities (CapabilityStatement)")
         // Load all classes in API package
-        val classes = ResourceUtil.findClassesInPackage(apiPackageName, classLoader)
-        return compileCapabilitiesFromAnnotations(classes, baseUrl)
+        val classes = ResourceUtil.findClassesInPackage(config.api.packageName, classLoader)
+        return compileCapabilitiesFromAnnotations(classes, URI(config.api.baseUrl))
     }
 
     // TODO: Implement method properly
@@ -58,7 +64,9 @@ object MetadataCompiler {
         val resources: MutableMap<ResourceType, CapabilityStatementRestResourceComponent> = mutableMapOf()
         val restComponent = capabilityStatement.addRest()
 
-        val servletClasses = classes.filter { clazz -> clazz.findAnnotation<Controller>() != null }
+        val servletClasses = classes.filter {
+            clazz -> clazz.findAnnotation<Controller>() != null || clazz.findAnnotation<RestController>() != null
+        }
         servletClasses.forEach { servletClass ->
             val forResource = servletClass.findAnnotation<ForResource>()
             // Check if there is already a component for the resource type and add one if not

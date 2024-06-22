@@ -2,6 +2,12 @@ logging:
   file:
     path: log
     name: logging.log
+  level:
+    de.itcr.termite: DEBUG
+    org:
+      springframework:
+        web: INFO
+      hibernate: INFO
 
 server:
   port: ${TERMINOLOGY_SERVICE_PORT:9083}
@@ -26,6 +32,11 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 termite:
+  api:
+    package_name: de.itcr.termite.api
+    base_url: "/fhir"
   index:
+    type: rocksdb
+    path: index
     schema:
       file: config/index/index.json

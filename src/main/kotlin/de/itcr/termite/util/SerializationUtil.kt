@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import java.nio.ByteBuffer
 
-private val anyArraySerializer = serializer<Array<Any>>()
+//private val anyArraySerializer = serializer<Array<*>>()
 private val stringArraySerializer = serializer<Array<String>>()
 
 /**
@@ -33,9 +33,9 @@ fun serialize(a: Any): ByteArray {
     return Json.encodeToString(a).toByteArray(Charsets.UTF_8)
 }
 
-fun serializeAnyArray(anyArr: Array<Any>): ByteArray {
-    return Json.encodeToString(anyArraySerializer, anyArr).toByteArray()
-}
+//fun serializeAnyArray(anyArr: Array<Any>): ByteArray {
+//    return Json.encodeToString(anyArraySerializer, anyArr).toByteArray()
+//}
 
 /**
  * Serializes String objects
@@ -119,9 +119,9 @@ fun deserialize(b: ByteArray): Any {
     return Json.decodeFromString(String(b))
 }
 
-fun deserializeAnyArray(b: ByteArray): Array<Any> {
-    return Json.decodeFromString(anyArraySerializer, String(b))
-}
+//fun deserializeAnyArray(b: ByteArray): Array<*> {
+//    return Json.decodeFromString(anyArraySerializer, String(b))
+//}
 
 /**
  * Deserializes ByteArray to String object

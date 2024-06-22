@@ -10,4 +10,7 @@ logging.log
 /database/*
 !/database/.gitkeep
 
+/index/
+!/index/.gitkeep
+
 /.commit
