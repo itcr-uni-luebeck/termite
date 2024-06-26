@@ -62,8 +62,57 @@ sealed class CodeSystemIndexPartitions<KEY_GENERATOR: Function<ByteArray>, VALUE
         Generator1 { id: Int -> serialize(id) }
     )
 
+    data object SEARCH_LANGUAGE: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.language",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    data object SEARCH_NAME: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.name",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    data object SEARCH_PUBLISHER: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.publisher",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    data object SEARCH_STATUS: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+    "CodeSystem.search.status",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    // NOTE: IF a URL is supplied as a reference to the CodeSystem seek into the CodeSystem.search.url partition instead
+    data object SEARCH_SUPPLEMENTS: CodeSystemIndexPartitions<Generator2<Int, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.supplements",
+        Generator2 { csId: Int, id: Int -> ByteBuffer.allocate(8).putInt(csId).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    data object SEARCH_SYSTEM: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.url",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    data object SEARCH_TITLE: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.title",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
     data object SEARCH_URL: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
         "CodeSystem.search.url",
+        Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
+        Generator1 { id: Int -> serialize(id) }
+    )
+
+    data object SEARCH_VERSION: CodeSystemIndexPartitions<Generator2<String, Int, ByteArray>, Generator1<Int, ByteArray>>(
+        "CodeSystem.search.version",
         Generator2 { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() },
         Generator1 { id: Int -> serialize(id) }
     )
