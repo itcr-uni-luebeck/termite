@@ -177,3 +177,9 @@ fun deserializeLongArray(b: ByteArray): LongArray {
     for (idx in b.indices) longArr[idx/8] = deserializeLong(b.sliceArray(idx..<idx + 8))
     return longArr
 }
+
+fun serializeInOrder(vararg args: Int): ByteArray {
+    val buffer = ByteBuffer.allocate(args.size)
+    args.forEach { arg -> buffer.putInt(arg) }
+    return buffer.array()
+}

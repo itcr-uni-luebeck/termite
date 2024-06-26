@@ -8,6 +8,7 @@ import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
 import de.itcr.termite.model.repository.FhirConceptRepository
 import de.itcr.termite.util.serialize
+import de.itcr.termite.util.serializeInOrder
 import de.itcr.termite.util.tagAsSummarized
 import org.hl7.fhir.r4b.model.CodeSystem
 import org.hl7.fhir.r4b.model.Parameters
@@ -29,12 +30,14 @@ class CodeSystemPersistenceManager(
     private val random = Random(0)
 
     override fun create(instance: CodeSystem): CodeSystem {
+        // Calculate concept count if necessary
+        instance.count = if (instance.count > 0) instance.count else instance.concept.size
         val csMetadata = instance.toFhirCodeSystemMetadata()
         val storedMetadata: FhirCodeSystemMetadata
         try { storedMetadata = repository.save(csMetadata) }
         catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem metadata. Reason: ${e.message}", e) }
         val concepts: Iterable<FhirConcept>
-        try { concepts = conceptRepository.saveAll(instance.concept.map { it.toFhirConcept(random.nextLong(), storedMetadata.id) }) }
+        try { concepts = conceptRepository.saveAll(instance.concept.map { it.toFhirConcept(random.nextLong(), storedMetadata) }) }
         catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem concepts. Reason: ${e.message}", e) }
         try {
             val batch = indexStore.createBatch()
@@ -45,7 +48,7 @@ class CodeSystemPersistenceManager(
                 val buffer = ByteBuffer.allocate(16)
                 buffer.putInt(system.hashCode())
                 buffer.putInt(code.hashCode())
-                buffer.putInt(Objects.hashCode(version))
+                buffer.putInt(Objects.hashCode(version)) // Since version can be null
                 buffer.putInt(csMetadata.id)
                 buffer.array()
             }
@@ -54,6 +57,7 @@ class CodeSystemPersistenceManager(
             indexStore.processBatch(batch)
         }
         catch (e: Exception) {
+            conceptRepository.deleteByCodeSystem(storedMetadata.id)
             repository.delete(storedMetadata)
             throw PersistenceException("Failed to index CodeSystem concepts. Reason: ${e.message}", e)
         }
@@ -82,11 +86,19 @@ class CodeSystemPersistenceManager(
         TODO("Not yet implemented")
     }
 
-    override fun validateCode(parameters: Parameters): Parameters {
-        TODO("Not yet implemented")
+    override fun validateCode(url: String, code: String, version: String?, display: String?): Parameters {
+        val prefix = serializeInOrder(url.hashCode(), code.hashCode(), version.hashCode())
+        TODO()
     }
 
-    override fun lookup(parameters: Parameters): Parameters {
+    override fun lookup(
+        system: String,
+        code: String,
+        version: String?,
+        display: String?,
+        displayLanguage: String?,
+        property: Set<String>?
+    ): Parameters {
         TODO("Not yet implemented")
     }
 

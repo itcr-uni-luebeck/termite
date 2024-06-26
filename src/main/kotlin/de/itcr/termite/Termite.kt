@@ -7,6 +7,7 @@ import de.itcr.termite.database.sql.TerminologyDatabase
 import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.index.provider.r4b.RocksDBIndexStore
 import de.itcr.termite.metadata.MetadataCompiler
+import de.itcr.termite.model.entity.FhirCodeSystemMetadata
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +22,8 @@ import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.ComponentScans
 import java.net.URI
 import java.nio.file.Path
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.javaField
 
 @SpringBootApplication
 @ConfigurationPropertiesScan

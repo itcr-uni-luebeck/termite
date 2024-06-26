@@ -13,8 +13,10 @@ import org.hibernate.annotations.UpdateTimestamp
 @Table(name = "fhir_code_system_metadata", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 data class FhirCodeSystemMetadata(
-    @Column(name = "id", nullable = false) @Id @GeneratedValue val id: Int,
-    @Column(name = "version_id", nullable = false) @Version val versionId: Int,
+    // Unfortunately Kotlin compiler translates Int to primitive type int while Hibernate returns the boxed type
+    // leading to an IllegalAccessException. Hence, the boxed type has to be enforced via nullability
+    @Column(name = "id", nullable = false) @Id @GeneratedValue var id: Int,
+    @Column(name = "version_id", nullable = false) @Version var versionId: Int,
     @Column(name = "last_updated") @Temporal(TemporalType.TIMESTAMP) @UpdateTimestamp val lastUpdated: Date?,
     @Column(name = "source") val source: String?,
     @Column(name = "profile") @ElementCollection val profile: List<String?>,
@@ -84,7 +86,7 @@ fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
 fun FhirCodeSystemMetadata.toCodeSystemResource(): CodeSystem {
     val cs = CodeSystem()
 
-    cs.meta.id = id.toString()
+    cs.id = id.toString()
     cs.meta.versionId = versionId.toString()
     cs.meta.lastUpdated = lastUpdated
     cs.meta.source = source

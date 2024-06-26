@@ -6,8 +6,15 @@ import org.hl7.fhir.r4b.model.Parameters
 
 interface ICodeSystemPersistenceManager<ID_TYPE>: FhirPersistenceManager<CodeSystem, ID_TYPE> {
 
-    fun validateCode(parameters: Parameters): Parameters
+    fun validateCode(url: String, code: String, version: String?, display: String?): Parameters
 
-    fun lookup(parameters: Parameters): Parameters
+    fun lookup(
+        system: String,
+        code: String,
+        version: String?,
+        display: String?,
+        displayLanguage: String?,
+        property: Set<String>?
+    ): Parameters
 
 }
