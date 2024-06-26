@@ -20,7 +20,7 @@ class RocksDBIndexStore(
     dbPath: Path,
     cfDescriptors: List<ColumnFamilyDescriptor>,
     dbOptions: DBOptions? = null
-): FhirIndexStore, BatchSupport, IteratorSupport<ByteArray, ByteArray> {
+): FhirIndexStore<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>> {
 
     private val dbOptions: DBOptions
     private val writeOptions: WriteOptions
@@ -69,60 +69,43 @@ class RocksDBIndexStore(
 
     }
 
-    override fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray) {
-        database.put(columnFamilyHandleMap[partition.indexName()], key, value)
-    }
+    override fun put(
+        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>,
+        key: ByteArray,
+        value: ByteArray
+    ) = database.put(columnFamilyHandleMap[partition.indexName()], key, value)
 
-    // TODO: Could be faster by avoiding creation of Pair objects in the first place
-    override fun put(partition: FhirIndexPartitions, batch: List<Pair<ByteArray, ByteArray>>) {
+    override fun put(batch: List<Pair<ByteArray, ByteArray>>) {
         val writeBatch = WriteBatch()
         batch.forEach { writeBatch.put(it.first, it.second) }
         database.write(writeOptions, writeBatch)
     }
 
-    override fun <T> put(
-        partition: FhirIndexPartitions,
-        data: Iterable<T>,
-        keySelector: (T) -> ByteArray,
-        valueSelector: (T) -> ByteArray
-    ) {
-        val batch = WriteBatch()
-        data.forEach { batch.put(columnFamilyHandleMap[partition.indexName()], keySelector(it), valueSelector(it)) }
-        database.write(writeOptions, batch)
-        database.newIterator().seek(byteArrayOf())
-    }
+    override fun seek(
+        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, *>,
+        key: ByteArray
+    ): ByteArray = database.get(columnFamilyHandleMap[partition.indexName()], key)
 
-    override fun seek(partition: FhirIndexPartitions, key: ByteArray): ByteArray =
-        database.get(columnFamilyHandleMap[partition.indexName()], key)
-
-    override fun delete(partition: FhirIndexPartitions, key: ByteArray) =
+    override fun delete(partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, *, *>, key: ByteArray) =
         database.delete(columnFamilyHandleMap[partition.indexName()], key)
 
-    override fun <T> delete(partition: FhirIndexPartitions, data: Iterable<T>, keySelector: (T) -> ByteArray) {
-        val batch = WriteBatch()
-        data.forEach { batch.delete(columnFamilyHandleMap[partition.indexName()], keySelector(it)) }
-        database.write(writeOptions, batch)
-    }
+    override fun delete(batch: IBatch<ByteArray, ByteArray>) = processBatch(batch)
 
-    override fun createBatch(): IBatch = Batch()
+    override fun createBatch(): IBatch<ByteArray, ByteArray> = Batch()
 
-    override fun processBatch(batch: IBatch) = database.write(writeOptions, (batch as Batch).batch)
+    override fun processBatch(batch: IBatch<ByteArray, ByteArray>) = database.write(writeOptions, (batch as Batch).batch)
 
-    override fun createIterator(partition: FhirIndexPartitions): IIterator<ByteArray, ByteArray> =
-        Iterator(partition, null)
-
-    override fun createIterator(partition: FhirIndexPartitions, prefix: ByteArray): IIterator<ByteArray, ByteArray> =
-        Iterator(partition, prefix)
-
-    inner class Batch: IBatch {
+    inner class Batch: IBatch<ByteArray, ByteArray> {
 
         val batch = WriteBatch()
 
-        override fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray) =
-            batch.put(columnFamilyHandleMap[partition.indexName()], key, value)
+        override fun put(
+            partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>,
+            key: ByteArray, value: ByteArray
+        ) = batch.put(columnFamilyHandleMap[partition.indexName()], key, value)
 
         override fun <T> put(
-            partition: FhirIndexPartitions,
+            partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>,
             data: Iterable<T>,
             keySelector: (T) -> ByteArray,
             valueSelector: (T) -> ByteArray
@@ -132,7 +115,9 @@ class RocksDBIndexStore(
 
     }
 
-    inner class Iterator(partition: FhirIndexPartitions, prefix: ByteArray?): IIterator<ByteArray, ByteArray> {
+    inner class Iterator(
+        partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>, prefix: ByteArray?
+    ): IIterator<ByteArray, ByteArray> {
 
         private val iterator: RocksIterator
 

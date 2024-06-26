@@ -4,9 +4,9 @@ import de.itcr.termite.index.partition.FhirIndexPartitions
 
 interface IteratorSupport<KEY, VALUE> {
 
-    fun createIterator(partition: FhirIndexPartitions): IIterator<KEY, VALUE>
+    fun createIterator(partition: FhirIndexPartitions<KEY, *, VALUE, *>): IIterator<KEY, VALUE>
 
-    fun createIterator(partition: FhirIndexPartitions, prefix: ByteArray): IIterator<KEY, VALUE>
+    fun createIterator(partition: FhirIndexPartitions<KEY, *, VALUE, *>, prefix: ByteArray): IIterator<KEY, VALUE>
 
 }
 
