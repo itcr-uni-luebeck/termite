@@ -29,7 +29,7 @@ class RocksDBIndexStore(
     dbPath: Path,
     cfDescriptors: List<ColumnFamilyDescriptor>,
     dbOptions: DBOptions? = null
-): FhirIndexStore, BatchSupport {
+): FhirIndexStore<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>> {
 
     private val dbOptions: DBOptions
     private val writeOptions: WriteOptions
@@ -80,16 +80,23 @@ class RocksDBIndexStore(
 
     }
 
-    override fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray) {
+    override fun put(
+        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>,
+        key: ByteArray,
+        value: ByteArray
+    ) {
         TODO("Not yet implemented")
     }
 
-    override fun put(partition: FhirIndexPartitions, batch: List<Pair<ByteArray, ByteArray>>) {
+    override fun put(
+        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>,
+        batch: List<Pair<ByteArray, ByteArray>>
+    ) {
         TODO("Not yet implemented")
     }
 
     override fun <T> put(
-        partition: FhirIndexPartitions,
+        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>,
         data: Iterable<T>,
         keySelector: (T) -> ByteArray,
         valueSelector: (T) -> ByteArray
@@ -99,31 +106,36 @@ class RocksDBIndexStore(
         database.write(writeOptions, batch)
     }
 
-    override fun search(partition: FhirIndexPartitions, key: ByteArray) {
+    override fun seek(
+        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, *>,
+        key: ByteArray): ByteArray
+    {
         TODO("Not yet implemented")
     }
 
-    override fun delete(partition: FhirIndexPartitions, key: ByteArray) {
+    override fun delete(partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, *, *>, key: ByteArray) {
         TODO("Not yet implemented")
     }
 
-    override fun delete(partition: FhirIndexPartitions, batch: List<ByteArray>) {
+    override fun delete(partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, *, *>, batch: List<ByteArray>) {
         TODO("Not yet implemented")
     }
 
-    override fun createBatch(): IBatch = Batch()
+    override fun createBatch(): IBatch<ByteArray, ByteArray> = Batch()
 
-    override fun processBatch(batch: IBatch) = database.write(writeOptions, (batch as Batch).batch)
+    override fun processBatch(batch: IBatch<ByteArray, ByteArray>) = database.write(writeOptions, (batch as Batch).batch)
 
-    inner class Batch: IBatch {
+    inner class Batch: IBatch<ByteArray, ByteArray> {
 
         val batch = WriteBatch()
 
-        override fun put(partition: FhirIndexPartitions, key: ByteArray, value: ByteArray) =
-            batch.put(columnFamilyHandleMap[partition.bytes()], key, value)
+        override fun put(
+            partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>,
+            key: ByteArray, value: ByteArray
+        ) = batch.put(columnFamilyHandleMap[partition.bytes()], key, value)
 
         override fun <T> put(
-            partition: FhirIndexPartitions,
+            partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>,
             data: Iterable<T>,
             keySelector: (T) -> ByteArray,
             valueSelector: (T) -> ByteArray
