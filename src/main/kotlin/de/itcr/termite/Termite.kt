@@ -50,9 +50,10 @@ class Termite(compilationResult: Pair<CapabilityStatement, Array<OperationDefini
     fun operationDefinitions(): List<OperationDefinition> = this.operationDefinitions
 
     @Bean
-    fun indexStore(): FhirIndexStore {
+    fun indexStore(): FhirIndexStore<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>> {
         return when (properties.index.type) {
-            "rocksdb" -> RocksDBIndexStore.open(Path.of(properties.index.path), capabilityStatement)
+            // TODO: Create single global FhirContext object
+            "rocksdb" -> RocksDBIndexStore.open(fhirContext(), Path.of(properties.index.path), capabilityStatement)
             else -> throw RuntimeException("Unknown index type '${properties.index.type}'")
         }
     }

@@ -20,7 +20,7 @@ data class FhirCodeSystemMetadata(
     @Column(name = "last_updated") @Temporal(TemporalType.TIMESTAMP) @UpdateTimestamp val lastUpdated: Date?,
     @Column(name = "source") val source: String?,
     @Column(name = "profile") @ElementCollection val profile: List<String?>,
-    @Column(name = "url") val url: String?,
+    @Column(name = "url") val url: String,
     @Column(name = "identifier", columnDefinition = "jsonb") @Type(type = "jsonb") val identifier: String?,
     @Column(name = "version") val version: String?,
     @Column(name = "name") val name: String?,

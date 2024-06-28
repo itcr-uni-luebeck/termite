@@ -12,12 +12,12 @@ interface BatchSupport<KEY, VALUE> {
 
 interface IBatch<KEY, VALUE> {
 
-    fun put(partition: FhirIndexPartitions<KEY, *, VALUE, *>, key: ByteArray, value: ByteArray)
+    fun put(partition: FhirIndexPartitions<*, *, *, KEY, *, *>, key: KEY, value: VALUE?)
 
     fun <T> put(
-        partition: FhirIndexPartitions<KEY, *, VALUE, *>,
-        data: Iterable<T>, keySelector: (T) -> ByteArray,
-        valueSelector: (T) -> ByteArray
+        partition: FhirIndexPartitions<*, *, *, KEY, *, *>,
+        data: Iterable<T>, keySelector: (T) -> KEY,
+        valueSelector: (T) -> VALUE?
     )
 
 }

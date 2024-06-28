@@ -1,7 +1,10 @@
 package de.itcr.termite.index.provider.r4b
 
+import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.Termite
 import de.itcr.termite.index.*
 import de.itcr.termite.index.partition.FhirIndexPartitions
+import de.itcr.termite.util.ResourceUtil
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.rocksdb.ColumnFamilyDescriptor
@@ -17,6 +20,7 @@ import java.nio.file.Path
 
 @Qualifier("RocksDB")
 class RocksDBIndexStore(
+    fhirContext: FhirContext,
     dbPath: Path,
     cfDescriptors: List<ColumnFamilyDescriptor>,
     dbOptions: DBOptions? = null
@@ -28,6 +32,7 @@ class RocksDBIndexStore(
     private val columnFamilyHandleMap: Map<String, ColumnFamilyHandle>
 
     init {
+        private val fhirContext = fhirContext
         this.dbOptions = dbOptions ?: DBOptions().setCreateIfMissing(true).setCreateMissingColumnFamilies(true)
         this.writeOptions = WriteOptions()
         val columnFamilyHandles = mutableListOf<ColumnFamilyHandle>()
@@ -41,28 +46,35 @@ class RocksDBIndexStore(
 
         init { RocksDB.loadLibrary() }
 
-        fun open(dbPath: Path, capabilityStmt: CapabilityStatement): RocksDBIndexStore {
+        fun open(fhirContext: FhirContext, dbPath: Path, capabilityStmt: CapabilityStatement): RocksDBIndexStore {
             // Column family definition
             val cfOptions = ColumnFamilyOptions().optimizeUniversalStyleCompaction()
-            val cfList = createCfDescriptors(capabilityStmt, cfOptions)
-            return RocksDBIndexStore(dbPath, cfList)
+            val cfList = createCfDescriptors(fhirContext, capabilityStmt, cfOptions)
+            return RocksDBIndexStore(fhirContext, dbPath, cfList)
         }
 
         private fun createCfDescriptors(
+            fhirContext: FhirContext,
             capabilityStmt: CapabilityStatement,
             cfOptions: ColumnFamilyOptions
         ): List<ColumnFamilyDescriptor> {
             val list = capabilityStmt.rest[0].resource
-                .map { createCfDescriptorsForFhirType(it, cfOptions) }
+                .map { createCfDescriptorsForFhirType(fhirContext, it, cfOptions) }
                 .flatten() as MutableList
             list.add(ColumnFamilyDescriptor("default".toByteArray(Charsets.UTF_8), cfOptions))
             return list
         }
 
         private fun createCfDescriptorsForFhirType(
+            fhirContext: FhirContext,
             restResourceComponent: CapabilityStatement.CapabilityStatementRestResourceComponent,
             cfOptions: ColumnFamilyOptions
         ): List<ColumnFamilyDescriptor> {
+            val classLoader = Termite::class.java.classLoader
+            val packageName = "de/itcr/termite/persistence/${fhirContext.version.version.name.lowercase()}"
+            val classes = ResourceUtil.findClassesInPackage(packageName, classLoader)
+            classes.filter { it.isSealed && it is FhirIndexPartitions<*, *, *, *, *, *> }
+                .map { Pair(it.qualifiedName.split(".").) }
             val type = restResourceComponent.type
             return getIndexPartitionsForType(type).map { ColumnFamilyDescriptor(it.bytes(), cfOptions) }
         }
@@ -70,7 +82,7 @@ class RocksDBIndexStore(
     }
 
     override fun put(
-        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>,
+        partition: FhirIndexPartitions<*, *, *, ByteArray, *, *>,
         key: ByteArray,
         value: ByteArray
     ) = database.put(columnFamilyHandleMap[partition.indexName()], key, value)
@@ -82,11 +94,11 @@ class RocksDBIndexStore(
     }
 
     override fun seek(
-        partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, ByteArray, *>,
+        partition: FhirIndexPartitions<*, *, *, ByteArray, *, *>,
         key: ByteArray
     ): ByteArray = database.get(columnFamilyHandleMap[partition.indexName()], key)
 
-    override fun delete(partition: FhirIndexPartitions<ByteArray, Function<ByteArray>, *, *>, key: ByteArray) =
+    override fun delete(partition: FhirIndexPartitions<*, *, *, ByteArray, *, *>, key: ByteArray) =
         database.delete(columnFamilyHandleMap[partition.indexName()], key)
 
     override fun delete(batch: IBatch<ByteArray, ByteArray>) = processBatch(batch)
@@ -100,15 +112,15 @@ class RocksDBIndexStore(
         val batch = WriteBatch()
 
         override fun put(
-            partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>,
-            key: ByteArray, value: ByteArray
+            partition: FhirIndexPartitions<*, *, *, ByteArray, *, *>,
+            key: ByteArray, value: ByteArray?
         ) = batch.put(columnFamilyHandleMap[partition.indexName()], key, value)
 
         override fun <T> put(
-            partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>,
+            partition: FhirIndexPartitions<*, *, *, ByteArray, *, *>,
             data: Iterable<T>,
             keySelector: (T) -> ByteArray,
-            valueSelector: (T) -> ByteArray
+            valueSelector: (T) -> ByteArray?
         ) = data.forEach {
             batch.put(columnFamilyHandleMap[partition.indexName()], keySelector(it), valueSelector(it))
         }
@@ -116,7 +128,7 @@ class RocksDBIndexStore(
     }
 
     inner class Iterator(
-        partition: FhirIndexPartitions<ByteArray, *, ByteArray, *>, prefix: ByteArray?
+        partition: FhirIndexPartitions<*, *, *, ByteArray, *, *>, prefix: ByteArray?
     ): IIterator<ByteArray, ByteArray> {
 
         private val iterator: RocksIterator
@@ -135,10 +147,6 @@ class RocksDBIndexStore(
         override fun hasNext(): Boolean = iterator.isValid
 
         override fun close() = iterator.close()
-
-        override fun key(): ByteArray = iterator.key()
-
-        override fun value(): ByteArray = iterator.value()
 
     }
 

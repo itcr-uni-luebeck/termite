@@ -1,13 +1,18 @@
 package de.itcr.termite.index.partition
 
-interface FhirIndexPartitions<KEY, KEY_GENERATOR: Function<KEY>, VALUE, VALUE_GENERATOR: Function<VALUE>> {
+import org.hl7.fhir.instance.model.api.IAnyResource
+import org.hl7.fhir.instance.model.api.IBase
+
+interface FhirIndexPartitions<FHIR_MODEL_TYPE, ELEMENT, ID_TYPE, KEY, PREFIX_GENERATOR: Function<KEY>, KEY_GENERATOR: Function<KEY>> {
 
     fun indexName(): String
 
     fun bytes(): ByteArray
 
-    fun keyGenerator(): KEY_GENERATOR
+    fun elementPath(): (FHIR_MODEL_TYPE) -> Iterable<ELEMENT>
 
-    fun valueGenerator(): VALUE_GENERATOR
+    fun prefixGenerator(): PREFIX_GENERATOR
+
+    fun keyGenerator(): KEY_GENERATOR
 
 }

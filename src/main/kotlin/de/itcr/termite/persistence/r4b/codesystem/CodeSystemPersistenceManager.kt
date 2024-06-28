@@ -4,9 +4,13 @@ import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
+import de.itcr.termite.index.IBatch
+import de.itcr.termite.index.partition.FhirSearchIndexPartitions
+import de.itcr.termite.index.provider.r4b.RocksDBIndexStore
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
 import de.itcr.termite.model.repository.FhirConceptRepository
+import de.itcr.termite.persistence.r4b.concept.ConceptOperationIndexPartitions
 import de.itcr.termite.util.serialize
 import de.itcr.termite.util.serializeInOrder
 import de.itcr.termite.util.tagAsSummarized
@@ -24,7 +28,7 @@ class CodeSystemPersistenceManager(
     @Autowired private val fhirCtx: FhirContext,
     @Autowired private val repository: FhirCodeSystemMetadataRepository,
     @Autowired private val conceptRepository : FhirConceptRepository,
-    @Autowired private val indexStore: FhirIndexStore
+    @Autowired private val indexStore: FhirIndexStore<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>
 ): ICodeSystemPersistenceManager<Int> {
 
     private val random = Random(0)
@@ -41,19 +45,13 @@ class CodeSystemPersistenceManager(
         catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem concepts. Reason: ${e.message}", e) }
         try {
             val batch = indexStore.createBatch()
-            val system = instance.url
-            val version = instance.version
-            // TODO: Extract key generators to some external place where they can more easily be found
-            val keySelector: FhirConcept.() -> ByteArray = {
-                val buffer = ByteBuffer.allocate(16)
-                buffer.putInt(system.hashCode())
-                buffer.putInt(code.hashCode())
-                buffer.putInt(Objects.hashCode(version)) // Since version can be null
-                buffer.putInt(csMetadata.id)
-                buffer.array()
-            }
-            val valueSelector: FhirConcept.() -> ByteArray = { serialize(id) }
-            batch.put(CodeSystemIndexPartitions.LOOKUP, concepts, keySelector, valueSelector)
+            val id = storedMetadata.id
+            val system = storedMetadata.url
+            val version = storedMetadata.version
+
+            addSearchParametersToBatch(instance, id, batch)
+            addLookupEntriesToBatch(concepts, id, system, version, batch)
+
             indexStore.processBatch(batch)
         }
         catch (e: Exception) {
@@ -62,6 +60,25 @@ class CodeSystemPersistenceManager(
             throw PersistenceException("Failed to index CodeSystem concepts. Reason: ${e.message}", e)
         }
         return storedMetadata.toCodeSystemResource().tagAsSummarized()
+    }
+
+    private fun addSearchParametersToBatch(cs: CodeSystem, id: Int, batch: IBatch<ByteArray, ByteArray>) {
+        for (partition in CodeSystemSearchIndexPartitions::class.sealedSubclasses.map { c -> c.objectInstance!! as CodeSystemSearchIndexPartitions<Any> }) {
+            val elements = partition.elementPath()(cs)
+            for (element in elements) {
+                val key = partition.keyGenerator()(element, id)
+                batch.put(partition, key, null)
+            }
+        }
+    }
+
+    private fun addLookupEntriesToBatch(concepts: Iterable<FhirConcept>, id: Int, system: String, version: String?, batch: IBatch<ByteArray, ByteArray>) {
+        val partition = ConceptOperationIndexPartitions.LOOKUP
+        for (concept in concepts) {
+            val key = partition.keyGenerator()(concept, system, version, id)
+            val value = partition.valueGenerator()(concept.id)
+            batch.put(partition, key, value)
+        }
     }
 
     override fun update(id: Int, instance: CodeSystem): CodeSystem {
