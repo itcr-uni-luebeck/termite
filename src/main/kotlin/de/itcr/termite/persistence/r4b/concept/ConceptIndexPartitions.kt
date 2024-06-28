@@ -7,6 +7,7 @@ import org.hl7.fhir.r4b.model.CodeSystem
 
 abstract class ConceptIndexPartitions <ELEMENT, ID_TYPE, PREFIX_GENERATOR: Function<ByteArray>, KEY_GENERATOR: Function<ByteArray>>(
     private val indexName: String,
+    private val prefixLength: Int,
     private val elementPath: (Iterable<FhirConcept>) -> Iterable<ELEMENT>,
     private val prefixGenerator: PREFIX_GENERATOR,
     private val keyGenerator: KEY_GENERATOR
@@ -15,6 +16,8 @@ abstract class ConceptIndexPartitions <ELEMENT, ID_TYPE, PREFIX_GENERATOR: Funct
     private val bytes = indexName.toByteArray(Charsets.UTF_8)
 
     override fun indexName(): String = indexName
+
+    override fun prefixLength(): Int = prefixLength
 
     override fun bytes(): ByteArray = bytes
 

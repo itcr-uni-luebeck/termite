@@ -28,7 +28,7 @@ class CodeSystemPersistenceManager(
     @Autowired private val fhirCtx: FhirContext,
     @Autowired private val repository: FhirCodeSystemMetadataRepository,
     @Autowired private val conceptRepository : FhirConceptRepository,
-    @Autowired private val indexStore: FhirIndexStore<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>>
+    @Autowired private val indexStore: FhirIndexStore<ByteArray, ByteArray>
 ): ICodeSystemPersistenceManager<Int> {
 
     private val random = Random(0)

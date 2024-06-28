@@ -2,6 +2,7 @@ package de.itcr.termite.persistence.r4b.valueset
 
 import de.itcr.termite.index.partition.FhirIndexPartitions
 
+/*
 enum class ValueSetIndexPartitions(private val indexName: String) : FhirIndexPartitions {
 
     CRUD("ValueSet.crud"),
@@ -12,3 +13,4 @@ enum class ValueSetIndexPartitions(private val indexName: String) : FhirIndexPar
     override fun bytes(): ByteArray = indexName.toByteArray(Charsets.UTF_8)
 
 }
+ */

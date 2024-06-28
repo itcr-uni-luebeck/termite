@@ -4,6 +4,7 @@
 /.gradle/
 /src/main/resources/db/
 /src/main/kotlin/de/itcr/termite/Test.kt
+/.kotlin/
 
 logging.log
 

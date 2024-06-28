@@ -7,6 +7,8 @@ interface FhirIndexPartitions<FHIR_MODEL_TYPE, ELEMENT, ID_TYPE, KEY, PREFIX_GEN
 
     fun indexName(): String
 
+    fun prefixLength(): Int
+
     fun bytes(): ByteArray
 
     fun elementPath(): (FHIR_MODEL_TYPE) -> Iterable<ELEMENT>

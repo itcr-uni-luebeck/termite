@@ -50,7 +50,7 @@ class Termite(compilationResult: Pair<CapabilityStatement, Array<OperationDefini
     fun operationDefinitions(): List<OperationDefinition> = this.operationDefinitions
 
     @Bean
-    fun indexStore(): FhirIndexStore<ByteArray, Function<ByteArray>, ByteArray, Function<ByteArray>> {
+    fun indexStore(): FhirIndexStore<ByteArray, ByteArray> {
         return when (properties.index.type) {
             // TODO: Create single global FhirContext object
             "rocksdb" -> RocksDBIndexStore.open(fhirContext(), Path.of(properties.index.path), capabilityStatement)

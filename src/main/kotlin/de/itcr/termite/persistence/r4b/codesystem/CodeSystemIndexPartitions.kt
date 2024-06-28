@@ -5,6 +5,7 @@ import org.hl7.fhir.r4b.model.CodeSystem
 
 abstract class CodeSystemIndexPartitions<ELEMENT, ID_TYPE, PREFIX_GENERATOR: Function<ByteArray>, KEY_GENERATOR: Function<ByteArray>>(
     private val indexName: String,
+    private val prefixLength: Int,
     private val elementPath: (CodeSystem) -> Iterable<ELEMENT>,
     private val prefixGenerator: PREFIX_GENERATOR,
     private val keyGenerator: KEY_GENERATOR
@@ -13,6 +14,8 @@ abstract class CodeSystemIndexPartitions<ELEMENT, ID_TYPE, PREFIX_GENERATOR: Fun
     private val bytes = indexName.toByteArray(Charsets.UTF_8)
 
     override fun indexName(): String = indexName
+
+    override fun prefixLength(): Int = prefixLength
 
     override fun bytes(): ByteArray = bytes
 
