@@ -1,6 +1,9 @@
 package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.api.r4b.exc.handleUnparsableEntity
+import de.itcr.termite.api.r4b.exc.handleUnsupportedFormat
+import de.itcr.termite.api.r4b.exc.handleUnsupportedParameterValue
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.api.UnsupportedFormatException
 import de.itcr.termite.exception.api.UnsupportedValueException
@@ -67,45 +70,9 @@ class BaseController (
                 .header("Content-Type", format)
                 .body(encodeResourceToString(metadataResource, format))
         }
-        catch (exc: UnsupportedValueException) {
-            logger.debug(exc.message)
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.VALUE,
-                exc.message,
-                jsonParser
-            )
-            return ResponseEntity.badRequest()
-                .eTag("W/\"0\"")
-                .header("Content-Type", "application/fhir+json")
-                .body(opOutcome)
-        }
-        catch (exc: UnsupportedFormatException) {
-            logger.debug(exc.message)
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.VALUE,
-                exc.message,
-                jsonParser
-            )
-            return ResponseEntity.badRequest()
-                .eTag("W/\"0\"")
-                .header("Content-Type", "application/fhir+json")
-                .body(opOutcome)
-        }
-        catch (exc: DataFormatException) {
-            logger.debug(exc.message)
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.STRUCTURE,
-                exc.message,
-                jsonParser
-            )
-            return ResponseEntity.badRequest()
-                .eTag("W/\"0\"")
-                .header("Content-Type", "application/fhir+json")
-                .body(opOutcome)
-        }
+        catch (exc: UnsupportedValueException) { return handleUnsupportedParameterValue(exc, jsonParser) }
+        catch (exc: UnsupportedFormatException) { return handleUnsupportedFormat(exc, jsonParser) }
+        catch (exc: DataFormatException) { return handleUnparsableEntity(exc, jsonParser) }
     }
 
     // TODO: Should be updated upon change in underlying database and new instance provided to this endpoint
