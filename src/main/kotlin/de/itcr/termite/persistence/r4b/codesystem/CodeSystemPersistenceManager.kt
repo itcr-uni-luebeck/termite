@@ -100,6 +100,7 @@ class CodeSystemPersistenceManager(
     }
 
     override fun search(parameters: Map<String, Any>): List<CodeSystem> {
+        if (parameters.isEmpty()) return repository.findAll().map { it.toCodeSystemResource() }
         TODO("Not yet implemented")
     }
 
