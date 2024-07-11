@@ -13,51 +13,33 @@ import org.hl7.fhir.r4b.model.OperationOutcome
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 
+typealias IssueSeverity = OperationOutcome.IssueSeverity
+typealias IssueType = OperationOutcome.IssueType
+
 private val logger = LogManager.getLogger("de.itcr.termite.api.r4b.exc.Handlers")
 
-fun handleUnsupportedFormat(exc: UnsupportedFormatException, parser: IParser): ResponseEntity<String> {
-    logger.debug(exc.message)
-    val opOutcome = generateOperationOutcomeString(
-        OperationOutcome.IssueSeverity.ERROR,
-        OperationOutcome.IssueType.VALUE,
-        exc.message,
-        parser
-    )
-    return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+fun handleUnsupportedFormat(e: UnsupportedFormatException, parser: IParser) =
+    handleException(e, parser, HttpStatus.NOT_ACCEPTABLE, IssueSeverity.ERROR, IssueType.VALUE)
+
+fun handleUnparsableEntity(e: Exception, parser: IParser) =
+    handleException(e, parser, HttpStatus.UNSUPPORTED_MEDIA_TYPE, IssueSeverity.ERROR, IssueType.VALUE, "Unparsable entity: {e}")
+
+fun handleUnsupportedParameterValue(exc: UnsupportedValueException, parser: IParser) =
+    handleException(exc, parser, HttpStatus.BAD_REQUEST, IssueSeverity.ERROR, IssueType.VALUE)
+
+fun handleException(e: Throwable, parser: IParser, httpStatus: HttpStatus, severity: IssueSeverity, type: IssueType, template: String = "{e}"): ResponseEntity<String> {
+    val message = replaceInTemplate(template, e.message ?: "")
+    logger.debug(message)
+    val opOutcome = generateOperationOutcomeString(severity, type, message, parser)
+    return ResponseEntity.status(httpStatus)
         .eTag("W/\"0\"")
         .header("Content-Type", determineContentType(parser))
         .body(opOutcome)
 }
 
-fun handleUnparsableEntity(exc: Exception, parser: IParser): ResponseEntity<String> {
-    logger.debug(exc.message)
-    val opOutcome = generateOperationOutcomeString(
-        OperationOutcome.IssueSeverity.ERROR,
-        OperationOutcome.IssueType.VALUE,
-        "Unparsable entity: " + exc.message,
-        parser
-    )
-    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-        .eTag("W/\"0\"")
-        .header("Content-Type", determineContentType(parser))
-        .body(opOutcome)
-}
+private fun replaceInTemplate(template: String, message: String): String = template.replace("{e}", message)
 
-fun handleUnsupportedParameterValue(exc: UnsupportedValueException, parser: IParser): ResponseEntity<String> {
-    logger.debug(exc.message)
-    val opOutcome = generateOperationOutcomeString(
-        OperationOutcome.IssueSeverity.ERROR,
-        OperationOutcome.IssueType.VALUE,
-        exc.message,
-        parser
-    )
-    return ResponseEntity.badRequest()
-        .eTag("W/\"0\"")
-        .header("Content-Type", determineContentType(parser))
-        .body(opOutcome)
-}
-
-fun determineContentType(parser: IParser): String {
+private fun determineContentType(parser: IParser): String {
     return when(parser.encoding) {
         EncodingEnum.JSON -> "application/fhir+json"
         EncodingEnum.NDJSON -> "application/fhir+ndjson"
