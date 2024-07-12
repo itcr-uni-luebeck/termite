@@ -55,7 +55,8 @@ class BaseController (
     @ResponseBody
     fun metadata(
         @RequestParam(required = false, name = "mode", defaultValue = "full") mode: String = "full",
-        @RequestParam(required = false, name = "_format", defaultValue = "application/fhir+json") format: String
+        @RequestParam(required = false, name = "_format", defaultValue = "application/fhir+json") format: String,
+        @RequestParam(required = false, name = "_summary", defaultValue = "false") summary: Boolean
     ): ResponseEntity<String>{
         logger.info("Received metadata request")
         try {
@@ -68,7 +69,7 @@ class BaseController (
             return ResponseEntity.ok()
                 .eTag("W/\"0\"")
                 .header("Content-Type", format)
-                .body(encodeResourceToString(metadataResource, format))
+                .body(encodeResourceToString(metadataResource, format, summary))
         }
         catch (exc: UnsupportedValueException) { return handleUnsupportedParameterValue(exc, jsonParser) }
         catch (exc: UnsupportedFormatException) { return handleUnsupportedFormat(exc, jsonParser) }

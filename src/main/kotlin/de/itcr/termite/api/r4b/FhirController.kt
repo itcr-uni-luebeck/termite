@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.DataFormatException
 import ca.uhn.fhir.parser.IParser
 import de.itcr.termite.exception.api.UnsupportedFormatException
 import de.itcr.termite.exception.api.UnsupportedValueException
+import de.itcr.termite.util.encodeResourceToString
 import org.hl7.fhir.instance.model.api.IBaseResource
 import org.springframework.http.RequestEntity
 
@@ -45,11 +46,11 @@ abstract class FhirController(val fhirContext: FhirContext) {
         }
     }
 
-    protected fun encodeResourceToString(resource: IBaseResource, contentType: String): String {
+    protected fun encodeResourceToString(resource: IBaseResource, contentType: String, summarized: Boolean = false): String {
         val (parser, parserFormat) = parsers[contentType] ?:
             throw UnsupportedFormatException("Unsupported content type: $contentType. Only supports: ${parsers.keys.joinToString(", ")}")
         try {
-            return parser.encodeResourceToString(resource)
+            return parser.encodeResourceToString(resource, summarized)
         } catch (e: DataFormatException) {
             val message = "Data is not in $parserFormat format"
             throw DataFormatException(message, e)
