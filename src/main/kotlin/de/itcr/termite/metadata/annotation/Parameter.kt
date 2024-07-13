@@ -1,5 +1,7 @@
 package de.itcr.termite.metadata.annotation
 
+import kotlin.reflect.KClass
+
 annotation class Parameter(
     val name: String,
     val use: String,

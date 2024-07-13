@@ -1,7 +1,5 @@
 package de.itcr.termite.persistence.r4b.valueset
 
-import de.itcr.termite.index.partition.FhirIndexPartitions
-
 /*
 enum class ValueSetIndexPartitions(private val indexName: String) : FhirIndexPartitions {
 

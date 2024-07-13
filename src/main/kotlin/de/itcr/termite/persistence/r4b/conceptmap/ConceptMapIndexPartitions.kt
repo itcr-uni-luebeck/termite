@@ -1,7 +1,5 @@
 package de.itcr.termite.persistence.r4b.conceptmap
 
-import de.itcr.termite.index.partition.FhirIndexPartitions
-
 /*
 enum class ConceptMapIndexPartitions(private val indexName: String) : FhirIndexPartitions {
 

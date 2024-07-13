@@ -24,6 +24,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.findAnnotations
 
+typealias ParameterComponent = CapabilityStatement.CapabilityStatementRestResourceSearchParamComponent
+
 @Component
 object MetadataCompiler {
 
@@ -119,6 +121,9 @@ object MetadataCompiler {
             }
             ann.searchInclude.forEach { include -> addSearchInclude(include) }
             ann.searchRevInclude.forEach { include -> addSearchRevInclude(include) }
+            searchParam = ann.searchParam.map {
+                param -> ParameterComponent(param.name, Enumerations.SearchParamType.fromCode(param.name))
+            }
         }
     }
 

@@ -5,22 +5,16 @@ import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.index.IBatch
-import de.itcr.termite.index.partition.FhirSearchIndexPartitions
-import de.itcr.termite.index.provider.r4b.RocksDBIndexStore
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
 import de.itcr.termite.model.repository.FhirConceptRepository
-import de.itcr.termite.persistence.r4b.concept.ConceptOperationIndexPartitions
-import de.itcr.termite.util.serialize
+import de.itcr.termite.persistence.r4b.concept.ConceptOperationIndexPartitionI
 import de.itcr.termite.util.serializeInOrder
 import de.itcr.termite.util.tagAsSummarized
 import org.hl7.fhir.r4b.model.CodeSystem
 import org.hl7.fhir.r4b.model.Parameters
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
-import java.nio.ByteBuffer
-import java.util.Objects
 import kotlin.random.Random
 
 @Component
@@ -63,17 +57,19 @@ class CodeSystemPersistenceManager(
     }
 
     private fun addSearchParametersToBatch(cs: CodeSystem, id: Int, batch: IBatch<ByteArray, ByteArray>) {
-        for (partition in CodeSystemSearchIndexPartitions::class.sealedSubclasses.map { c -> c.objectInstance!! as CodeSystemSearchIndexPartitions<Any> }) {
+        for (partition in CodeSystemSearchIndexPartitionI::class.sealedSubclasses.map { c -> c.objectInstance!! as CodeSystemSearchIndexPartitionI<Any> }) {
             val elements = partition.elementPath()(cs)
             for (element in elements) {
-                val key = partition.keyGenerator()(element, id)
-                batch.put(partition, key, null)
+                if (element != null) {
+                    val key = partition.keyGenerator()(element, id)
+                    batch.put(partition, key, byteArrayOf())
+                }
             }
         }
     }
 
     private fun addLookupEntriesToBatch(concepts: Iterable<FhirConcept>, id: Int, system: String, version: String?, batch: IBatch<ByteArray, ByteArray>) {
-        val partition = ConceptOperationIndexPartitions.LOOKUP
+        val partition = ConceptOperationIndexPartitionI.LOOKUP
         for (concept in concepts) {
             val key = partition.keyGenerator()(concept, system, version, id)
             val value = partition.valueGenerator()(concept.id)
@@ -96,7 +92,7 @@ class CodeSystemPersistenceManager(
     }
 
     override fun search(parameters: Parameters): List<CodeSystem> {
-        TODO("Not yet implemented")
+        parameters.parameter.map { entry -> entry. }
     }
 
     override fun search(parameters: Map<String, Any>): List<CodeSystem> {

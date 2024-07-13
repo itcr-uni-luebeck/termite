@@ -11,7 +11,8 @@ data class ApplicationConfig (
     val index: IndexConfig
 ) {
 
-    data class APIConfig(
+    class APIConfig(
+        val fhirApiVersion: String,
         val packageName: String,
         val baseUrl: String
     )

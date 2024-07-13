@@ -1,12 +1,12 @@
 package de.itcr.termite.index
 
-import de.itcr.termite.index.partition.FhirIndexPartitions
+import de.itcr.termite.index.partition.IFhirIndexPartition
 
 interface IteratorSupport<KEY, VALUE> {
 
-    fun createIterator(partition: FhirIndexPartitions<*, *, *, KEY, *, *>): IIterator<KEY, VALUE>
+    fun createIterator(partition: IFhirIndexPartition<*, *, *, KEY, *, *>): IIterator<KEY, VALUE>
 
-    fun createIterator(partition: FhirIndexPartitions<*, *, *, KEY, *, *>, prefix: ByteArray): IIterator<KEY, VALUE>
+    fun createIterator(partition: IFhirIndexPartition<*, *, *, KEY, *, *>, prefix: ByteArray): IIterator<KEY, VALUE>
 
 }
 

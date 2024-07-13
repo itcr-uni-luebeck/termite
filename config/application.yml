@@ -33,6 +33,7 @@ spring:
 
 termite:
   api:
+    fhir_api_version: "R4B"
     package_name: de.itcr.termite.api
     base_url: "/fhir"
   index:

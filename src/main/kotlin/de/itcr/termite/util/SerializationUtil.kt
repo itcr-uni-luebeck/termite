@@ -5,6 +5,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import java.nio.ByteBuffer
+import java.util.Date
+import kotlin.reflect.full.companionObjectInstance
 
 //private val anyArraySerializer = serializer<Array<*>>()
 private val stringArraySerializer = serializer<Array<String>>()
@@ -95,6 +97,10 @@ fun serializeLongArray(longArr: LongArray): ByteArray {
     return buffer.array()
 }
 
+fun serialize(a: Date): ByteArray = serialize(a.time)
+
+fun serialize(a: Enum<*>): ByteArray = serialize(a.ordinal)
+
 /**
  * Deserializes ByteArray to object of specified type T
  * @param b ByteArray
@@ -106,6 +112,7 @@ inline fun <reified T> deserialize(b: ByteArray): T {
         Int::class -> deserializeInt(b) as T
         Long::class -> deserializeLong(b) as T
         String::class -> deserializeString(b) as T
+        Date::class -> deserializeDate(b) as T
         else -> deserialize(b) as T
     }
 }
@@ -178,8 +185,30 @@ fun deserializeLongArray(b: ByteArray): LongArray {
     return longArr
 }
 
+fun deserializeDate(b: ByteArray): Date = Date(deserializeLong(b))
+
+inline fun <reified T: Enum<T>> deserializeEnum(b: ByteArray): Enum<T> = enumValues<T>()[deserializeInt(b)]
+
 fun serializeInOrder(vararg args: Int): ByteArray {
-    val buffer = ByteBuffer.allocate(args.size)
+    val buffer = ByteBuffer.allocate(args.size * 4)
     args.forEach { arg -> buffer.putInt(arg) }
     return buffer.array()
 }
+
+// TODO: Check performance
+fun serializeInOrder(vararg args: Any): ByteArray {
+    val buffer = ArrayList<Byte>(args.size * 4)
+    args.forEach { arg ->
+        when (arg) {
+            is String -> buffer.addAll(serialize(arg).asIterable())
+            is Int -> buffer.addAll(serialize(arg).asIterable())
+            is Long -> buffer.addAll(serialize(arg).asIterable())
+            is Date -> buffer.addAll(serialize(arg).asIterable())
+            is Enum<*> -> buffer.addAll(serialize(arg).asIterable())
+            else -> buffer.addAll(serialize(arg).asIterable())
+        }
+    }
+    return buffer.toByteArray()
+}
+
+fun serializeInOrder(vararg args: String): ByteArray = args.mapToBytes()

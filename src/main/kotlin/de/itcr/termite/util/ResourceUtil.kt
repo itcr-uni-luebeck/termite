@@ -32,7 +32,7 @@ class ResourceUtil {
 
         private fun getClass(className: String, packageName: String): KClass<*>?
         {
-            val fullClassName = "$packageName.${className.substring(0, className.lastIndexOf('.'))}"
+            val fullClassName = "${packageName.replace("/", ".")}.${className.substring(0, className.lastIndexOf('.'))}"
             return try {
                 Class.forName(fullClassName).kotlin
             } catch (exception: ClassNotFoundException) {

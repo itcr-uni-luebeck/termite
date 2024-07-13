@@ -1,22 +1,21 @@
 package de.itcr.termite.persistence.r4b.codesystem
 
 import de.itcr.termite.index.partition.*
-import de.itcr.termite.model.entity.FhirCodeSystemMetadata
 import de.itcr.termite.util.serialize
 import org.hl7.fhir.r4b.model.*
 import java.nio.ByteBuffer
 import java.util.*
 
-sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
+sealed class CodeSystemSearchIndexPartitionI<ELEMENT>(
     indexName: String,
     prefixLength: Int,
     elementPath: (CodeSystem) -> Iterable<ELEMENT>,
     prefixGenerator: (ELEMENT) -> ByteArray,
     keyGenerator: (ELEMENT, Int) -> ByteArray
-): CodeSystemIndexPartitions<ELEMENT, Int, (ELEMENT) -> ByteArray, (ELEMENT, Int) -> ByteArray>(indexName, prefixLength, elementPath, prefixGenerator, keyGenerator),
-    FhirSearchIndexPartitions<CodeSystem, ELEMENT, ByteArray> {
+): CodeSystemIndexPartitionI<ELEMENT, Int, (ELEMENT) -> ByteArray, (ELEMENT, Int) -> ByteArray>(indexName, prefixLength, elementPath, prefixGenerator, keyGenerator),
+    IFhirSearchIndexPartition<CodeSystem, ELEMENT, ByteArray> {
 
-    data object SEARCH_CONTENT_MODE: CodeSystemSearchIndexPartitions<CodeSystem.CodeSystemContentMode>(
+    data object SEARCH_CONTENT_MODE: CodeSystemSearchIndexPartitionI<CodeSystem.CodeSystemContentMode>(
         "CodeSystem.search.content-mode",
         4,
         { res: CodeSystem -> listOf(res.content) },
@@ -25,7 +24,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
     )
 
     // Using Long (8 bytes) instead of String hash code (4 bytes) to possibly leverage ordering on iteration
-    data object SEARCH_DATE: CodeSystemSearchIndexPartitions<Date>(
+    data object SEARCH_DATE: CodeSystemSearchIndexPartitionI<Date>(
         "CodeSystem.search.date",
         8,
         { res: CodeSystem -> listOf(res.date) },
@@ -33,7 +32,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: Date, id: Int -> ByteBuffer.allocate(12).putLong(value.time).putInt(id).array() }
     )
 
-    data object SEARCH_DESCRIPTION: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_DESCRIPTION: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.description",
         4,
         { res: CodeSystem -> listOf(res.description) },
@@ -41,7 +40,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_IDENTIFIER: CodeSystemSearchIndexPartitions<Identifier>(
+    data object SEARCH_IDENTIFIER: CodeSystemSearchIndexPartitionI<Identifier>(
         "CodeSystem.search.identifier",
         8,
         { res: CodeSystem -> res.identifier },
@@ -56,7 +55,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
             .array() }
     )
 
-    data object SEARCH_JURISDICTION: CodeSystemSearchIndexPartitions<Coding>(
+    data object SEARCH_JURISDICTION: CodeSystemSearchIndexPartitionI<Coding>(
         "CodeSystem.search.jurisdiction",
         8,
         { res: CodeSystem -> res.jurisdiction.map { cc -> cc.coding }.flatten() },
@@ -72,7 +71,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
             .array()}
     )
 
-    data object SEARCH_LANGUAGE: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_LANGUAGE: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.language",
         4,
         { cs: CodeSystem -> listOf(cs.language) },
@@ -80,7 +79,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_NAME: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_NAME: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.name",
         4,
         { cs: CodeSystem -> listOf(cs.name) },
@@ -88,7 +87,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_PUBLISHER: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_PUBLISHER: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.publisher",
         4,
         { cs: CodeSystem -> listOf(cs.publisher) },
@@ -96,7 +95,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_STATUS: CodeSystemSearchIndexPartitions<Enumerations.PublicationStatus>(
+    data object SEARCH_STATUS: CodeSystemSearchIndexPartitionI<Enumerations.PublicationStatus>(
         "CodeSystem.search.status",
         4,
         { cs: CodeSystem -> listOf(cs.status) },
@@ -105,7 +104,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
     )
 
     // NOTE: IF a URL is supplied as a reference to the CodeSystem seek into the CodeSystem.search.url partition instead
-    data object SEARCH_SUPPLEMENTS: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_SUPPLEMENTS: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.supplements",
         4,
         { cs: CodeSystem -> listOf(cs.supplements) },
@@ -113,7 +112,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_SYSTEM: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_SYSTEM: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.url",
         4,
         { cs: CodeSystem -> listOf(cs.url) },
@@ -121,7 +120,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_TITLE: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_TITLE: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.title",
         4,
         { cs: CodeSystem -> listOf(cs.title) },
@@ -129,7 +128,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_URL: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_URL: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.url",
         4,
         { cs: CodeSystem -> listOf(cs.url) },
@@ -137,7 +136,7 @@ sealed class CodeSystemSearchIndexPartitions<ELEMENT>(
         { value: String, id: Int -> ByteBuffer.allocate(8).putInt(value.hashCode()).putInt(id).array() }
     )
 
-    data object SEARCH_VERSION: CodeSystemSearchIndexPartitions<String>(
+    data object SEARCH_VERSION: CodeSystemSearchIndexPartitionI<String>(
         "CodeSystem.search.version",
         4,
         { cs: CodeSystem -> listOf(cs.version) },

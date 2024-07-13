@@ -4,26 +4,17 @@ import ca.uhn.fhir.context.FhirContext
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
-import de.itcr.termite.model.entity.FhirCodeSystemMetadata
-import de.itcr.termite.model.entity.toCodeSystemResource
-import de.itcr.termite.model.entity.toFhirCodeSystemMetadata
-import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
 import de.itcr.termite.persistence.r4b.codesystem.CodeSystemPersistenceManager
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.hl7.fhir.instance.model.api.IBase
 import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestHeader
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.ResponseBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
 import java.net.URI
 
@@ -41,9 +32,31 @@ import java.net.URI
     searchRevInclude = [],
     searchParam = [
         SearchParameter(
+            name = "code",
+            type = "token",
+            documentation = "A code defined in the code system",
+            processing = ProcessingHint(
+                targetType = Coding::class,
+                elementPath = "CodeSystem.concept"
+            )
+        ),
+        SearchParameter(
             name = "url",
             type = "uri",
-            documentation = "URL of the resource to locate"
+            documentation = "The uri that identifies the code system",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "CodeSystem.url"
+            )
+        ),
+        SearchParameter(
+            name = "name",
+            type = "string",
+            documentation = "Computationally friendly name of the code system",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "CodeSystem.name"
+            )
         )
     ]
 )
@@ -350,20 +363,20 @@ class CodeSystemController(
                 .body(opOutcome)
         }
     }
-
-    @GetMapping(params = ["url"])
+*/
+    @GetMapping
     @ResponseBody
-    fun search(@RequestParam url: String): ResponseEntity<String>{
-        logger.info("Searching for code system [url = $url]")
+    fun search(@RequestParam param: Map<String, String>): ResponseEntity<String>{
+        logger.info("Searching for code system [url = $param]")
         try{
-            val csList = database.searchCodeSystem(url)
+            val csList = database.searchCodeSystem(param)
             val bundle = Bundle()
             bundle.id = UUID.randomUUID().toString()
             bundle.type = Bundle.BundleType.SEARCHSET
             bundle.total = csList.size
             //Should be faster since otherwise an internal array list would have to resized all the time
             bundle.entry = csList.map { cs -> Bundle.BundleEntryComponent().setResource(cs) }
-            logger.debug("Found ${csList.size} code systems for URL $url")
+            logger.debug("Found ${csList.size} code systems for URL $param")
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
         }
         catch (e: Exception){
@@ -380,6 +393,6 @@ class CodeSystemController(
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(opOutcome)
         }
-    }*/
+    }
 
 }

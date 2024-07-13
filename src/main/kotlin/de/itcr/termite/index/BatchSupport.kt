@@ -1,6 +1,6 @@
 package de.itcr.termite.index
 
-import de.itcr.termite.index.partition.FhirIndexPartitions
+import de.itcr.termite.index.partition.IFhirIndexPartition
 
 interface BatchSupport<KEY, VALUE> {
 
@@ -12,10 +12,10 @@ interface BatchSupport<KEY, VALUE> {
 
 interface IBatch<KEY, VALUE> {
 
-    fun put(partition: FhirIndexPartitions<*, *, *, KEY, *, *>, key: KEY, value: VALUE?)
+    fun put(partition: IFhirIndexPartition<*, *, *, KEY, *, *>, key: KEY, value: VALUE?)
 
     fun <T> put(
-        partition: FhirIndexPartitions<*, *, *, KEY, *, *>,
+        partition: IFhirIndexPartition<*, *, *, KEY, *, *>,
         data: Iterable<T>, keySelector: (T) -> KEY,
         valueSelector: (T) -> VALUE?
     )
