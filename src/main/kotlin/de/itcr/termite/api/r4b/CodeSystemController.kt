@@ -117,7 +117,7 @@ import java.net.URI
         )
     ]
 )
-@RestController
+//@RestController
 @RequestMapping("fhir/CodeSystem")
 class CodeSystemController(
     @Autowired persistence: CodeSystemPersistenceManager,
