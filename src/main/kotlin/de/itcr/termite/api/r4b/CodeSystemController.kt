@@ -338,6 +338,28 @@ class CodeSystemController(
         }
     }*/
 
+    @DeleteMapping(
+        path = ["{id}"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
+    @ResponseBody
+    fun delete(
+        @PathVariable id: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String
+    ): ResponseEntity<String> {
+        logger.info("Deleting CodeSystem instance [id: $id]")
+        try{
+            val responseMediaType = determineResponseMediaType(accept)
+            val cs = persistence.delete(id.toInt())
+            logger.debug("Deleted CodeSystem instance [id: $id, url: ${cs.url}, version: ${cs.version}]")
+            return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(cs, responseMediaType))
+        }
+        catch (e: NotFoundException) { return handleNotFound(e, accept) }
+        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
+            IssueType.PROCESSING, "Deletion of CodeSystem instance failed during database access. Reason: {e}"
+        ) }
+    }
+
     @GetMapping(
         path = ["{id}"],
         produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]

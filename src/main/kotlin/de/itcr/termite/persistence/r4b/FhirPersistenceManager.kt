@@ -10,7 +10,7 @@ interface FhirPersistenceManager<RESOURCE_TYPE, ID_TYPE> {
 
     fun read(id: ID_TYPE): RESOURCE_TYPE
 
-    fun delete(id: ID_TYPE)
+    fun delete(id: ID_TYPE): RESOURCE_TYPE
 
     fun search(parameters: Parameters): List<RESOURCE_TYPE>
 

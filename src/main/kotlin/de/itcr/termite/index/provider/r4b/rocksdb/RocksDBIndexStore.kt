@@ -403,6 +403,7 @@ class RocksDBIndexStore(
                 Enumeration::class -> 4
                 UriType::class -> 4
                 CanonicalType::class -> 4
+                InstantType::class -> 8
                 else -> throw PersistenceException("Cannot find prefix length for target type ${targetType.qualifiedName}")
             }
         }
@@ -418,6 +419,7 @@ class RocksDBIndexStore(
                 Enumeration::class -> 8
                 UriType::class -> 8
                 CanonicalType::class -> 8
+                InstantType::class -> 12
                 else -> throw PersistenceException("Cannot find key length for target type ${targetType.qualifiedName}")
             }
         }
@@ -454,6 +456,10 @@ class RocksDBIndexStore(
                 DateTimeType::class -> Pair(
                     { v: Any -> serialize((v as DateTimeType).value) },
                     { v: Any, id: Int -> serializeInOrder((v as DateTimeType).value, id) }
+                )
+                InstantType::class -> Pair(
+                    { v: Any -> serialize((v as InstantType).value) },
+                    { v: Any, id: Int -> serializeInOrder((v as InstantType).value, id) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }

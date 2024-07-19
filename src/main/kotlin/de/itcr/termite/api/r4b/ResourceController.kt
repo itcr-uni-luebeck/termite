@@ -30,7 +30,7 @@ import kotlin.reflect.full.findAnnotation
             type = "date",
             documentation = "When the resource version last changed",
             processing = ProcessingHint(
-                targetType = DateTimeType::class,
+                targetType = InstantType::class,
                 elementPath = "meta.lastUpdated"
             )
         ),
@@ -96,7 +96,6 @@ abstract class ResourceController<TYPE, ID>(
         method: HttpMethod,
         exemptions: Set<String> = setOf("_format")
     ): Map<String, String> {
-        println(searchParameterMap.keys)
         return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in searchParameterMap.keys }
         else {
             val diff = parameters.keys - searchParameterMap.keys - exemptions

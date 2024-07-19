@@ -17,6 +17,7 @@ import de.itcr.termite.util.serializeInOrder
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CodeSystem
 import org.hl7.fhir.r4b.model.Parameters
+import org.rocksdb.Status.Code
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import kotlin.random.Random
@@ -68,8 +69,24 @@ class CodeSystemPersistenceManager(
         else return csOptional.get().toCodeSystemResource()
     }
 
-    override fun delete(id: Int) {
-        TODO("Not yet implemented")
+    override fun delete(id: Int): CodeSystem {
+        val storedMetadata: FhirCodeSystemMetadata
+        try { storedMetadata = repository.findById(id).get() }
+        catch (e: NoSuchElementException) { throw NotFoundException<CodeSystem>("id", id) }
+        catch (e: Exception) { throw PersistenceException("Error occurred while searching CodeSystem metadata. Reason: ${e.message}", e) }
+        val instance = storedMetadata.toCodeSystemResource()
+        val concepts: Iterable<FhirConcept>
+        try { concepts = conceptRepository.deleteByCodeSystem(id) }
+        catch (e: Exception) { throw PersistenceException("Failed to delete CodeSystem concepts. Reason: ${e.message}", e) }
+        try { indexStore.deleteCodeSystem(instance, concepts) }
+        catch (e: Exception) {
+            conceptRepository.deleteByCodeSystem(storedMetadata.id)
+            repository.delete(storedMetadata)
+            throw PersistenceException("Failed to remove CodeSystem instance from index. Reason: ${e.message}", e)
+        }
+        try { repository.deleteById(id) }
+        catch (e: Exception) { throw PersistenceException("Failed to delete CodeSystem metadata. Reason: ${e.message}", e) }
+        return instance.tagAsSummarized()
     }
 
     override fun search(parameters: Parameters): List<CodeSystem> = search(parametersToMap(parameters))

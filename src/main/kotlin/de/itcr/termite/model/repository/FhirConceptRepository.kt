@@ -11,7 +11,7 @@ interface FhirConceptRepository: CrudRepository<FhirConcept, Long> {
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM FhirConcept WHERE cs_id = ?1")
-    fun deleteByCodeSystem(csId: Int)
+    @Query(value = "DELETE FROM fhir_concept WHERE cs_id = ?1 RETURNING *", nativeQuery = true)
+    fun deleteByCodeSystem(csId: Int): List<FhirConcept>
 
 }
