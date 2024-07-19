@@ -27,22 +27,22 @@ class JsonUtil {
             else jsonParser.parseType(string, typeName)
         }
 
-        fun deserializeList(string: String?, typeName: String): List<DataType?> {
-            if (string == null) return emptyList()
+        fun deserializeList(string: String?, typeName: String): MutableList<DataType?> {
+            if (string == null) return mutableListOf()
             val jsonList = splitJsonArrayString(string)
             return when (jsonList.size) {
-                0 -> emptyList()
-                1 -> if (jsonList[0].all { it == ' ' }) emptyList() else listOf(deserialize(jsonList[0], typeName))
-                else -> jsonList.map { deserialize(it, typeName) }
+                0 -> mutableListOf()
+                1 -> if (jsonList[0].all { it == ' ' }) mutableListOf() else mutableListOf(deserialize(jsonList[0], typeName))
+                else -> jsonList.map { deserialize(it, typeName) }.toMutableList()
             }
         }
 
-        fun deserializeStringList(string: String?): List<String> {
-            if (string == null) return emptyList()
+        fun deserializeStringList(string: String?): MutableList<String> {
+            if (string == null) return mutableListOf()
             val jsonList = splitJsonArrayString(string)
             // Assuming this method is only used to parse JSON string from the database, this should suffice
-            return if (jsonList.isEmpty()) emptyList()
-            else jsonList.map { it.substring(1, it.length - 1) }
+            return if (jsonList.isEmpty()) mutableListOf()
+            else jsonList.map { it.substring(1, it.length - 1) }.toMutableList()
         }
 
         fun splitJsonArrayString(string: String): List<String> = splitJsonObjectOrArrayString(string, '[', ']')
@@ -52,9 +52,9 @@ class JsonUtil {
 
         // FIXME: Inefficient for deeply nested structures as many substrings will be read multiple times over multiple
         //        uses of this method on smaller substrings of the original string
-        private fun splitJsonObjectOrArrayString(string: String, prefixChar: Char, suffixChar: Char): List<String> {
+        private fun splitJsonObjectOrArrayString(string: String, prefixChar: Char, suffixChar: Char): MutableList<String> {
             val trimmedString = string.trim().removeSurrounding("$prefixChar", "$suffixChar")
-            if (trimmedString.isEmpty()) return emptyList()
+            if (trimmedString.isEmpty()) return mutableListOf()
             val list = mutableListOf<String>()
             var depthCurlyBraces = 0
             var depthBrackets = 0

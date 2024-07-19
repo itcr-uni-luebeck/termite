@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.hl7.fhir.r4b.model.CapabilityStatement
 import org.hl7.fhir.r4b.model.OperationDefinition
+import org.rocksdb.DBOptions
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -49,9 +50,10 @@ class Termite(compilationResult: Pair<CapabilityStatement, Array<OperationDefini
 
     @Bean
     fun indexStore(): FhirIndexStore<ByteArray, ByteArray> {
+        val dbOptions = DBOptions().optimizeForSmallDb().setCreateIfMissing(true).setCreateMissingColumnFamilies(true)
         return when (properties.index.type) {
             // TODO: Create single global FhirContext object
-            "rocksdb" -> RocksDBIndexStore.open(fhirContext(), Path.of(properties.index.path))
+            "rocksdb" -> RocksDBIndexStore.open(fhirContext(), Path.of(properties.index.path), dbOptions, properties)
             else -> throw RuntimeException("Unknown index type '${properties.index.type}'")
         }
     }

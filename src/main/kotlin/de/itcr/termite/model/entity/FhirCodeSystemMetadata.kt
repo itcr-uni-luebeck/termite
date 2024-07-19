@@ -15,11 +15,13 @@ import org.hibernate.annotations.UpdateTimestamp
 data class FhirCodeSystemMetadata(
     // Unfortunately Kotlin compiler translates Int to primitive type int while Hibernate returns the boxed type
     // leading to an IllegalAccessException. Hence, the boxed type has to be enforced via nullability
-    @Column(name = "id", nullable = false) @Id @GeneratedValue var id: Int,
-    @Column(name = "version_id", nullable = false) @Version var versionId: Int,
-    @Column(name = "last_updated") @Temporal(TemporalType.TIMESTAMP) @UpdateTimestamp val lastUpdated: Date?,
-    @Column(name = "source") val source: String?,
-    @Column(name = "profile") @ElementCollection val profile: List<String?>,
+    override val id: Int,
+    override val versionId: Int,
+    override val lastUpdated: Date?,
+    override val source: String?,
+    override val profile: List<String?>,
+    override val security: String?,
+    override val tag: String?,
     @Column(name = "url") val url: String,
     @Column(name = "identifier", columnDefinition = "jsonb") @Type(type = "jsonb") val identifier: String?,
     @Column(name = "version") val version: String?,
@@ -46,7 +48,7 @@ data class FhirCodeSystemMetadata(
     @Column(name = "count") val count: Int,
     @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb") val filter: String?,
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
-)
+): FhirResourceMetadata(id, versionId, lastUpdated, source, profile, security, tag)
 
 fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
     return FhirCodeSystemMetadata(
@@ -55,6 +57,8 @@ fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
         null,
         meta.source,
         meta.profile.map { it.valueAsString },
+        JsonUtil.serialize(meta.security),
+        JsonUtil.serialize(meta.tag),
         url,
         JsonUtil.serialize(identifier),
         version,
@@ -91,6 +95,8 @@ fun FhirCodeSystemMetadata.toCodeSystemResource(): CodeSystem {
     cs.meta.lastUpdated = lastUpdated
     cs.meta.source = source
     cs.meta.profile = profile.map { CanonicalType(it) }
+    cs.meta.security = JsonUtil.deserializeList(security, "Coding") as List<Coding>
+    cs.meta.tag = JsonUtil.deserializeList(tag, "Coding") as List<Coding>
     cs.url = url
     cs.identifier = JsonUtil.deserializeList(identifier, "Identifier") as List<Identifier>
     cs.version = version

@@ -122,7 +122,7 @@ object MetadataCompiler {
             ann.searchInclude.forEach { include -> addSearchInclude(include) }
             ann.searchRevInclude.forEach { include -> addSearchRevInclude(include) }
             searchParam = ann.searchParam.map {
-                param -> ParameterComponent(param.name, Enumerations.SearchParamType.fromCode(param.name))
+                param -> ParameterComponent(param.name, Enumerations.SearchParamType.fromCode(param.type))
             }
         }
     }

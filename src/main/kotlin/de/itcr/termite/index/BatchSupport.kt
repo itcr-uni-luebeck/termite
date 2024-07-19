@@ -12,12 +12,19 @@ interface BatchSupport<KEY, VALUE> {
 
 interface IBatch<KEY, VALUE> {
 
-    fun put(partition: IFhirIndexPartition<*, *, *, KEY, *, *>, key: KEY, value: VALUE?)
+    fun put(partition: IFhirIndexPartition<*, KEY, *, *>, key: KEY, value: VALUE?)
 
     fun <T> put(
-        partition: IFhirIndexPartition<*, *, *, KEY, *, *>,
+        partition: IFhirIndexPartition<*, KEY, *, *>,
         data: Iterable<T>, keySelector: (T) -> KEY,
         valueSelector: (T) -> VALUE?
+    )
+
+    fun delete(partition: IFhirIndexPartition<*, KEY, *, *>, key: KEY)
+
+    fun <T> delete(
+        partition: IFhirIndexPartition<*, KEY, *, *>,
+        data: Iterable<T>, keySelector: (T) -> KEY,
     )
 
 }

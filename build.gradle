@@ -43,6 +43,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-configuration-processor'
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 
+    implementation 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+
     //implementation 'org.springframework.data:spring-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
@@ -73,6 +75,7 @@ dependencies {
     implementation 'ca.uhn.hapi.fhir:hapi-fhir-validation:7.2.0'
     implementation 'ca.uhn.hapi.fhir:hapi-fhir-validation-resources-r4b:7.2.0'
     implementation 'ca.uhn.hapi.fhir:hapi-fhir-client:7.2.0'
+    implementation 'ca.uhn.hapi.fhir:hapi-fhir-caching-caffeine:7.2.0'
 
     // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.17.1'

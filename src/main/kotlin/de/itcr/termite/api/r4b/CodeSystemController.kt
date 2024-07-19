@@ -1,22 +1,29 @@
 package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
+import ca.uhn.fhir.parser.DataFormatException
+import de.itcr.termite.api.r4b.exc.*
+import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
+import de.itcr.termite.exception.api.UnsupportedFormatException
+import de.itcr.termite.exception.api.UnsupportedParameterException
+import de.itcr.termite.exception.api.UnsupportedValueException
+import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
+import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.persistence.r4b.codesystem.CodeSystemPersistenceManager
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
-import org.hl7.fhir.instance.model.api.IBase
 import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
-import org.springframework.http.RequestEntity
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
 import java.net.URI
+
+typealias IssueSeverity = OperationOutcome.IssueSeverity
+typealias IssueType = OperationOutcome.IssueType
 
 @ForResource(
     type = "CodeSystem",
@@ -32,21 +39,66 @@ import java.net.URI
     searchRevInclude = [],
     searchParam = [
         SearchParameter(
-            name = "code",
+            name = "content-mode",
             type = "token",
-            documentation = "A code defined in the code system",
+            documentation = "not-present | example | fragment | complete | supplement",
             processing = ProcessingHint(
-                targetType = Coding::class,
-                elementPath = "CodeSystem.concept"
+                targetType = StringType::class,
+                elementPath = "CodeSystem.contentMode"
             )
         ),
         SearchParameter(
-            name = "url",
-            type = "uri",
-            documentation = "The uri that identifies the code system",
+            name = "context",
+            type = "token",
+            documentation = "A use context assigned to the code system",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "(CodeSystem.useContext.value as CodeableConcept)"
+            )
+        ),
+        SearchParameter(
+            name = "context-type",
+            type = "token",
+            documentation = "A type of use context assigned to the code system",
+            processing =  ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "CodeSystem.useContext.code"
+            )
+        ),
+        SearchParameter(
+            name = "date",
+            type = "date",
+            documentation = "The code system publication date",
+            processing = ProcessingHint(
+                targetType = DateTimeType::class,
+                elementPath = "CodeSystem.date"
+            )
+        ),
+        SearchParameter(
+            name = "description",
+            type = "string",
+            documentation = "The description of the code system",
             processing = ProcessingHint(
                 targetType = StringType::class,
-                elementPath = "CodeSystem.url"
+                elementPath = "CodeSystem.description"
+            )
+        ),
+        SearchParameter(
+            name = "identifier",
+            type = "token",
+            documentation = "External identifier for the code system",
+            processing = ProcessingHint(
+                targetType = Identifier::class,
+                elementPath = "CodeSystem.identifier"
+            )
+        ),
+        SearchParameter(
+            name = "jurisdiction",
+            type = "token",
+            documentation = "Intended jurisdiction for the code system",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "CodeSystem.jurisdiction"
             )
         ),
         SearchParameter(
@@ -56,6 +108,56 @@ import java.net.URI
             processing = ProcessingHint(
                 targetType = StringType::class,
                 elementPath = "CodeSystem.name"
+            )
+        ),
+        SearchParameter(
+            name = "publisher",
+            type = "string",
+            documentation = "Name of the publisher of the code system",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "CodeSystem.publisher"
+            )
+        ),
+        SearchParameter(
+            name = "status",
+            type = "token",
+            documentation = "The current status of the code system",
+            processing = ProcessingHint(
+                targetType = Enumeration::class,
+                elementPath = "CodeSystem.status"
+            )
+        ),
+        SearchParameter(
+            name = "url",
+            type = "uri",
+            documentation = "The uri that identifies the code system",
+            processing = ProcessingHint(
+                targetType = UriType::class,
+                elementPath = "CodeSystem.url"
+            )
+        ),
+        SearchParameter(
+            name = "system",
+            documentation = "The system for any codes defined by this code system",
+            sameAs = "url"
+        ),
+        SearchParameter(
+            name = "title",
+            type = "string",
+            documentation = "The human-friendly name of the code system",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "CodeSystem.title"
+            )
+        ),
+        SearchParameter(
+            name = "version",
+            type = "token",
+            documentation = "The business version of the code system",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "CodeSystem.version"
             )
         )
     ]
@@ -117,74 +219,54 @@ import java.net.URI
         )
     ]
 )
-//@RestController
+@RestController
 @RequestMapping("fhir/CodeSystem")
 class CodeSystemController(
     @Autowired persistence: CodeSystemPersistenceManager,
-    @Autowired fhirContext: FhirContext
-    ): ResourceController<CodeSystem, Int>(persistence, fhirContext) {
+    @Autowired fhirContext: FhirContext,
+    @Autowired properties: ApplicationConfig
+    ): ResourceController<CodeSystem, Int>(persistence, fhirContext, properties, logger) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(this)
     }
 
-    @PostMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    @PostMapping(
+        consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun create(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
+    fun create(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?
+    ): ResponseEntity<String> {
         try {
             val cs = parseBodyAsResource(requestEntity, contentType)
             if (cs is CodeSystem) {
                 try {
+                    val responseMediaType = determineResponseMediaType(accept, contentType)
                     val createdCs = persistence.create(cs)
                     logger.info("Created CodeSystem instance [id: ${createdCs.id}, url: ${createdCs.url}, version: ${createdCs.version}]")
                     return ResponseEntity.created(URI(createdCs.id))
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(responseMediaType)
                         .eTag("W/\"${createdCs.meta.versionId}\"")
                         .lastModified(createdCs.meta.lastUpdated.time)
-                        .body(jsonParser.encodeResourceToString(createdCs))
-                } catch (e: Exception) {
-                    val opOutcome = generateOperationOutcomeString(
-                        OperationOutcome.IssueSeverity.ERROR,
-                        OperationOutcome.IssueType.PROCESSING,
-                        e.message,
-                        jsonParser
-                    )
-                    logger.warn("Creation of CodeSystem instance failed during database access. Reason: ${e.message}")
-                    logger.debug(e.stackTraceToString())
-                    return ResponseEntity.unprocessableEntity()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(opOutcome)
+                        .body(encodeResourceToSting(createdCs, responseMediaType))
                 }
-            } else {
-                val message =
-                    "Request body contained instance which was not of type CodeSystem but ${cs.javaClass.simpleName}"
-                val opOutcome = generateOperationOutcomeString(
-                    OperationOutcome.IssueSeverity.ERROR,
-                    OperationOutcome.IssueType.INVALID,
-                    message,
-                    jsonParser
-                )
-                logger.warn(message)
-                return ResponseEntity.unprocessableEntity()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(opOutcome)
-            }
+                catch (e: PersistenceException) {
+                    logger.warn(e.stackTraceToString())
+                    return handleException(
+                        e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
+                        "Creation of CodeSystem instance failed during database access. Reason: {e}"
+                    )
+                }
+            } else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (cs as Resource).resourceType) }
         }
-        catch (e: Exception){
-            if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource. HTTP headers: ${requestEntity.headers}"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.STRUCTURE,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.badRequest()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
+        catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
+        catch (e: UnexpectedResourceTypeException) { return handleUnexpectedResourceType(e, accept) }
+        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING, "Unexpected error: {e}") }
     }
 
     /*@PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
@@ -256,42 +338,26 @@ class CodeSystemController(
         }
     }*/
 
-    @GetMapping(path = ["{id}"])
+    @GetMapping(
+        path = ["{id}"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun read(@PathVariable id: String): ResponseEntity<String> {
-        logger.info("Reading CodeSystem instance [id = $id]")
+    fun read(
+        @PathVariable id: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String
+    ): ResponseEntity<String> {
+        logger.info("Reading CodeSystem instance [id: $id]")
         try{
+            val responseMediaType = determineResponseMediaType(accept)
             val cs = persistence.read(id.toInt())
-            logger.debug("Found CodeSystem instance [id = $id, url = ${cs.url}, version = ${cs.version}]")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(cs))
+            logger.debug("Found CodeSystem instance [id: $id, url: ${cs.url}, version: ${cs.version}]")
+            return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(cs, responseMediaType))
         }
-        catch (e: NotFoundException) {
-            val message = "No such CodeSystem instance [id = $id]"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.INFORMATION,
-                OperationOutcome.IssueType.NOTFOUND,
-                message,
-                jsonParser
-            )
-            logger.debug(message)
-            return ResponseEntity.status(404)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
-        catch (e: Exception) {
-            val message = "Reading of CodeSystem instance failed during database access. Reason: ${e.message}"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.PROCESSING,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.internalServerError()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: NotFoundException) { return handleNotFound(e, accept) }
+        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
+            IssueType.PROCESSING, "Reading of CodeSystem instance failed during database access. Reason: {e}"
+        ) }
     }
 /*
     @GetMapping(path = ["\$validate-code"])
@@ -364,35 +430,31 @@ class CodeSystemController(
         }
     }
 */
-    @GetMapping
+
+    // TODO: Implement paging
+    @GetMapping(
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun search(@RequestParam param: Map<String, String>): ResponseEntity<String>{
-        logger.info("Searching for code system [url = $param]")
-        try{
-            val csList = database.searchCodeSystem(param)
-            val bundle = Bundle()
-            bundle.id = UUID.randomUUID().toString()
-            bundle.type = Bundle.BundleType.SEARCHSET
-            bundle.total = csList.size
-            //Should be faster since otherwise an internal array list would have to resized all the time
-            bundle.entry = csList.map { cs -> Bundle.BundleEntryComponent().setResource(cs) }
-            logger.debug("Found ${csList.size} code systems for URL $param")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
+    fun search(
+        @RequestParam params: Map<String, String>,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String>{
+        logger.info("Received search request for CodeSystem [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+        try {
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/CodeSystem", HttpMethod.GET)
+            val instances = persistence.search(filteredParams)
+            return ResponseEntity.ok()
+                .contentType(responseMediaType)
+                .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
         }
-        catch (e: Exception){
-            val message = e.message
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.PROCESSING,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.internalServerError()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: Exception) { e.printStackTrace(); return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
+            IssueType.PROCESSING, "Unexpected internal error: {e}") }
     }
 
 }

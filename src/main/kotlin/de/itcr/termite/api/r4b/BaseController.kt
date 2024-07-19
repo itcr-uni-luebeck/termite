@@ -8,19 +8,13 @@ import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.api.UnsupportedFormatException
 import de.itcr.termite.exception.api.UnsupportedValueException
 import de.itcr.termite.persistence.r4b.codesystem.CodeSystemPersistenceManager
-import de.itcr.termite.util.generateOperationOutcome
-import de.itcr.termite.util.generateOperationOutcomeString
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.*
 import org.hl7.fhir.r4b.model.Enumerations.PublicationStatus
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.util.Date
 import java.util.zip.DataFormatException
 
@@ -37,11 +31,11 @@ typealias FilterComponent = TerminologyCapabilities.TerminologyCapabilitiesCodeS
 @RestController
 @RequestMapping("fhir")
 class BaseController (
-    @Autowired val properties: ApplicationConfig,
+    @Autowired properties: ApplicationConfig,
     @Autowired val csPersistence: CodeSystemPersistenceManager,
     @Autowired fhirContext: FhirContext,
     @Autowired val capabilityStatement: CapabilityStatement
-): FhirController(fhirContext) {
+): FhirController(fhirContext, properties, logger) {
 
     companion object {
         private val logger = LogManager.getLogger(this::class)
@@ -71,9 +65,9 @@ class BaseController (
                 .header("Content-Type", format)
                 .body(encodeResourceToString(metadataResource, format, summary))
         }
-        catch (exc: UnsupportedValueException) { return handleUnsupportedParameterValue(exc, jsonParser) }
-        catch (exc: UnsupportedFormatException) { return handleUnsupportedFormat(exc, jsonParser) }
-        catch (exc: DataFormatException) { return handleUnparsableEntity(exc, jsonParser) }
+        catch (exc: UnsupportedValueException) { return handleUnsupportedParameterValue(exc, format) }
+        catch (exc: UnsupportedFormatException) { return handleUnsupportedFormat(exc, format) }
+        catch (exc: DataFormatException) { return handleUnparsableEntity(exc, format) }
     }
 
     // TODO: Should be updated upon change in underlying database and new instance provided to this endpoint

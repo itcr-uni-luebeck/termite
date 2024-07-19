@@ -14,7 +14,8 @@ data class ApplicationConfig (
     class APIConfig(
         val fhirApiVersion: String,
         val packageName: String,
-        val baseUrl: String
+        val baseUrl: String,
+        val defaultResponseContentType: String
     )
 
     data class IndexConfig(

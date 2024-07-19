@@ -25,7 +25,7 @@ spring:
     password: ${DATABASE_PASSWORD:termite}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
       default_schema: public
     properties:
       hibernate:
@@ -36,6 +36,7 @@ termite:
     fhir_api_version: "R4B"
     package_name: de.itcr.termite.api
     base_url: "/fhir"
+    defaultResponseContentType: "application/fhir+json"
   index:
     type: rocksdb
     path: index

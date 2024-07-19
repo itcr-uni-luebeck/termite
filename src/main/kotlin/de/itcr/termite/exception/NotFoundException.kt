@@ -3,7 +3,7 @@ package de.itcr.termite.exception
 import kotlin.reflect.KClass
 
 class NotFoundException constructor(clazz: KClass<*>, identifiers: List<Pair<String, String>>)
-    : Exception("${clazz.simpleName} instance [${identifiers.joinToString(" and ") { "${it.first} = ${it.second}" }}] was not found")
+    : Exception("${clazz.simpleName} instance [${identifiers.joinToString(" and ") { "${it.first} = ${it.second}" }}] not found")
 
 inline fun <reified T> NotFoundException(identifiers: List<Pair<String, String>>) = NotFoundException(T::class, identifiers)
 

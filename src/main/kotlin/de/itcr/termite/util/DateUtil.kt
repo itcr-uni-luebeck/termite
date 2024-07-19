@@ -1,5 +1,6 @@
 package de.itcr.termite.util
 
+import java.util.*
 import javax.xml.bind.DatatypeConverter
 
 
@@ -10,4 +11,4 @@ import javax.xml.bind.DatatypeConverter
  * @param dateString: Input string with date encoded according to ISO 8601 standard
  * @return Instance of java.util.Date class representing timestamp expressed by date string
  */
-fun parseDate(dateString: String) = DatatypeConverter.parseDate(dateString).time
+fun parseDate(dateString: String): Date = DatatypeConverter.parseDate(dateString).time

@@ -59,9 +59,9 @@ fun serializeStringArray(stringArr: Array<String>): ByteArray {
  */
 fun serialize(i: Int): ByteArray {
     val buffer = ByteArray(4)
-    buffer[0] = (i shl 24).toByte()
-    buffer[1] = (i shl 16).toByte()
-    buffer[2] = (i shl 8).toByte()
+    buffer[0] = (i shr 24).toByte()
+    buffer[1] = (i shr 16).toByte()
+    buffer[2] = (i shr 8).toByte()
     buffer[3] = i.toByte()
     return buffer
 }
@@ -79,13 +79,13 @@ fun serializeIntArray(intArr: IntArray): ByteArray {
  */
 fun serialize(a: Long): ByteArray {
     val buffer = ByteArray(8)
-    buffer[0] = (a shl 56).toByte()
-    buffer[1] = (a shl 48).toByte()
-    buffer[2] = (a shl 40).toByte()
-    buffer[3] = (a shl 32).toByte()
-    buffer[4] = (a shl 24).toByte()
-    buffer[5] = (a shl 16).toByte()
-    buffer[6] = (a shl 8).toByte()
+    buffer[0] = (a shr 56).toByte()
+    buffer[1] = (a shr 48).toByte()
+    buffer[2] = (a shr 40).toByte()
+    buffer[3] = (a shr 32).toByte()
+    buffer[4] = (a shr 24).toByte()
+    buffer[5] = (a shr 16).toByte()
+    buffer[6] = (a shr 8).toByte()
     buffer[7] = a.toByte()
     return buffer
 }
@@ -150,10 +150,10 @@ fun deserializeStringArray(b: ByteArray): Array<String> {
  * @return integer deserialized from the byte array
  */
 fun deserializeInt(b: ByteArray): Int {
-    return (b[0].toInt() and 0xFF shl 24) or
-            (b[1].toInt() and 0xFF shl 16) or
-            (b[2].toInt() and 0xFF shl 8) or
-            (b[3].toInt() and 0xFF)
+    return (b[0].toInt() shl 24) or
+            (b[1].toInt() shl 16) or
+            (b[2].toInt() shl 8) or
+            b[3].toInt()
 }
 
 fun deserializeIntArray(b: ByteArray): IntArray {
@@ -169,14 +169,14 @@ fun deserializeIntArray(b: ByteArray): IntArray {
  * @return long deserialized from the byte array
  */
 fun deserializeLong(b: ByteArray): Long {
-    return (b[0].toLong() and 0xFF shl 56) or
-            (b[1].toLong() and 0xFF shl 48) or
-            (b[2].toLong() and 0xFF shl 40) or
-            (b[3].toLong() and 0xFF shl 32) or
-            (b[4].toLong() and 0xFF shl 24) or
-            (b[5].toLong() and 0xFF shl 16) or
-            (b[6].toLong() and 0xFF shl 8) or
-            (b[7].toLong() and 0xFF)
+    return (b[0].toLong() shl 56) or
+            (b[1].toLong() shl 48) or
+            (b[2].toLong() shl 40) or
+            (b[3].toLong() shl 32) or
+            (b[4].toLong() shl 24) or
+            (b[5].toLong() shl 16) or
+            (b[6].toLong() shl 8) or
+            b[7].toLong()
 }
 
 fun deserializeLongArray(b: ByteArray): LongArray {

@@ -4,7 +4,8 @@ import kotlin.reflect.KClass
 
 annotation class SearchParameter(
     val name: String,
-    val type: String,
+    val type: String = "string",
     val documentation: String = "",
-    val processing: ProcessingHint
+    val processing: ProcessingHint = ProcessingHint(Nothing::class, ""),
+    val sameAs: String = ""
 )
