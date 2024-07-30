@@ -5,11 +5,9 @@ import ca.uhn.fhir.model.api.IResource
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
-import de.itcr.termite.index.IBatch
 import de.itcr.termite.model.entity.*
-import de.itcr.termite.model.repository.FhirCodeSystemMetadataRepository
-import de.itcr.termite.model.repository.FhirConceptRepository
-import de.itcr.termite.util.deserializeInt
+import de.itcr.termite.model.repository.CodeSystemMetadataRepository
+import de.itcr.termite.model.repository.CSConceptDataRepository
 import de.itcr.termite.util.r4b.parametersToMap
 import de.itcr.termite.util.r4b.parseParameterValue
 import de.itcr.termite.util.r4b.tagAsSummarized
@@ -17,7 +15,6 @@ import de.itcr.termite.util.serializeInOrder
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CodeSystem
 import org.hl7.fhir.r4b.model.Parameters
-import org.rocksdb.Status.Code
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import kotlin.random.Random
@@ -26,8 +23,8 @@ import kotlin.reflect.KClass
 @Component
 class CodeSystemPersistenceManager(
     @Autowired private val fhirCtx: FhirContext,
-    @Autowired private val repository: FhirCodeSystemMetadataRepository,
-    @Autowired private val conceptRepository : FhirConceptRepository,
+    @Autowired private val repository: CodeSystemMetadataRepository,
+    @Autowired private val conceptRepository : CSConceptDataRepository,
     @Autowired private val indexStore: FhirIndexStore<ByteArray, ByteArray>
 ): ICodeSystemPersistenceManager<Int> {
 
@@ -42,13 +39,13 @@ class CodeSystemPersistenceManager(
     override fun create(instance: CodeSystem): CodeSystem {
         // Calculate concept count if necessary
         instance.count = if (instance.count > 0) instance.count else instance.concept.size
-        val csMetadata = instance.toFhirCodeSystemMetadata()
-        val storedMetadata: FhirCodeSystemMetadata
+        val csMetadata = instance.toCodeSystemMetadata()
+        val storedMetadata: CodeSystemMetadata
         try { storedMetadata = repository.save(csMetadata) }
         catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem metadata. Reason: ${e.message}", e) }
         instance.id = storedMetadata.id.toString()
-        val concepts: Iterable<FhirConcept>
-        try { concepts = conceptRepository.saveAll(instance.concept.map { it.toFhirConcept(random.nextLong(), storedMetadata) }) }
+        val concepts: Iterable<CodeSystemConceptData>
+        try { concepts = conceptRepository.saveAll(instance.concept.map { it.toCSConceptData(random.nextLong(), storedMetadata) }) }
         catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem concepts. Reason: ${e.message}", e) }
         try { indexStore.putCodeSystem(instance, concepts) }
         catch (e: Exception) {
@@ -70,12 +67,12 @@ class CodeSystemPersistenceManager(
     }
 
     override fun delete(id: Int): CodeSystem {
-        val storedMetadata: FhirCodeSystemMetadata
+        val storedMetadata: CodeSystemMetadata
         try { storedMetadata = repository.findById(id).get() }
         catch (e: NoSuchElementException) { throw NotFoundException<CodeSystem>("id", id) }
         catch (e: Exception) { throw PersistenceException("Error occurred while searching CodeSystem metadata. Reason: ${e.message}", e) }
         val instance = storedMetadata.toCodeSystemResource()
-        val concepts: Iterable<FhirConcept>
+        val concepts: Iterable<CodeSystemConceptData>
         try { concepts = conceptRepository.deleteByCodeSystem(id) }
         catch (e: Exception) { throw PersistenceException("Failed to delete CodeSystem concepts. Reason: ${e.message}", e) }
         try { indexStore.deleteCodeSystem(instance, concepts) }
@@ -120,6 +117,7 @@ class CodeSystemPersistenceManager(
         displayLanguage: String?,
         property: Set<String>?
     ): Parameters {
+        val conceptId = indexStore.codeSystemLookup(code, system, version)
         TODO("Not yet implemented")
     }
 

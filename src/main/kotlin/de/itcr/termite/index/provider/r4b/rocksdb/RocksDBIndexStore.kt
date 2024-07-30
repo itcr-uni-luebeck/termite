@@ -9,7 +9,7 @@ import de.itcr.termite.index.*
 import de.itcr.termite.index.partition.*
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.SearchParameter
-import de.itcr.termite.model.entity.FhirConcept
+import de.itcr.termite.model.entity.CodeSystemConceptData
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.instance.model.api.IBase
@@ -26,8 +26,6 @@ import javax.annotation.PreDestroy
 import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.findAnnotations
-import kotlin.reflect.full.superclasses
 
 @Qualifier("RocksDB")
 class RocksDBIndexStore(
@@ -128,7 +126,7 @@ class RocksDBIndexStore(
         else throw Exception("No search partitions for FHIR type '${type.simpleName}'")
     }
 
-    override fun putCodeSystem(resource: CodeSystem, concepts: Iterable<FhirConcept>) {
+    override fun putCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>) {
         val batch = createBatch()
         val id = resource.id.toInt()
         // Search indices
@@ -156,7 +154,7 @@ class RocksDBIndexStore(
         processBatch(batch)
     }
 
-    override fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<FhirConcept>) {
+    override fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>) {
         val batch = createBatch()
         val id = resource.id.toInt()
         // Search indices
@@ -210,16 +208,12 @@ class RocksDBIndexStore(
     override fun codeSystemLookup(
         code: String,
         system: String,
-        version: String?,
-        displayLanguage: String?,
-        property: List<String>?
-    ): Coding {
+        version: String?
+    ): Long {
         TODO("Not yet implemented")
     }
 
-    override fun codeSystemLookup(coding: Coding, displayLanguage: String?, property: List<String>?): Coding {
-        TODO("Not yet implemented")
-    }
+    override fun codeSystemLookup(coding: Coding): Long = codeSystemLookup(coding.code, coding.system, coding.version)
 
     override fun codeSystemValidateCode(
         url: String,

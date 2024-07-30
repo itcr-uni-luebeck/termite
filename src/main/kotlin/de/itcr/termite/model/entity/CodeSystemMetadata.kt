@@ -7,12 +7,11 @@ import org.hibernate.annotations.TypeDef
 import org.hl7.fhir.r4b.model.*
 import java.util.*
 import javax.persistence.*
-import org.hibernate.annotations.UpdateTimestamp
 
 @Entity
 @Table(name = "fhir_code_system_metadata", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
-data class FhirCodeSystemMetadata(
+data class CodeSystemMetadata(
     // Unfortunately Kotlin compiler translates Int to primitive type int while Hibernate returns the boxed type
     // leading to an IllegalAccessException. Hence, the boxed type has to be enforced via nullability
     override val id: Int,
@@ -48,10 +47,10 @@ data class FhirCodeSystemMetadata(
     @Column(name = "count") val count: Int,
     @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb") val filter: String?,
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
-): FhirResourceMetadata(id, versionId, lastUpdated, source, profile, security, tag)
+): ResourceMetadata(id, versionId, lastUpdated, source, profile, security, tag)
 
-fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
-    return FhirCodeSystemMetadata(
+fun CodeSystem.toCodeSystemMetadata(): CodeSystemMetadata {
+    return CodeSystemMetadata(
         if (meta.idBase != null) meta.idBase.toInt() else 0,
         if (meta.versionId != null) meta.versionId.toInt() else 0,
         null,
@@ -87,7 +86,7 @@ fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
     )
 }
 
-fun FhirCodeSystemMetadata.toCodeSystemResource(): CodeSystem {
+fun CodeSystemMetadata.toCodeSystemResource(): CodeSystem {
     val cs = CodeSystem()
 
     cs.id = id.toString()
