@@ -9,6 +9,8 @@ import javax.persistence.*
 
 typealias CSConceptData = CodeSystemConceptData
 
+private typealias ConceptDefinitionComponent = CodeSystem.ConceptDefinitionComponent
+
 // TODO: Check if just storing the ConceptDefinitionComponent instance as JSONB is better than destructuring it
 //       and only storing certain parts as JSONB
 @Entity
@@ -16,7 +18,7 @@ typealias CSConceptData = CodeSystemConceptData
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 data class CodeSystemConceptData (
     @Column(name = "id") @Id val id: Long,
-    @ManyToOne(targetEntity = CodeSystemMetadata::class) val cs: CodeSystemMetadata,
+    @ManyToOne(targetEntity = CodeSystemData::class) val cs: CodeSystemData,
     @Column(name = "code") val code: String,
     @Column(name = "display") val display: String?,
     @Column(name = "definition") val definition: String?,
@@ -24,7 +26,7 @@ data class CodeSystemConceptData (
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
 )
 
-fun CodeSystem.ConceptDefinitionComponent.toCSConceptData(id: Long, cs: CodeSystemMetadata): CodeSystemConceptData {
+fun ConceptDefinitionComponent.toCSConceptData(id: Long, cs: CodeSystemData): CodeSystemConceptData {
     return CodeSystemConceptData(
         id,
         cs,
@@ -36,9 +38,9 @@ fun CodeSystem.ConceptDefinitionComponent.toCSConceptData(id: Long, cs: CodeSyst
     )
 }
 
-fun CodeSystem.ConceptDefinitionComponent.toCSConceptData(cs: CodeSystemMetadata): CodeSystemConceptData = this.toCSConceptData(0, cs)
+fun ConceptDefinitionComponent.toCSConceptData(cs: CodeSystemData): CodeSystemConceptData = this.toCSConceptData(0, cs)
 
-fun CodeSystemConceptData.toCSConceptDefinitionComponent(): CodeSystem.ConceptDefinitionComponent {
+fun CodeSystemConceptData.toCSConceptDefinitionComponent(): ConceptDefinitionComponent {
     val csDefComponent = CodeSystem.ConceptDefinitionComponent()
     csDefComponent.code = code
     csDefComponent.display = display

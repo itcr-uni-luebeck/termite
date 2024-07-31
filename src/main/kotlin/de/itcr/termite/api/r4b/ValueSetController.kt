@@ -1,38 +1,33 @@
-package de.itcr.termite.api.r4b/*
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.api.CodeSystemController.Companion
-import de.itcr.termite.database.TerminologyStorage
-import de.itcr.termite.exception.NotFoundException
-import de.itcr.termite.exception.ValueSetException
+import ca.uhn.fhir.parser.DataFormatException
+import de.itcr.termite.api.r4b.exc.handleException
+import de.itcr.termite.api.r4b.exc.handleUnexpectedResourceType
+import de.itcr.termite.api.r4b.exc.handleUnparsableEntity
+import de.itcr.termite.api.r4b.exc.handleUnsupportedFormat
+import de.itcr.termite.config.ApplicationConfig
+import de.itcr.termite.exception.api.UnsupportedFormatException
+import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
+import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
-import de.itcr.termite.util.generateOperationOutcomeString
-import de.itcr.termite.util.generateParametersString
-import de.itcr.termite.util.isPositiveInteger
-import de.itcr.termite.util.parseParameters
+import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URI
 import java.util.*
-import kotlin.Exception
-import kotlin.math.min
 
-*/
 /**
  * Handles request regarding instances of the ValueSet resource
- *//*
+ */
 
 @ForResource(
     type = "ValueSet",
@@ -46,13 +41,7 @@ import kotlin.math.min
     referencePolicy = [],
     searchInclude = [],
     searchRevInclude = [],
-    searchParam = [
-        SearchParameter(
-            name = "url",
-            type = "uri",
-            documentation = "URL of the resource to locate"
-        )
-    ]
+    searchParam = []
 )
 @SupportsInteraction(["create", "search-type"])
 @SupportsOperation(
@@ -146,80 +135,55 @@ import kotlin.math.min
 @Controller
 @RequestMapping("fhir/ValueSet")
 class ValueSetController(
-    @Autowired database: TerminologyStorage,
-    @Autowired fhirContext: FhirContext
-): ResourceController(database, fhirContext) {
+    @Autowired persistence: ValueSetPersistenceManager,
+    @Autowired fhirContext: FhirContext,
+    @Autowired properties: ApplicationConfig
+): ResourceController<ValueSet, Int>(persistence, fhirContext, properties, logger) {
 
     companion object{
-        private val logger: Logger = LogManager.getLogger(ValueSetController::class.java)
-        //private val delegator = Delegator<ValueSetController, ResponseEntity<String>>()
+        private val logger: Logger = LogManager.getLogger(this)
     }
 
-    */
-/**
-     * Adds a ValueSet instance to the database via the CREATE interaction
-     * @see <a href= "https://www.hl7.org/fhir/http.html#create">create interaction</a>
-     *//*
-
-    @PostMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    @PostMapping(
+        consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun addValueSet(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
-        try{
+    fun create(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?
+    ): ResponseEntity<String>{
+        try {
             val vs = parseBodyAsResource(requestEntity, contentType)
-            if(vs is ValueSet) {
-                try{
-                    val (vsCreated, versionId, lastUpdated) = database.addValueSet(vs)
-                    logger.info("Added value set [url: ${vs.url}, version: ${vs.version}] to database")
-                    return ResponseEntity.created(URI(vsCreated.id))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .eTag("W/\"$versionId\"")
-                        .lastModified(lastUpdated.time)
-                        .body(jsonParser.encodeResourceToString(vsCreated))
+            if (vs is ValueSet) {
+                try {
+                    val responseMediaType = determineResponseMediaType(accept, contentType)
+                    val createdVs = persistence.create(vs)
+                    logger.info("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
+                    return ResponseEntity.created(URI(createdVs.id))
+                        .contentType(responseMediaType)
+                        .eTag("W/\"${createdVs.meta.versionId}\"")
+                        .lastModified(createdVs.meta.lastUpdated.time)
+                        .body(encodeResourceToSting(createdVs, responseMediaType))
                 }
-                catch (e: Exception){
-                    val opOutcome = generateOperationOutcomeString(
-                        OperationOutcome.IssueSeverity.ERROR,
-                        OperationOutcome.IssueType.PROCESSING,
-                        e.message,
-                        jsonParser
+                catch (e: PersistenceException) {
+                    logger.warn(e.stackTraceToString())
+                    return handleException(
+                        e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
+                        "Creation of ValueSet instance failed during database access. Reason: {e}"
                     )
-                    logger.warn("Adding of ValueSet instance failed during database access")
-                    logger.debug(e.stackTraceToString())
-                    return ResponseEntity.unprocessableEntity()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(opOutcome)
                 }
-            } else {
-                val message = "Request body contained instance which was not of type ValueSet but ${vs.javaClass.simpleName}"
-                val opOutcome = generateOperationOutcomeString(
-                    OperationOutcome.IssueSeverity.ERROR,
-                    OperationOutcome.IssueType.INVALID,
-                    message,
-                    jsonParser
-                )
-                logger.warn("Request body contained instance which was not of type ValueSet but ${vs.javaClass.simpleName}")
-                return ResponseEntity.unprocessableEntity()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(opOutcome)
             }
+            else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (vs as Resource).resourceType) }
         }
-        catch (e: Exception){
-            if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.STRUCTURE,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.badRequest()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
+        catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
+        catch (e: UnexpectedResourceTypeException) { return handleUnexpectedResourceType(e, accept) }
+        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING, "Unexpected error: {e}") }
     }
 
+/*
     @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
     @ResponseBody
     fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
@@ -483,6 +447,6 @@ class ValueSetController(
             )
         }
     }
+*/
 
 }
-*/

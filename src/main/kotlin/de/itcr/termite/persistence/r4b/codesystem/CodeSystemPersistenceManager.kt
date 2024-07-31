@@ -6,7 +6,7 @@ import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.model.entity.*
-import de.itcr.termite.model.repository.CodeSystemMetadataRepository
+import de.itcr.termite.model.repository.CodeSystemDataRepository
 import de.itcr.termite.model.repository.CSConceptDataRepository
 import de.itcr.termite.util.r4b.parametersToMap
 import de.itcr.termite.util.r4b.parseParameterValue
@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 @Component
 class CodeSystemPersistenceManager(
     @Autowired private val fhirCtx: FhirContext,
-    @Autowired private val repository: CodeSystemMetadataRepository,
+    @Autowired private val repository: CodeSystemDataRepository,
     @Autowired private val conceptRepository : CSConceptDataRepository,
     @Autowired private val indexStore: FhirIndexStore<ByteArray, ByteArray>
 ): ICodeSystemPersistenceManager<Int> {
@@ -39,8 +39,8 @@ class CodeSystemPersistenceManager(
     override fun create(instance: CodeSystem): CodeSystem {
         // Calculate concept count if necessary
         instance.count = if (instance.count > 0) instance.count else instance.concept.size
-        val csMetadata = instance.toCodeSystemMetadata()
-        val storedMetadata: CodeSystemMetadata
+        val csMetadata = instance.toCodeSystemData()
+        val storedMetadata: CodeSystemData
         try { storedMetadata = repository.save(csMetadata) }
         catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem metadata. Reason: ${e.message}", e) }
         instance.id = storedMetadata.id.toString()
@@ -67,7 +67,7 @@ class CodeSystemPersistenceManager(
     }
 
     override fun delete(id: Int): CodeSystem {
-        val storedMetadata: CodeSystemMetadata
+        val storedMetadata: CodeSystemData
         try { storedMetadata = repository.findById(id).get() }
         catch (e: NoSuchElementException) { throw NotFoundException<CodeSystem>("id", id) }
         catch (e: Exception) { throw PersistenceException("Error occurred while searching CodeSystem metadata. Reason: ${e.message}", e) }

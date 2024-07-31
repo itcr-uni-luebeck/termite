@@ -225,7 +225,7 @@ class CodeSystemController(
     @Autowired persistence: CodeSystemPersistenceManager,
     @Autowired fhirContext: FhirContext,
     @Autowired properties: ApplicationConfig
-    ): ResourceController<CodeSystem, Int>(persistence, fhirContext, properties, logger) {
+): ResourceController<CodeSystem, Int>(persistence, fhirContext, properties, logger) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(this)
@@ -261,7 +261,8 @@ class CodeSystemController(
                         "Creation of CodeSystem instance failed during database access. Reason: {e}"
                     )
                 }
-            } else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (cs as Resource).resourceType) }
+            }
+            else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (cs as Resource).resourceType) }
         }
         catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
         catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }

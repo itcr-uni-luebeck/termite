@@ -1,12 +1,12 @@
 package de.itcr.termite.model.entity
 
+import de.itcr.termite.model.lazy.LazyConceptSetComponent
 import de.itcr.termite.util.r4b.JsonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hl7.fhir.r4b.model.CanonicalType
 import org.hl7.fhir.r4b.model.ValueSet
-import org.yaml.snakeyaml.constructor.SafeConstructor.ConstructYamlSet
 import javax.persistence.*
 
 typealias VSContentData = ValueSetContentData
@@ -14,23 +14,47 @@ typealias VSIncludeData = ValueSetIncludeData
 typealias VSExcludeData = ValueSetExcludeData
 
 private typealias ConceptSetComponent = ValueSet.ConceptSetComponent
+private typealias ConceptReferenceComponent = ValueSet.ConceptReferenceComponent
+private typealias ConceptSetFilterComponent = ValueSet.ConceptSetFilterComponent
 
 @Entity
 @Table(name = "fhir_value_set_compose_data", schema = "public")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(discriminatorType = DiscriminatorType.CHAR, name = "type")
+@DiscriminatorColumn(discriminatorType = DiscriminatorType.STRING, name = "type")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 abstract class ValueSetContentData(
-    @Column(name = "id", nullable = false) @Id @GeneratedValue open val id: Int,
-    @ManyToOne(targetEntity = ValueSetMetadata::class) open val vs: ValueSetMetadata,
-    @Column(name = "system") open val system: String?,
-    @Column(name = "version") open val version: String?,
-    @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb") open val filter: String?,
-    @Column(name = "valueSet") open val valueSet: String?
-)
+    id: String?,
+    @ManyToOne val vs: ValueSetData?,
+    @Column(name = "system") val system: String?,
+    @Column(name = "version") val version: String?,
+    concept: List<ConceptReferenceComponent>,
+    filter: List<ConceptSetFilterComponent>,
+    valueSet: List<CanonicalType>
+) {
+
+    @Column(name = "id", nullable = false) @Id @GeneratedValue
+    val id: Int? = id?.toInt()
+    @OneToMany(mappedBy = "vsContentData", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val concept: List<VSConceptData> = concept.map { it.toVSConceptData(this) }
+    @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb")
+    val filter: String? = JsonUtil.serialize(filter)
+    @Column(name = "valueSet")
+    val valueSet: String? = JsonUtil.serialize(valueSet)
+
+    // See https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ValueSetContentData) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = this::class.hashCode()
+
+}
 
 fun ValueSetContentData.toConceptSetComponent(): ConceptSetComponent {
-    val csComponent = ConceptSetComponent()
+    val csComponent = LazyConceptSetComponent { concept.map { it.toVSConceptReferenceComponent() }.toMutableList() }
 
     csComponent.system = system
     csComponent.version = version
@@ -43,45 +67,37 @@ fun ValueSetContentData.toConceptSetComponent(): ConceptSetComponent {
 }
 
 @Entity
-@DiscriminatorValue("I")
-data class ValueSetIncludeData(
-    override val id: Int,
-    override val vs: ValueSetMetadata,
-    override val system: String?,
-    override val version: String?,
-    override val filter: String?,
-    override val valueSet: String?
-): ValueSetContentData(id, vs, system, version, filter, valueSet)
+@DiscriminatorValue("Include")
+class ValueSetIncludeData(
+    conceptSet: ConceptSetComponent,
+    vsData: ValueSetData
+): ValueSetContentData(
+    conceptSet.id,
+    vsData,
+    conceptSet.system,
+    conceptSet.version,
+    conceptSet.concept,
+    conceptSet.filter,
+    conceptSet.valueSet
+)
 
-fun ConceptSetComponent.toValueSetIncludeData(vs: ValueSetMetadata): ValueSetIncludeData {
-    return ValueSetIncludeData(
-        0, // Default value as it will be generated anyway,
-        vs,
-        system,
-        version,
-        JsonUtil.serialize(filter),
-        JsonUtil.serialize(valueSet)
-    )
-}
+fun ConceptSetComponent.toValueSetIncludeData(vs: ValueSetData): ValueSetIncludeData =
+    ValueSetIncludeData(this, vs)
 
 @Entity
-@DiscriminatorValue("E")
-data class ValueSetExcludeData(
-    override val id: Int,
-    override val vs: ValueSetMetadata,
-    override val system: String?,
-    override val version: String?,
-    override val filter: String?,
-    override val valueSet: String?
-): ValueSetContentData(id, vs, system, version, filter, valueSet)
+@DiscriminatorValue("Exclude")
+class ValueSetExcludeData(
+    conceptSet: ConceptSetComponent,
+    vsData: ValueSetData
+): ValueSetContentData(
+    conceptSet.id,
+    vsData,
+    conceptSet.system,
+    conceptSet.version,
+    conceptSet.concept,
+    conceptSet.filter,
+    conceptSet.valueSet
+)
 
-fun ConceptSetComponent.toValueSetExcludeData(vs: ValueSetMetadata): ValueSetExcludeData {
-    return ValueSetExcludeData(
-        0, // Default value as it will be generated anyway,
-        vs,
-        system,
-        version,
-        JsonUtil.serialize(filter),
-        JsonUtil.serialize(valueSet)
-    )
-}
+fun ConceptSetComponent.toValueSetExcludeData(vs: ValueSetData): ValueSetExcludeData =
+    ValueSetExcludeData(this, vs)

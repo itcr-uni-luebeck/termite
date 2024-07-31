@@ -9,9 +9,9 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "fhir_code_system_metadata", schema = "public")
+@Table(name = "code_system_data", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
-data class CodeSystemMetadata(
+data class CodeSystemData(
     // Unfortunately Kotlin compiler translates Int to primitive type int while Hibernate returns the boxed type
     // leading to an IllegalAccessException. Hence, the boxed type has to be enforced via nullability
     override val id: Int,
@@ -47,10 +47,10 @@ data class CodeSystemMetadata(
     @Column(name = "count") val count: Int,
     @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb") val filter: String?,
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
-): ResourceMetadata(id, versionId, lastUpdated, source, profile, security, tag)
+): ResourceData(id, versionId, lastUpdated, source, profile, security, tag)
 
-fun CodeSystem.toCodeSystemMetadata(): CodeSystemMetadata {
-    return CodeSystemMetadata(
+fun CodeSystem.toCodeSystemData(): CodeSystemData {
+    return CodeSystemData(
         if (meta.idBase != null) meta.idBase.toInt() else 0,
         if (meta.versionId != null) meta.versionId.toInt() else 0,
         null,
@@ -86,7 +86,7 @@ fun CodeSystem.toCodeSystemMetadata(): CodeSystemMetadata {
     )
 }
 
-fun CodeSystemMetadata.toCodeSystemResource(): CodeSystem {
+fun CodeSystemData.toCodeSystemResource(): CodeSystem {
     val cs = CodeSystem()
 
     cs.id = id.toString()

@@ -1,9 +1,14 @@
 package de.itcr.termite.persistence.r4b.valueset
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
+import de.itcr.termite.model.entity.ValueSetData
+import de.itcr.termite.model.entity.toValueSetData
+import de.itcr.termite.model.entity.toValueSetResource
 import de.itcr.termite.model.repository.CSConceptDataRepository
-import de.itcr.termite.model.repository.ValueSetMetadataRepository
+import de.itcr.termite.model.repository.ValueSetDataRepository
+import de.itcr.termite.util.r4b.tagAsSummarized
 import org.hl7.fhir.r4b.model.Coding
 import org.hl7.fhir.r4b.model.Parameters
 import org.hl7.fhir.r4b.model.ValueSet
@@ -15,7 +20,7 @@ class ValueSetPersistenceManager(
     @Autowired
     private val fhirCtx: FhirContext,
     @Autowired
-    private val repository: ValueSetMetadataRepository,
+    private val repository: ValueSetDataRepository,
     @Autowired
     private val conceptRepository : CSConceptDataRepository,
     @Autowired
@@ -23,7 +28,11 @@ class ValueSetPersistenceManager(
 ): IValueSetPersistenceManager<Int> {
 
     override fun create(instance: ValueSet): ValueSet {
-        TODO("Not yet implemented")
+        val vsData = instance.toValueSetData()
+        val storedData: ValueSetData
+        try { storedData = repository.save(vsData) }
+        catch (e: Exception) { throw PersistenceException("Failed to store ValueSet data. Reason: ${e.message}", e) }
+        return storedData.toValueSetResource().tagAsSummarized()
     }
 
     override fun update(id: Int, instance: ValueSet): ValueSet {

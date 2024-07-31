@@ -33,7 +33,8 @@ fun FhirController.handleNotFound(exc: NotFoundException, accept: String?) =
 
 fun FhirController.handleException(e: Throwable, accept: String?, httpStatus: HttpStatus, severity: IssueSeverity, type: IssueType, template: String = "{e}"): ResponseEntity<String> {
     val message = replaceInTemplate(template, e.message ?: e::class.simpleName ?: "Error without message")
-    logger.debug(message)
+    logger.warn(message)
+    logger.debug(e.stackTraceToString())
     val opOutcome = generateOperationOutcomeString(severity, type, message, accept ?: "application/fhir+json")
     return ResponseEntity.status(httpStatus)
         .eTag("W/\"0\"")
