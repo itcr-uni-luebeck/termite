@@ -1,9 +1,11 @@
 package de.itcr.termite.model.lazy
 
+import ca.uhn.fhir.model.api.annotation.Block
 import org.hl7.fhir.r4b.model.ValueSet
 
 typealias LazyConceptSetComponent = LazyValueSetConceptSetComponent
 
+@Block // To enable parsing by HAPI library
 class LazyValueSetConceptSetComponent(
     private var lazyConcept: Lazy<MutableList<ValueSet.ConceptReferenceComponent>>
 ): ValueSet.ConceptSetComponent() {

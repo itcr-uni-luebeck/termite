@@ -4,6 +4,7 @@ import de.itcr.termite.util.r4b.JsonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
+import org.hibernate.annotations.Where
 import org.hl7.fhir.r4b.model.*
 import java.util.*
 import javax.persistence.*
@@ -14,8 +15,8 @@ import javax.persistence.*
 class ValueSetData(
     vs: ValueSet
 ): ResourceData(
-    if (vs.meta.idBase != null) vs.meta.idBase.toInt() else 0,
-    if (vs.meta.versionId != null) vs.meta.versionId.toInt() else 0,
+    if (vs.meta.idBase != null) vs.meta.idBase.toInt() else null,
+    if (vs.meta.versionId != null) vs.meta.versionId.toInt() else null,
     null,
     vs.meta.source,
     vs.meta.profile.map { it.valueAsString },
@@ -41,9 +42,9 @@ class ValueSetData(
     @Column(name = "copyright") val copyright: String?
     @Column(name = "composeLockedDate") val composeLockedDate: Date?
     @Column(name = "composeInactive") val composeInactive: Boolean?
-    @OneToMany(mappedBy = "vs", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "vs", cascade = [CascadeType.ALL], orphanRemoval = true) @Where(clause = "type='Include'")
     val composeInclude: List<VSIncludeData>
-    @OneToMany(mappedBy = "vs", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "vs", cascade = [CascadeType.ALL], orphanRemoval = true) @Where(clause = "type='Exclude'")
     val composeExclude: List<VSExcludeData>
 
     init {

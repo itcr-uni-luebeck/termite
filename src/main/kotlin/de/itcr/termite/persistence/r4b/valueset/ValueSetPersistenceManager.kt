@@ -1,14 +1,15 @@
 package de.itcr.termite.persistence.r4b.valueset
 
 import ca.uhn.fhir.context.FhirContext
+import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
-import de.itcr.termite.model.entity.ValueSetData
-import de.itcr.termite.model.entity.toValueSetData
-import de.itcr.termite.model.entity.toValueSetResource
+import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CSConceptDataRepository
 import de.itcr.termite.model.repository.ValueSetDataRepository
 import de.itcr.termite.util.r4b.tagAsSummarized
+import org.apache.logging.log4j.LogManager
+import org.hl7.fhir.r4b.model.CodeSystem
 import org.hl7.fhir.r4b.model.Coding
 import org.hl7.fhir.r4b.model.Parameters
 import org.hl7.fhir.r4b.model.ValueSet
@@ -27,6 +28,12 @@ class ValueSetPersistenceManager(
     private val indexStore: FhirIndexStore<ByteArray, ByteArray>
 ): IValueSetPersistenceManager<Int> {
 
+    companion object {
+
+        private val logger = LogManager.getLogger(this::class)
+
+    }
+
     override fun create(instance: ValueSet): ValueSet {
         val vsData = instance.toValueSetData()
         val storedData: ValueSetData
@@ -40,11 +47,23 @@ class ValueSetPersistenceManager(
     }
 
     override fun read(id: Int): ValueSet {
-        TODO("Not yet implemented")
+        val vsOptional = repository.findById(id)
+        if (vsOptional.isEmpty) throw NotFoundException<ValueSet>("id", id)
+        else return vsOptional.get().toValueSetResource()
     }
 
+    //TODO: Change repository deleteByID method such that it returns the deleted instance. Is this faster?
     override fun delete(id: Int): ValueSet {
-        TODO("Not yet implemented")
+        val storedMetadata: ValueSetData
+        logger.debug("Checking if ValueSet instance exists [id: $id]")
+        try { storedMetadata = repository.findById(id).get() }
+        catch (e: NoSuchElementException) { throw NotFoundException<ValueSet>("id", id) }
+        catch (e: Exception) { throw PersistenceException("Error occurred while searching ValueSet data. Reason: ${e.message}", e) }
+        logger.debug("Deleting ValueSet instance data [id: $id]")
+        val instance = storedMetadata.toValueSetResource()
+        try { repository.deleteById(id) }
+        catch (e: Exception) { throw PersistenceException("Failed to delete ValueSet data. Reason: ${e.message}", e) }
+        return instance.tagAsSummarized()
     }
 
     override fun search(parameters: Parameters): List<ValueSet> {

@@ -113,7 +113,6 @@ abstract class FhirController(val fhirContext: FhirContext, val properties: Appl
         }
     }
 
-
     fun generateBundleString(type: Bundle.BundleType, entries: List<IBaseResource>, contentType: String): String {
         return parsers[contentType]!!.first.encodeResourceToString(generateBundle(type, entries))
     }

@@ -8,6 +8,8 @@ import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CodeSystemDataRepository
 import de.itcr.termite.model.repository.CSConceptDataRepository
+import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
+import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager.Companion
 import de.itcr.termite.util.r4b.parametersToMap
 import de.itcr.termite.util.r4b.parseParameterValue
 import de.itcr.termite.util.r4b.tagAsSummarized
@@ -68,19 +70,23 @@ class CodeSystemPersistenceManager(
 
     override fun delete(id: Int): CodeSystem {
         val storedMetadata: CodeSystemData
+        logger.debug("Checking if CodeSystem instance exists [id: $id]")
         try { storedMetadata = repository.findById(id).get() }
         catch (e: NoSuchElementException) { throw NotFoundException<CodeSystem>("id", id) }
         catch (e: Exception) { throw PersistenceException("Error occurred while searching CodeSystem metadata. Reason: ${e.message}", e) }
+        logger.debug("Deleting CodeSystem instance index data [id: $id]")
         val instance = storedMetadata.toCodeSystemResource()
         val concepts: Iterable<CodeSystemConceptData>
         try { concepts = conceptRepository.deleteByCodeSystem(id) }
         catch (e: Exception) { throw PersistenceException("Failed to delete CodeSystem concepts. Reason: ${e.message}", e) }
+        logger.debug("Deleting CodeSystem instance concept data [id: $id]")
         try { indexStore.deleteCodeSystem(instance, concepts) }
         catch (e: Exception) {
             conceptRepository.deleteByCodeSystem(storedMetadata.id)
             repository.delete(storedMetadata)
             throw PersistenceException("Failed to remove CodeSystem instance from index. Reason: ${e.message}", e)
         }
+        logger.debug("Deleting CodeSystem instance metadata [id: $id]")
         try { repository.deleteById(id) }
         catch (e: Exception) { throw PersistenceException("Failed to delete CodeSystem metadata. Reason: ${e.message}", e) }
         return instance.tagAsSummarized()

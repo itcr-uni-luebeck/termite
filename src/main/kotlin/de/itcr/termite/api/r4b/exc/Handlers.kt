@@ -6,6 +6,7 @@ import de.itcr.termite.exception.api.UnsupportedFormatException
 import de.itcr.termite.exception.api.UnsupportedParameterException
 import de.itcr.termite.exception.api.UnsupportedValueException
 import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
+import de.itcr.termite.exception.persistence.PersistenceException
 import org.hl7.fhir.r4b.model.OperationOutcome
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -30,6 +31,14 @@ fun FhirController.handleUnexpectedResourceType(exc: UnexpectedResourceTypeExcep
 
 fun FhirController.handleNotFound(exc: NotFoundException, accept: String?) =
     handleException(exc, accept, HttpStatus.NOT_FOUND, IssueSeverity.INFORMATION, IssueType.NOTFOUND)
+
+fun FhirController.handlePersistenceException(exc: PersistenceException, accept: String?) =
+    this.handleException(exc, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
+        template = "Operation failed during database access. Reason: {e}")
+
+fun FhirController.handleUnexpectedError(e: Throwable, accept: String?) =
+    this.handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
+        template = "Unexpected error occurred: {e}")
 
 fun FhirController.handleException(e: Throwable, accept: String?, httpStatus: HttpStatus, severity: IssueSeverity, type: IssueType, template: String = "{e}"): ResponseEntity<String> {
     val message = replaceInTemplate(template, e.message ?: e::class.simpleName ?: "Error without message")
