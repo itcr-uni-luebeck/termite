@@ -75,15 +75,15 @@ class CodeSystemPersistenceManager(
         catch (e: NoSuchElementException) { throw NotFoundException<CodeSystem>("id", id) }
         catch (e: Exception) { throw PersistenceException("Error occurred while searching CodeSystem metadata. Reason: ${e.message}", e) }
         logger.debug("Deleting CodeSystem instance index data [id: $id]")
+        logger.debug("Deleting CodeSystem instance concept data [id: $id]")
         val instance = storedMetadata.toCodeSystemResource()
         val concepts: Iterable<CodeSystemConceptData>
         try { concepts = conceptRepository.deleteByCodeSystem(id) }
         catch (e: Exception) { throw PersistenceException("Failed to delete CodeSystem concepts. Reason: ${e.message}", e) }
-        logger.debug("Deleting CodeSystem instance concept data [id: $id]")
+        logger.debug("Deleting CodeSystem instance index data [id: $id]")
         try { indexStore.deleteCodeSystem(instance, concepts) }
         catch (e: Exception) {
-            conceptRepository.deleteByCodeSystem(storedMetadata.id)
-            repository.delete(storedMetadata)
+            conceptRepository.saveAll(concepts)
             throw PersistenceException("Failed to remove CodeSystem instance from index. Reason: ${e.message}", e)
         }
         logger.debug("Deleting CodeSystem instance metadata [id: $id]")
@@ -105,7 +105,10 @@ class CodeSystemPersistenceManager(
             @Suppress("UNCHECKED_CAST")
             var ids = indexStore.search(parsedParams, CodeSystem::class as KClass<out IResource>)
             // Special handling for '_id' search parameters as indexing it makes no sense
-            if ("_id" in parameters) ids = ids intersect setOf(parameters["_id"]!!.toInt())
+            if ("_id" in parameters) {
+                val idSet = setOf(parameters["_id"]!!.toInt())
+                ids = if (parsedParams.isNotEmpty()) ids intersect idSet else idSet
+            }
             repository.findAllById(ids).map { it.toCodeSystemResource() }
         }
     }

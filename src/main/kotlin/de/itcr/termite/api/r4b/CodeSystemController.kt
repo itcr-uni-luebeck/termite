@@ -244,23 +244,14 @@ class CodeSystemController(
         try {
             val cs = parseBodyAsResource(requestEntity, contentType)
             if (cs is CodeSystem) {
-                try {
-                    val responseMediaType = determineResponseMediaType(accept, contentType)
-                    val createdCs = persistence.create(cs)
-                    logger.info("Created CodeSystem instance [id: ${createdCs.id}, url: ${createdCs.url}, version: ${createdCs.version}]")
-                    return ResponseEntity.created(URI(createdCs.id))
-                        .contentType(responseMediaType)
-                        .eTag("W/\"${createdCs.meta.versionId}\"")
-                        .lastModified(createdCs.meta.lastUpdated.time)
-                        .body(encodeResourceToSting(createdCs, responseMediaType))
-                }
-                catch (e: PersistenceException) {
-                    logger.warn(e.stackTraceToString())
-                    return handleException(
-                        e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
-                        "Creation of CodeSystem instance failed during database access. Reason: {e}"
-                    )
-                }
+                val responseMediaType = determineResponseMediaType(accept, contentType)
+                val createdCs = persistence.create(cs)
+                logger.info("Created CodeSystem instance [id: ${createdCs.id}, url: ${createdCs.url}, version: ${createdCs.version}]")
+                return ResponseEntity.created(URI(createdCs.id))
+                    .contentType(responseMediaType)
+                    .eTag("W/\"${createdCs.meta.versionId}\"")
+                    .lastModified(createdCs.meta.lastUpdated.time)
+                    .body(encodeResourceToSting(createdCs, responseMediaType))
             }
             else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (cs as Resource).resourceType) }
         }

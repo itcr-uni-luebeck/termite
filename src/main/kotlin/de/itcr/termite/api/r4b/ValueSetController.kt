@@ -6,14 +6,20 @@ import de.itcr.termite.api.r4b.exc.*
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.api.UnsupportedFormatException
+import de.itcr.termite.exception.api.UnsupportedParameterException
+import de.itcr.termite.exception.api.UnsupportedValueException
 import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.metadata.annotation.*
+import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
+import de.itcr.termite.util.parsePreferHandling
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
+import org.hl7.fhir.r4b.model.Enumeration
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
@@ -38,9 +44,118 @@ import java.util.*
     referencePolicy = [],
     searchInclude = [],
     searchRevInclude = [],
-    searchParam = []
+    searchParam = [
+        SearchParameter(
+            name = "context",
+            type = "token",
+            documentation = "A use context assigned to the value set",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "(ValueSet.useContext.value as CodeableConcept)"
+            )
+        ),
+        SearchParameter(
+            name = "context-type",
+            type = "token",
+            documentation = "A type of use context assigned to the value set",
+            processing =  ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.useContext.code"
+            )
+        ),
+        SearchParameter(
+            name = "date",
+            type = "date",
+            documentation = "The code system publication date",
+            processing = ProcessingHint(
+                targetType = DateTimeType::class,
+                elementPath = "ValueSet.date"
+            )
+        ),
+        SearchParameter(
+            name = "description",
+            type = "string",
+            documentation = "The description of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.description"
+            )
+        ),
+        SearchParameter(
+            name = "identifier",
+            type = "token",
+            documentation = "External identifier for the value set",
+            processing = ProcessingHint(
+                targetType = Identifier::class,
+                elementPath = "ValueSet.identifier"
+            )
+        ),
+        SearchParameter(
+            name = "jurisdiction",
+            type = "token",
+            documentation = "Intended jurisdiction for the value set",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "ValueSet.jurisdiction"
+            )
+        ),
+        SearchParameter(
+            name = "name",
+            type = "string",
+            documentation = "Computationally friendly name of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.name"
+            )
+        ),
+        SearchParameter(
+            name = "publisher",
+            type = "string",
+            documentation = "Name of the publisher of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.publisher"
+            )
+        ),
+        SearchParameter(
+            name = "status",
+            type = "token",
+            documentation = "The current status of the value set",
+            processing = ProcessingHint(
+                targetType = Enumeration::class,
+                elementPath = "ValueSet.status"
+            )
+        ),
+        SearchParameter(
+            name = "title",
+            type = "string",
+            documentation = "The human-friendly name of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.title"
+            )
+        ),
+        SearchParameter(
+            name = "url",
+            type = "uri",
+            documentation = "The uri that identifies the value set",
+            processing = ProcessingHint(
+                targetType = UriType::class,
+                elementPath = "ValueSet.url"
+            )
+        ),
+        SearchParameter(
+            name = "version",
+            type = "token",
+            documentation = "The business version of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.version"
+            )
+        )
+    ]
 )
-@SupportsInteraction(["create", "search-type"])
+@SupportsInteraction(["create", "read", "delete", "search-type"])
 @SupportsOperation(
     name = "ValueSet-lookup",
     title = "ValueSet-lookup",
@@ -155,23 +270,14 @@ class ValueSetController(
             val vs = parseBodyAsResource(requestEntity, contentType)
             if (vs is ValueSet) {
                 logger.info("Creating ValueSet instance [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
-                try {
-                    val responseMediaType = determineResponseMediaType(accept, contentType)
-                    val createdVs = persistence.create(vs)
-                    logger.debug("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
-                    return ResponseEntity.created(URI(createdVs.id))
-                        .contentType(responseMediaType)
-                        .eTag("W/\"${createdVs.meta.versionId}\"")
-                        .lastModified(createdVs.meta.lastUpdated.time)
-                        .body(encodeResourceToSting(createdVs, responseMediaType))
-                }
-                catch (e: PersistenceException) {
-                    logger.warn(e.stackTraceToString())
-                    return handleException(
-                        e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
-                        "Creation of ValueSet instance failed during database access. Reason: {e}"
-                    )
-                }
+                val responseMediaType = determineResponseMediaType(accept, contentType)
+                val createdVs = persistence.create(vs)
+                logger.debug("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
+                return ResponseEntity.created(URI(createdVs.id))
+                    .contentType(responseMediaType)
+                    .eTag("W/\"${createdVs.meta.versionId}\"")
+                    .lastModified(createdVs.meta.lastUpdated.time)
+                    .body(encodeResourceToSting(createdVs, responseMediaType))
             }
             else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (vs as Resource).resourceType) }
         }
@@ -224,40 +330,33 @@ class ValueSetController(
         catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-/*
-    @GetMapping(params = ["url"])
+    // TODO: Implement paging
+    @GetMapping(
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
-        logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
-        try{
-            val vsList = database.searchValueSet(url, valueSetVersion)
-            val bundle = Bundle()
-            bundle.id = UUID.randomUUID().toString()
-            bundle.type = Bundle.BundleType.SEARCHSET
-            bundle.total = vsList.size
-            val baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-            vsList.forEach { vs ->
-                bundle.addEntry(
-                    Bundle.BundleEntryComponent()
-                        .setFullUrl("http://$baseURL/${vs.id}")
-                        .setResource(vs)
-                )
-            }
-            logger.debug("Found ${vsList.size} value sets for URL $url and value set version $valueSetVersion")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
+    fun search(
+        @RequestParam params: Map<String, String>,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String>{
+        logger.info("Received search request for ValueSet [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+        try {
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.GET)
+            val instances = persistence.search(filteredParams)
+            return ResponseEntity.ok()
+                .contentType(responseMediaType)
+                .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
         }
-        catch(e: Exception){
-            val message = "Search for ValueSet instances [url = $url, version = $valueSetVersion] failed"
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            throw ResponseStatusException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                message
-            )
-        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    */
+/*
 /**
      * Validates a code with respect to the given value set
      * @see <a href="http://www.hl7.org/FHIR/valueset-operation-validate-code.html">validate-code operation</a>
@@ -267,7 +366,7 @@ class ValueSetController(
      * @param system URI defining the code system to which the code belongs
      * @param code value of the code
      * @param display (optional) display value of the code in the given value set
-     *//*
+     */
 
     @GetMapping(path = ["\$validate-code"])
     @ResponseBody

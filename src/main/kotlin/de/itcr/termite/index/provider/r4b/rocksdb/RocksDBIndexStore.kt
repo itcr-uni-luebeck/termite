@@ -10,6 +10,7 @@ import de.itcr.termite.index.partition.*
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.model.entity.CodeSystemConceptData
+import de.itcr.termite.model.entity.VSConceptData
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.instance.model.api.IBase
@@ -184,7 +185,7 @@ class RocksDBIndexStore(
 
     // TODO: Implement short circuiting if resulting set is empty
     override fun search(parameters: Map<String, IBase>, type: KClass<out IResource>): Set<Int> {
-        return parameters.map { entry ->
+        val resultColl = parameters.map { entry ->
             when (entry.key) {
                 "code" -> TODO("Not yet implemented")
                 else -> {
@@ -202,7 +203,9 @@ class RocksDBIndexStore(
                     return@map idSet
                 }
             }
-        }.reduce { s1: Set<Int>, s2: Set<Int> -> s1 intersect s2 }
+        }
+        return if (resultColl.isNotEmpty()) resultColl.reduce { s1: Set<Int>, s2: Set<Int> -> s1 intersect s2 }
+        else emptySet()
     }
 
     override fun codeSystemLookup(
@@ -234,6 +237,34 @@ class RocksDBIndexStore(
         displayLanguage: String?
     ): Triple<Boolean, String, String> {
         TODO("Not yet implemented")
+    }
+
+    override fun putValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>) {
+        val batch = createBatch()
+        val id = resource.idPart.toInt()
+        // Search indices
+        for (partition in searchPartitionsByType(ValueSet::class).values) {
+            val elements = partition.elementPath()(resource)
+            for (element in elements) {
+                val key = partition.keyGenerator()(element, id)
+                batch.put(partition, key, null)
+            }
+        }
+        processBatch(batch)
+    }
+
+    override fun deleteValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>) {
+        val batch = createBatch()
+        val id = resource.id.toInt()
+        // Search indices
+        for (partition in searchPartitionsByType(ValueSet::class).values) {
+            val elements = partition.elementPath()(resource)
+            for (element in elements) {
+                val key = partition.keyGenerator()(element, id)
+                batch.put(partition, key, null)
+            }
+        }
+        processBatch(batch)
     }
 
     @PreDestroy

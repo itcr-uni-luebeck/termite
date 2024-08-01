@@ -18,7 +18,7 @@ fun parseParameterValue(paramDef: SearchParameter, value: String): IBase {
         "string" -> StringType(value)
         "token" -> parseTokenParameterValue(paramDef, value)
         "reference" -> Reference(value)
-        "uri" -> StringType(value)
+        "uri" -> UriType(value)
         else -> throw FhirParsingException("Unsupported type '${paramDef.type}' for parameter '${paramDef.name}'")
     }
 }
