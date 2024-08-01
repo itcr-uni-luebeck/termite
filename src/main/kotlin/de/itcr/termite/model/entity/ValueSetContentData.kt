@@ -32,7 +32,7 @@ abstract class ValueSetContentData(
     valueSet: List<CanonicalType>
 ) {
 
-    @Column(name = "id", nullable = false) @Id @GeneratedValue
+    @Column(name = "id", nullable = false) @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int? = id?.toInt()
     @OneToMany(mappedBy = "vsContentData", cascade = [CascadeType.ALL], orphanRemoval = true)
     val concept: List<VSConceptData> = concept.map { it.toVSConceptData(this) }

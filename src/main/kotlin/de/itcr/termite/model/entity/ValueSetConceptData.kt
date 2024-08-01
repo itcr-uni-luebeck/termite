@@ -15,7 +15,7 @@ private typealias ConceptDesignation = ValueSet.ConceptReferenceDesignationCompo
 @Table(name = "vs_concept", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 data class ValueSetConceptData (
-    @Column(name = "id") @Id @GeneratedValue val id: Long?,
+    @Column(name = "id") @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long?,
     @ManyToOne val vsContentData: ValueSetContentData,
     @Column(name = "code") val code: String,
     @Column(name = "display") val display: String?,
