@@ -67,3 +67,9 @@ inline fun <reified T: CanonicalResource> T.tagAsSummarized(): T {
     )
     return this
 }
+
+fun ValidateCodeParameters(result: Boolean, message: String? = null, display: String? = null) = Parameters().apply {
+    setParameter("result", result)
+    if (message != null) setParameter("message", message)
+    if (display != null) setParameter("display", display)
+}

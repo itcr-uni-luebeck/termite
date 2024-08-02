@@ -7,14 +7,15 @@ import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CSConceptDataRepository
+import de.itcr.termite.model.repository.ValueSetConceptDataRepository
 import de.itcr.termite.model.repository.ValueSetDataRepository
+import de.itcr.termite.util.r4b.ValidateCodeParameters
 import de.itcr.termite.util.r4b.parametersToMap
 import de.itcr.termite.util.r4b.parseParameterValue
 import de.itcr.termite.util.r4b.tagAsSummarized
 import org.apache.logging.log4j.LogManager
-import org.hl7.fhir.r4b.model.Coding
-import org.hl7.fhir.r4b.model.Parameters
-import org.hl7.fhir.r4b.model.ValueSet
+import org.hl7.fhir.instance.model.api.IBase
+import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
@@ -26,7 +27,7 @@ class ValueSetPersistenceManager(
     @Autowired
     private val repository: ValueSetDataRepository,
     @Autowired
-    private val conceptRepository : CSConceptDataRepository,
+    private val conceptRepository : ValueSetConceptDataRepository,
     @Autowired
     private val indexStore: FhirIndexStore<ByteArray, ByteArray>
 ): IValueSetPersistenceManager<Int> {
@@ -100,32 +101,37 @@ class ValueSetPersistenceManager(
     }
 
     override fun validateCode(
-        url: String,
+        id: Int?,
+        url: String?,
         valueSetVersion: String?,
         system: String,
         code: String,
         systemVersion: String?,
         display: String?
     ): Parameters {
+        val actualId: Int
+        if (id == null) {
+            if (url == null) throw PersistenceException("Cannot determine ValueSet instance: No ID nor URL provided")
+            val params = mutableMapOf<String, IBase>()
+            params["url"] = UriType(url)
+            if (valueSetVersion != null) params["version"] = StringType(valueSetVersion)
+            @Suppress("UNCHECKED_CAST")
+            val ids = indexStore.search(params, ValueSet::class as KClass<out IResource>)
+            if (ids.size > 1) throw PersistenceException("Cannot determine ValueSet instance: Multiple instances match")
+            else if (ids.isEmpty()) return ValidateCodeParameters(false, "No ValueSet instance matched criteria")
+            actualId = ids.first()
+        }
+        else actualId = id
+        val conceptId = indexStore.valueSetValidateCode(actualId, system, code, systemVersion)
+            ?: return ValidateCodeParameters(false, "Coding not in ValueSet instance [id: $actualId]")
+        val concept = conceptRepository.findById(conceptId).get() // Should never be null unless inconsistencies exist
+        return if (display != null && display != concept.display)
+            ValidateCodeParameters(false, "Coding present in ValueSet instance [id: $actualId] but displays did not match [expected: '${concept.display}', actual: $display]")
+        else ValidateCodeParameters(true, "Coding present in ValueSet instance [id: $actualId]", concept.display)
+    }
+
+    override fun validateCode(id: Int?, url: String?, valueSetVersion: String?, concept: CodeableConcept): Parameters {
         TODO("Not yet implemented")
-    }
-
-    override fun validateCode(url: String, valueSetVersion: String?, coding: Coding): Parameters {
-        return super.validateCode(url, valueSetVersion, coding)
-    }
-
-    override fun validateCode(
-        id: Int,
-        system: String,
-        code: String,
-        systemVersion: String?,
-        display: String?
-    ): Parameters {
-        TODO("Not yet implemented")
-    }
-
-    override fun validateCode(id: Int, coding: Coding): Parameters {
-        return super.validateCode(id, coding)
     }
 
     override fun expand(url: String, version: String?): ValueSet {

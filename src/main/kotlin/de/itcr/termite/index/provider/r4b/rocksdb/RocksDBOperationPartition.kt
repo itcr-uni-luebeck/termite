@@ -36,4 +36,24 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         { b: ByteArray -> deserializeLong(b) }
     )
 
+    data object VALUE_SET_VALIDATE_CODE_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple4<String, String, String?, Int>, Long>(
+        "ValueSet.\$validate-code#code",
+        8,
+        20,
+        { v: Tuple4<String, String, String?, Int> -> serializeInOrder(v.t1, v.t2) },
+        { v: Tuple4<String, String, String?, Int> -> serializeInOrder(v.t1, v.t2, v.t3?: "", v.t4) },
+        { v: Long -> serialize(v) },
+        { b: ByteArray -> deserializeLong(b) }
+    )
+
+    data object VALUE_SET_VALIDATE_CODE_BY_ID: RocksDBOperationPartition<CodeSystem, Tuple4<Int, String, String, String?>, Long>(
+        "ValueSet.\$validate-code#id",
+        12,
+        20,
+        { v: Tuple4<Int, String, String, String?> -> serializeInOrder(v.t1, v.t2, v.t3) },
+        { v: Tuple4<Int, String, String, String?> -> serializeInOrder(v.t1, v.t2, v.t3, v.t4?: "") },
+        { v: Long -> serialize(v) },
+        { b: ByteArray -> deserializeLong(b) }
+    )
+
 }

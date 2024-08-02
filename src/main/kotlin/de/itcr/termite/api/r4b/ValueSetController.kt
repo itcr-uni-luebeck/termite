@@ -152,30 +152,39 @@ import java.util.*
                 targetType = StringType::class,
                 elementPath = "ValueSet.version"
             )
+        ),
+        SearchParameter(
+            name = "system",
+            type = "uri",
+            documentation = "Code system the value set contains codes of",
+            processing = ProcessingHint(
+                targetType = UriType::class,
+                elementPath = "ValueSet.compose.include.system"
+            )
         )
     ]
 )
 @SupportsInteraction(["create", "read", "delete", "search-type"])
 @SupportsOperation(
-    name = "ValueSet-lookup",
-    title = "ValueSet-lookup",
+    name = "ValueSet-validate-code",
+    title = "ValueSet-validate-code",
     status = "active",
     kind = "operation",
     experimental = false,
-    description = "Checks whether a given concept is in a value set",
+    description = "Validate that a coded value is in the set of codes allowed by a value set",
     affectState = false,
-    code = "lookup",
+    code = "validate-code",
     resource = ["ValueSet"],
     system = false,
     type = true,
-    instance = false,
+    instance = true,
     parameter = [
         Parameter(
             name = "url",
             use = "in",
             min = 1,
             max = "1",
-            documentation = "URL of the ValueSet instance",
+            documentation = "URL of the value set",
             type = "uri"
         ),
         Parameter(
@@ -183,7 +192,7 @@ import java.util.*
             use = "in",
             min = 0,
             max = "1",
-            documentation = "Version of the ValueSet instance",
+            documentation = "Version of the value set",
             type = "string"
         ),
         Parameter(
@@ -191,7 +200,7 @@ import java.util.*
             use = "in",
             min = 1,
             max = "1",
-            documentation = "Code of the coding to be located",
+            documentation = "Code of the coding to be validated",
             type = "code"
         ),
         Parameter(
@@ -199,16 +208,56 @@ import java.util.*
             use = "in",
             min = 1,
             max = "1",
-            documentation = "System from which the code originates",
+            documentation = "System from which the coding originates",
             type = "uri"
+        ),
+        Parameter(
+            name = "systemVersion",
+            use = "in",
+            min = 1,
+            max = "1",
+            documentation = "System from which the coding originates",
+            type = "string"
         ),
         Parameter(
             name = "display",
             use = "in",
             min = 0,
             max = "1",
-            documentation = "Display value of the concept",
+            documentation = "Display value of the coding",
             type = "uri"
+        ),
+        Parameter(
+            name = "coding",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "A coding to validate",
+            type = "Coding"
+        ),
+        Parameter(
+            name = "result",
+            use = "out",
+            min = 1,
+            max = "1",
+            documentation = "Indicates validity of the supplied concept details",
+            type = "boolean"
+        ),
+        Parameter(
+            name = "message",
+            use = "out",
+            min = 0,
+            max = "1",
+            documentation = "Error details, if result = false. If this is provided when result = true, the message carries hints and warnings",
+            type = "string"
+        ),
+        Parameter(
+            name = "display",
+            use = "out",
+            min = 0,
+            max = "1",
+            documentation = "A valid display for the concept if the system wishes to display this to a user",
+            type = "string"
         )
     ]
 )
@@ -247,7 +296,7 @@ import java.util.*
 @Controller
 @RequestMapping("fhir/ValueSet")
 class ValueSetController(
-    @Autowired persistence: ValueSetPersistenceManager,
+    @Autowired override val persistence: ValueSetPersistenceManager,
     @Autowired fhirContext: FhirContext,
     @Autowired properties: ApplicationConfig
 ): ResourceController<ValueSet, Int>(persistence, fhirContext, properties, logger) {
@@ -356,98 +405,42 @@ class ValueSetController(
         catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-/*
-/**
-     * Validates a code with respect to the given value set
-     * @see <a href="http://www.hl7.org/FHIR/valueset-operation-validate-code.html">validate-code operation</a>
-     *
-     * @param url URL of the value set against which the code is validated
-     * @param valueSetVersion (optional) version of the value set assigned by its maintainer
-     * @param system URI defining the code system to which the code belongs
-     * @param code value of the code
-     * @param display (optional) display value of the code in the given value set
-     */
-
-    @GetMapping(path = ["\$validate-code"])
+    @GetMapping(
+        path = ["\$validate-code", "{id}/\$validate-code"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun validateCode(@RequestParam url: String,
-                     @RequestParam(required = false) valueSetVersion: String?,
-                     @RequestParam system: String,
-                     @RequestParam code: String,
-                     @RequestParam(required = false) display: String?): ResponseEntity<String>{
-        var mutableUrl = url
-        val urlParts = mutableUrl.split("|")
-        mutableUrl = if (urlParts.isNotEmpty()) urlParts[0] else mutableUrl
-        logger.info("Validating code [system=$system, code=$code, display=$display] against value set [url=$mutableUrl, version=$valueSetVersion]")
-        try{
-            val (result, version) = database.validateCodeVS(mutableUrl, valueSetVersion, system, code, display)
-            val body = generateParametersString(
-                jsonParser,
-                Parameters.ParametersParameterComponent("result").setValue(BooleanType(result)),
-                Parameters.ParametersParameterComponent("message").setValue(StringType(
-                    "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
-                            "[url = $mutableUrl and version = $version]"
-                ))
-            )
-            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [url = $mutableUrl, version = $version]: $result")
-            return ResponseEntity.ok().body(body)
+    fun validateCode(
+        @RequestParam(name = "id", required = false) id: String?,
+        @RequestParam params: Map<String, String>,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String>{
+        logger.info("Received validate-code request for ValueSet [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+        try {
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$validate-code"
+            val filteredParams = validateOperationParameters("validate-code", params, handling, apiPath, HttpMethod.GET)
+            val instances = persistence.validateCode(
+                id?.toInt(),
+                filteredParams["url"],
+                filteredParams["valueSetVersion"],
+                filteredParams["code"],
+                filteredParams["system"],
+                filteredParams["systemVersion"],
+                filteredParams[""])
+            return ResponseEntity.ok()
+                .contentType(responseMediaType)
+                .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
         }
-        catch (e: Exception){
-            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [url = $mutableUrl${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            throw ResponseStatusException(
-                //TODO: Here INTERNAL_SERVER_ERROR or UNPROCESSABLE_ENTITY?
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                message
-            )
-        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    @PostMapping(path = ["\$validate-code"])
-    @ResponseBody
-    fun validateCode(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
-        logger.info("POST: Validating code against value set with request body: ${requestEntity.body}")
-        try{
-            val parameters = parseBodyAsResource(requestEntity, contentType) as Parameters
-            val paramMap = parseParameters(parameters)
-            var url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
-            val urlParts = url.split("|")
-            url = if (urlParts.isNotEmpty()) urlParts[0] else url
-            val system = paramMap["system"] ?: throw Exception("system has to be provided in parameters in request body")
-            val code = paramMap["code"] ?: throw Exception("code has to be provided in parameters in request body")
-            val display = paramMap["display"]
-            //TODO: Implement other parameters like version
-            val (result, version) = database.validateCodeVS(url, null, system, code, display)
-            val resultParam = generateParametersString(
-                jsonParser,
-                Parameters.ParametersParameterComponent()
-                    .setName("result").setValue(BooleanType(result)),
-                Parameters.ParametersParameterComponent()
-                    .setName("message").setValue(StringType(
-                        "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
-                                "[url = $url and version = $version]"
-                    ))
-            )
-            logger.debug("Validation result: $resultParam")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultParam)
-        }
-        catch (e: Exception){
-            logger.warn("Validation of code against value set failed")
-            logger.debug(e.stackTraceToString())
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.INVALID,
-                e.message,
-                jsonParser
-            )
-            return ResponseEntity.internalServerError()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
-    }
-
-    @GetMapping(path = ["\$expand"])
+/*    @GetMapping(path = ["\$expand"])
     @ResponseBody
     fun expand(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
         logger.info("Expanding value set [url = $url,  version = $valueSetVersion]")

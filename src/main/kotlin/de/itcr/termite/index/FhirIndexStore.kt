@@ -41,6 +41,12 @@ interface FhirIndexStore<KEY, VALUE>: BatchSupport<KEY, VALUE>, IteratorSupport<
 
     fun deleteValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>)
 
+    fun valueSetValidateCode(vsId: Int, system: String, code: String, version: String?): Long?
+
+    fun valueSetValidateCode(vsId: Int, coding: Coding): Long?
+
+    fun valueSetValidateCode(vsId: Int, concept: CodeableConcept): Long?
+
 }
 
 inline fun <reified FHIR_TYPE: IResource> FhirIndexStore<*, *>.search(parameters: Map<String, IBase>): Set<Int> =

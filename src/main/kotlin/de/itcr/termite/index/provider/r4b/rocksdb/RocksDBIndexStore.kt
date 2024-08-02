@@ -173,7 +173,6 @@ class RocksDBIndexStore(
             var partition: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long> =
                 RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_SYSTEM
             var key = partition.keyGenerator()(element)
-            val value = partition.valueGenerator()(concept.id)
             batch.delete(partition, key)
             // Lookup by code
             partition = RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_CODE
@@ -185,27 +184,29 @@ class RocksDBIndexStore(
 
     // TODO: Implement short circuiting if resulting set is empty
     override fun search(parameters: Map<String, IBase>, type: KClass<out IResource>): Set<Int> {
-        val resultColl = parameters.map { entry ->
-            when (entry.key) {
-                "code" -> TODO("Not yet implemented")
-                else -> {
-                    val partitionName = "${type.simpleName}.search.${entry.key}"
-                    val partition = searchPartitionByTypeAndName(type, partitionName)!!
-                    val prefix = partition.prefixGenerator()(entry.value)
-                    val iterator = createIterator(partition, prefix)
-                    val idSet = mutableSetOf<Int>()
-                    iterator.forEach {
-                        val key = it.first
-                        val id = key.sliceArray(key.size - 4 ..< key.size)
-                        idSet.add(deserializeInt(id))
-                    }
-                    iterator.close()
-                    return@map idSet
-                }
-            }
-        }
+        val resultColl = parameters.map { entry -> search(entry.key, entry.value, type) }
         return if (resultColl.isNotEmpty()) resultColl.reduce { s1: Set<Int>, s2: Set<Int> -> s1 intersect s2 }
         else emptySet()
+    }
+
+    private fun search(name: String, value: IBase, type: KClass<out IResource>): Set<Int> {
+        when (name) {
+            "code" -> TODO("Not yet implemented")
+            else -> {
+                val partitionName = "${type.simpleName}.search.${name}"
+                val partition = searchPartitionByTypeAndName(type, partitionName)!!
+                val prefix = partition.prefixGenerator()(value)
+                val iterator = createIterator(partition, prefix)
+                val idSet = mutableSetOf<Int>()
+                iterator.forEach {
+                    val key = it.first
+                    val id = key.sliceArray(key.size - 4 ..< key.size)
+                    idSet.add(deserializeInt(id))
+                }
+                iterator.close()
+                return idSet
+            }
+        }
     }
 
     override fun codeSystemLookup(
@@ -265,6 +266,34 @@ class RocksDBIndexStore(
             }
         }
         processBatch(batch)
+    }
+
+    override fun valueSetValidateCode(vsId: Int, system: String, code: String, version: String?): Long? {
+        val partition = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID
+        val t = Tuple4(vsId, code, system, version)
+        if (version != null) {
+            val value = database.get(columnFamilyHandleMap[partition.indexName()], partition.keyGenerator()(t))
+            return if (value != null) partition.valueDestructor()(value) else null
+        }
+        else {
+            // FIXME: This assumes that versions adhere to semantic versioning spec!!!
+            val prefix = partition.prefixGenerator()(t)
+            val it = createIterator(partition, prefix)
+            val value = (it as Iterator).last().second
+            return partition.valueDestructor()(value)
+        }
+    }
+
+    override fun valueSetValidateCode(vsId: Int, coding: Coding): Long? =
+        valueSetValidateCode(vsId, coding.system, coding.code, coding.version)
+
+    override fun valueSetValidateCode(vsId: Int, concept: CodeableConcept): Long? {
+        var conceptId: Long?
+        for (coding in concept.coding) {
+            conceptId = valueSetValidateCode(vsId, coding)
+            if (conceptId != null) break
+        }
+        return null
     }
 
     @PreDestroy
@@ -344,6 +373,11 @@ class RocksDBIndexStore(
         override fun hasNext(): Boolean = iterator.isValid
 
         override fun close() = iterator.close()
+
+        fun last(): Pair<ByteArray, ByteArray> {
+            iterator.seekToLast()
+            return next()
+        }
 
     }
 
