@@ -57,7 +57,7 @@ class ValueSetData(
         experimental = vs.experimental
         date = vs.date
         publisher = vs.publisher
-        contact =JsonUtil.serialize(vs.contact)
+        contact = JsonUtil.serialize(vs.contact)
         description = vs.description
         useContext = JsonUtil.serialize(vs.useContext)
         jurisdiction = JsonUtil.serialize(vs.jurisdiction)
