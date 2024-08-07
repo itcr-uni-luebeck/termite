@@ -5,6 +5,7 @@ import ca.uhn.fhir.model.api.IResource
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.FhirIndexStore
+import de.itcr.termite.index.provider.r4b.rocksdb.RocksDBOperationPartition
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CSConceptDataRepository
 import de.itcr.termite.model.repository.ValueSetConceptDataRepository
@@ -82,21 +83,27 @@ class ValueSetPersistenceManager(
         return if (parameters.isEmpty()) repository.findAll().map { it.toValueSetResource() }
         else {
             val supportedParams = indexStore.searchPartitionsByType(ValueSet::class)
-            val parsedParams = parameters.entries.filter { it.key != "_id" }.associate {
-                val paramDef = supportedParams["ValueSet.search.${it.key}"]
-                return@associate it.key to parseParameterValue(paramDef!!.parameter(), it.value)
+            val parsedParams = parameters.entries.filter { it.key != "_id" && it.key != "code" }.associate {
+                val paramDef = supportedParams["ValueSet.search.${it.key}"]!!
+                return@associate it.key to parseParameterValue(paramDef.parameter(), it.value)
             }
             @Suppress("UNCHECKED_CAST")
             var ids = indexStore.search(parsedParams, ValueSet::class as KClass<out IResource>)
             // Special handling for '_id' search parameters as indexing it makes no sense
             if ("_id" in parameters) {
                 val idSet = setOf(parameters["_id"]!!.toInt())
-                ids = if (parsedParams.isNotEmpty()) ids intersect idSet else idSet
+                ids = if (ids.isNotEmpty()) idSet intersect ids else idSet
             }
-            // Special handling for 'code' search parameters as it is indexed differently than other search parameters
-            if ("code" in parameters) {
-                val coding = parseCodeTypeParameterValue("code", parameters["code"]!!)
-                indexStore.valueSetValidateCode()
+            // As there is an index for code systems supported by the value set it will be used if only a system value
+            // is provided
+            else if ("code" in parameters) {
+                val paramDef = supportedParams[RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.indexName()]!!
+                val parsedParam = parseParameterValue(paramDef.parameter(), parameters["code"]!!) as CodeType
+                @Suppress("UNCHECKED_CAST")
+                val idSet = if (parsedParam.value == null)
+                    indexStore.search("system", UriType(parsedParam.system), ValueSet::class as KClass<out IResource>)
+                else indexStore.search("code", parsedParam, ValueSet::class as KClass<out IResource>)
+                ids = if (ids.isNotEmpty()) idSet intersect ids else idSet
             }
             repository.findAllById(ids).map { it.toValueSetResource() }
         }

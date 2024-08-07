@@ -25,7 +25,9 @@ interface FhirIndexStore<KEY, VALUE>: BatchSupport<KEY, VALUE>, IteratorSupport<
 
     fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>)
 
-    fun search(parameters: Map<String, IBase>, type: KClass<out IResource>): Set<Int>
+    fun search(parameters: Map<String, IBase>, type: KClass<out IBaseResource>): Set<Int>
+
+    fun search(name: String, value: IBase, type: KClass<out IBaseResource>): Set<Int>
 
     fun codeSystemLookup(code: String, system: String, version: String?): Long
 

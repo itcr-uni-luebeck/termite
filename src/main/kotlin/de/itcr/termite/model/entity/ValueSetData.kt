@@ -80,7 +80,7 @@ fun ValueSetData.toValueSetResource(): ValueSet {
     vs.id = id.toString()
     vs.meta.versionId = versionId.toString()
     vs.meta.lastUpdated = lastUpdated
-    vs.meta.source = source
+    vs.meta.source = sourceSystem
     vs.meta.profile = profile.map { CanonicalType(it) }
     vs.meta.security = JsonUtil.deserializeList(security, "Coding") as List<Coding>
     vs.meta.tag = JsonUtil.deserializeList(tag, "Coding") as List<Coding>

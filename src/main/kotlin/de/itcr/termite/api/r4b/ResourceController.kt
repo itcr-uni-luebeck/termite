@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.api.PreferHandlingEnum
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.api.MissingParameterException
 import de.itcr.termite.exception.api.UnsupportedParameterException
+import de.itcr.termite.exception.api.UnsupportedValueException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.persistence.r4b.FhirPersistenceManager
@@ -108,6 +109,11 @@ abstract class ResourceController<TYPE, ID>(
         method: HttpMethod,
         exemptions: Set<String> = setOf("_format")
     ): Map<String, String> {
+        if ("code" in parameters) {
+            val code = parameters["code"]!!.trim()
+            if (code.startsWith("|") || !code.contains('|'))
+                throw UnsupportedValueException("Parameter 'code' has to feature a system value")
+        }
         return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in searchParameterMap.keys }
         else {
             val diff = parameters.keys - searchParameterMap.keys - exemptions

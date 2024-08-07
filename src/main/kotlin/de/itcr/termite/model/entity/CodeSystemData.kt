@@ -17,7 +17,7 @@ data class CodeSystemData(
     override val id: Int,
     override val versionId: Int,
     override val lastUpdated: Date?,
-    override val source: String?,
+    override val sourceSystem: String?,
     override val profile: List<String?>,
     override val security: String?,
     override val tag: String?,
@@ -47,7 +47,7 @@ data class CodeSystemData(
     @Column(name = "count") val count: Int,
     @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb") val filter: String?,
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
-): ResourceData(id, versionId, lastUpdated, source, profile, security, tag)
+): ResourceData(id, versionId, lastUpdated, sourceSystem, profile, security, tag)
 
 fun CodeSystem.toCodeSystemData(): CodeSystemData {
     return CodeSystemData(
@@ -92,7 +92,7 @@ fun CodeSystemData.toCodeSystemResource(): CodeSystem {
     cs.id = id.toString()
     cs.meta.versionId = versionId.toString()
     cs.meta.lastUpdated = lastUpdated
-    cs.meta.source = source
+    cs.meta.source = sourceSystem
     cs.meta.profile = profile.map { CanonicalType(it) }
     cs.meta.security = JsonUtil.deserializeList(security, "Coding") as List<Coding>
     cs.meta.tag = JsonUtil.deserializeList(tag, "Coding") as List<Coding>

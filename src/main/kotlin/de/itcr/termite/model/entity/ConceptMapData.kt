@@ -6,7 +6,6 @@ import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hl7.fhir.r4b.model.CanonicalType
 import org.hl7.fhir.r4b.model.ConceptMap
-import org.hl7.fhir.r4b.model.UriType
 import java.util.*
 import javax.persistence.Column
 import javax.persistence.Entity

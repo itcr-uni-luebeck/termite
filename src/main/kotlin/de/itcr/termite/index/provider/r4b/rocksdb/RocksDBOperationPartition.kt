@@ -1,8 +1,13 @@
 package de.itcr.termite.index.provider.r4b.rocksdb
 
+import de.itcr.termite.index.annotation.GenerateSearchPartition
 import de.itcr.termite.index.partition.FhirOperationIndexPartition
+import de.itcr.termite.metadata.annotation.ProcessingHint
+import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.util.*
 import org.hl7.fhir.r4b.model.CodeSystem
+import org.hl7.fhir.r4b.model.CodeType
+import org.hl7.fhir.r4b.model.ValueSet
 
 sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
     indexName: String,
@@ -28,7 +33,7 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
 
     data object CODE_SYSTEM_LOOKUP_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long>(
         "CodeSystem.\$lookup#code",
-        8,
+        4,
         20,
         { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t2, v.t1) },
         { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t2, v.t1, v.t3?: "", v.t4?: "", v.t5) },
@@ -36,8 +41,20 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         { b: ByteArray -> deserializeLong(b) }
     )
 
+    @GenerateSearchPartition(
+        target = ValueSet::class,
+        param = SearchParameter(
+            name = "code",
+            type = "token",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "",
+                special = true
+            )
+        )
+    )
     data object VALUE_SET_VALIDATE_CODE_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple4<String, String, String?, Int>, Long>(
-        "ValueSet.\$validate-code#code",
+        "ValueSet.search.code",
         8,
         20,
         { v: Tuple4<String, String, String?, Int> -> toBytesInOrder(v.t1, v.t2, useHashCode = true) },
@@ -47,7 +64,7 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
     )
 
     data object VALUE_SET_VALIDATE_CODE_BY_ID: RocksDBOperationPartition<CodeSystem, Tuple4<Int, String, String, String?>, Long>(
-        "ValueSet.\$validate-code#id",
+        "ValueSet.search.code#id",
         12,
         20,
         { v: Tuple4<Int, String, String, String?> -> toBytesInOrder(v.t1, v.t2, v.t3, useHashCode = true) },

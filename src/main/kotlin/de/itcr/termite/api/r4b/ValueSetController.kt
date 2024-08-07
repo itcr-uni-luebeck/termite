@@ -15,6 +15,7 @@ import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
 import de.itcr.termite.util.parsePreferHandling
+import de.itcr.termite.util.r4b.parseCodeTypeParameterValue
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
@@ -56,6 +57,7 @@ import java.util.*
                 special = true
             )
         ),
+        /*
         SearchParameter(
             name = "context",
             type = "token",
@@ -64,13 +66,13 @@ import java.util.*
                 targetType = CodeType::class,
                 elementPath = "(ValueSet.useContext.value as CodeableConcept)"
             )
-        ),
+        ),*/
         SearchParameter(
             name = "context-type",
             type = "token",
             documentation = "A type of use context assigned to the value set",
             processing =  ProcessingHint(
-                targetType = StringType::class,
+                targetType = Coding::class,
                 elementPath = "ValueSet.useContext.code"
             )
         ),
@@ -106,8 +108,8 @@ import java.util.*
             type = "token",
             documentation = "Intended jurisdiction for the value set",
             processing = ProcessingHint(
-                targetType = CodeType::class,
-                elementPath = "ValueSet.jurisdiction"
+                targetType = Coding::class,
+                elementPath = "ValueSet.jurisdiction.coding"
             )
         ),
         SearchParameter(

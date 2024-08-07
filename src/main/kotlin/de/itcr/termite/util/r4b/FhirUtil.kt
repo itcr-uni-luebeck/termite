@@ -36,6 +36,7 @@ fun parseTokenParameterValue(paramDef: SearchParameter, value: String): IBase {
         StringType::class -> StringType(value)
         CodeType::class -> parseCodeTypeParameterValue(paramDef.name, value)
         Identifier::class -> parseIdentifierParameterValue(paramDef.name, value)
+        Coding::class -> parseCodingParameterValue(paramDef.name, value)
         else -> throw FhirParsingException("Unsupported target type ${paramDef.processing.targetType.simpleName} for parameter '${paramDef.name}' of type 'token'")
     }
 }
@@ -43,7 +44,7 @@ fun parseTokenParameterValue(paramDef: SearchParameter, value: String): IBase {
 fun parseCodeTypeParameterValue(name: String, value: String): CodeType {
     val splitParam = value.split("|")
     return when (splitParam.size) {
-        1 -> CodeType(value)
+        1 -> if (value.trim().startsWith('|')) CodeType(splitParam[0]) else CodeType().setSystem(splitParam[0])
         2 -> CodeType(splitParam[1].ifBlank { null }).setSystem(splitParam[0])
         else -> throw UnsupportedValueException("Parameter '$name' of type 'token' with target class 'CodeType' can at most consists of two parts. Actual: '$value'")
     }
@@ -54,6 +55,15 @@ fun parseIdentifierParameterValue(name: String, value: String): Identifier {
     return when (splitParam.size) {
         2 -> Identifier().setValue(splitParam[1].ifBlank { null }).setSystem(splitParam[0])
         else -> throw UnsupportedValueException("Parameter '$name' of type 'token' with target class 'Identifier' has to consists of two parts. Actual: '$value'")
+    }
+}
+
+fun parseCodingParameterValue(name: String, value: String): Coding {
+    val splitParam = value.split("|")
+    return when (splitParam.size) {
+        1 -> if (value.trim().startsWith('|')) Coding().setCode(splitParam[0]) else Coding().setSystem(splitParam[0])
+        2 -> Coding().setSystem(splitParam[0]).setCode(splitParam[1].ifBlank { null })
+        else -> throw UnsupportedValueException("Parameter '$name' of type 'token' with target class 'CodeType' can at most consists of two parts. Actual: '$value'")
     }
 }
 
