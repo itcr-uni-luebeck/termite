@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import java.nio.ByteBuffer
 import java.util.Date
-import kotlin.reflect.full.companionObjectInstance
+import java.io.Serializable
 
 //private val anyArraySerializer = serializer<Array<*>>()
 private val stringArraySerializer = serializer<Array<String>>()
@@ -17,12 +17,12 @@ private val stringArraySerializer = serializer<Array<String>>()
  * @return ByteArray containing serialized object
  */
 @JvmName("serializeT")
-inline fun <reified T> serialize(t: T): ByteArray {
+inline fun <reified T: Serializable> serialize(t: T): ByteArray {
     return when (T::class) {
         Int::class -> serialize(t as Int)
         Long::class -> serialize(t as Long)
         String::class -> serialize(t as String)
-        else -> serialize(t as Any)
+        else -> serialize(t)
     }
 }
 
@@ -31,7 +31,7 @@ inline fun <reified T> serialize(t: T): ByteArray {
  * @param a Any object
  * @return ByteArray containing serialized object
  */
-fun serialize(a: Any): ByteArray {
+fun serialize(a: Serializable): ByteArray {
     return Json.encodeToString(a).toByteArray(Charsets.UTF_8)
 }
 
@@ -189,14 +189,14 @@ fun deserializeDate(b: ByteArray): Date = Date(deserializeLong(b))
 
 inline fun <reified T: Enum<T>> deserializeEnum(b: ByteArray): Enum<T> = enumValues<T>()[deserializeInt(b)]
 
-fun serializeInOrder(vararg args: Int): ByteArray {
-    val buffer = ByteBuffer.allocate(args.size * 4)
-    args.forEach { arg -> buffer.putInt(arg) }
-    return buffer.array()
-}
+fun toBytesInOrder(vararg args: String): ByteArray = args.mapToBytes()
 
 // TODO: Check performance
-fun serializeInOrder(vararg args: Any): ByteArray {
+fun toBytesInOrder(vararg args: Serializable, useHashCode: Boolean = false): ByteArray =
+    if (useHashCode) hashInOrder(*args) else serializeInOrder(*args)
+
+
+fun serializeInOrder(vararg args: Serializable): ByteArray {
     val buffer = ArrayList<Byte>(args.size * 4)
     args.forEach { arg ->
         when (arg) {
@@ -205,10 +205,22 @@ fun serializeInOrder(vararg args: Any): ByteArray {
             is Long -> buffer.addAll(serialize(arg).asIterable())
             is Date -> buffer.addAll(serialize(arg).asIterable())
             is Enum<*> -> buffer.addAll(serialize(arg).asIterable())
-            else -> buffer.addAll(serialize(arg).asIterable())
+            else -> buffer.addAll(serialize(arg.hashCode()).asIterable())
         }
     }
     return buffer.toByteArray()
 }
 
-fun serializeInOrder(vararg args: String): ByteArray = args.mapToBytes()
+fun hashInOrder(vararg args: Serializable): ByteArray {
+    val buffer = ArrayList<Byte>(args.size * 4)
+    args.forEach { arg ->
+        when (arg) {
+            is Int -> buffer.addAll(serialize(arg).asIterable())
+            is Long -> buffer.addAll(serialize(arg).asIterable())
+            is Date -> buffer.addAll(serialize(arg).asIterable())
+            is Enum<*> -> buffer.addAll(serialize(arg).asIterable())
+            else -> buffer.addAll(serialize(arg.hashCode()).asIterable())
+        }
+    }
+    return buffer.toByteArray()
+}

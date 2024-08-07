@@ -9,10 +9,7 @@ import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CSConceptDataRepository
 import de.itcr.termite.model.repository.ValueSetConceptDataRepository
 import de.itcr.termite.model.repository.ValueSetDataRepository
-import de.itcr.termite.util.r4b.ValidateCodeParameters
-import de.itcr.termite.util.r4b.parametersToMap
-import de.itcr.termite.util.r4b.parseParameterValue
-import de.itcr.termite.util.r4b.tagAsSummarized
+import de.itcr.termite.util.r4b.*
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.instance.model.api.IBase
 import org.hl7.fhir.r4b.model.*
@@ -44,7 +41,7 @@ class ValueSetPersistenceManager(
         try { storedData = repository.save(vsData) }
         catch (e: Exception) { throw PersistenceException("Failed to store ValueSet data. Reason: ${e.message}", e) }
         instance.id = storedData.id.toString()
-        try { indexStore.putValueSet(instance, emptyList()) }
+        try { indexStore.putValueSet(instance, vsData.composeInclude.map { it.concept }.flatten()) }
         catch (e: Exception) {
             repository.delete(storedData)
             throw PersistenceException("Failed to index ValueSet instance. Reason: ${e.message}", e)
@@ -96,6 +93,11 @@ class ValueSetPersistenceManager(
                 val idSet = setOf(parameters["_id"]!!.toInt())
                 ids = if (parsedParams.isNotEmpty()) ids intersect idSet else idSet
             }
+            // Special handling for 'code' search parameters as it is indexed differently than other search parameters
+            if ("code" in parameters) {
+                val coding = parseCodeTypeParameterValue("code", parameters["code"]!!)
+                indexStore.valueSetValidateCode()
+            }
             repository.findAllById(ids).map { it.toValueSetResource() }
         }
     }
@@ -117,7 +119,7 @@ class ValueSetPersistenceManager(
             if (valueSetVersion != null) params["version"] = StringType(valueSetVersion)
             @Suppress("UNCHECKED_CAST")
             val ids = indexStore.search(params, ValueSet::class as KClass<out IResource>)
-            if (ids.size > 1) throw PersistenceException("Cannot determine ValueSet instance: Multiple instances match")
+            if (ids.size > 1) throw PersistenceException("Cannot determine ValueSet instance: Multiple instances match: IDs: $ids")
             else if (ids.isEmpty()) return ValidateCodeParameters(false, "No ValueSet instance matched criteria")
             actualId = ids.first()
         }
