@@ -3,6 +3,7 @@ package de.itcr.termite.api.r4b
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.PreferHandlingEnum
 import de.itcr.termite.config.ApplicationConfig
+import de.itcr.termite.exception.api.MissingParameterException
 import de.itcr.termite.exception.api.UnsupportedParameterException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
@@ -22,7 +23,8 @@ import kotlin.reflect.full.findAnnotations
             documentation = "Logical id of this artifact",
             processing = ProcessingHint(
                 targetType = StringType::class,
-                elementPath = "id"
+                elementPath = "id",
+                special = true
             )
         ),
         SearchParameter(
@@ -95,9 +97,8 @@ abstract class ResourceController<TYPE, ID>(
         operationParameterMap = mutableMapOf()
         inheritingClass.kotlin.findAnnotations<SupportsOperation>().map { op ->
             val opCode = op.code
-            operationParameterMap[opCode] = op.parameter.filter { it.type == "in" }.associateBy { it.name }
+            operationParameterMap[opCode] = op.parameter.filter { it.use == "in" }.associateBy { it.name }
         }
-        paramAnnList.addAll(ResourceController::class.findAnnotation<ForResource>()!!.searchParam)
     }
 
     fun validateSearchParameters(
@@ -124,7 +125,11 @@ abstract class ResourceController<TYPE, ID>(
         exemptions: Set<String> = setOf("_format")
     ): Map<String, String> {
         val opParameterMap = operationParameterMap[operationCode]!!
-        return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in  opParameterMap.keys}
+        // Check if required parameters are present
+        val missingParameters = opParameterMap.filter { it.value.min >= 1 }.keys - parameters.keys
+        if (missingParameters.isNotEmpty()) throw MissingParameterException(missingParameters)
+        // Handle unknown parameters based on handling strategy
+        return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in opParameterMap.keys}
         else {
             val diff = parameters.keys - opParameterMap.keys - exemptions
             if (diff.isNotEmpty()) throw UnsupportedParameterException(diff.elementAt(0), apiPath, method)

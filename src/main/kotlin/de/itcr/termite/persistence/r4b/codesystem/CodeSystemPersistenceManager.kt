@@ -8,12 +8,10 @@ import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CodeSystemDataRepository
 import de.itcr.termite.model.repository.CSConceptDataRepository
-import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
-import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager.Companion
 import de.itcr.termite.util.r4b.parametersToMap
 import de.itcr.termite.util.r4b.parseParameterValue
 import de.itcr.termite.util.r4b.tagAsSummarized
-import de.itcr.termite.util.serializeInOrder
+import de.itcr.termite.util.toBytesInOrder
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.r4b.model.CodeSystem
 import org.hl7.fhir.r4b.model.Parameters
@@ -114,7 +112,7 @@ class CodeSystemPersistenceManager(
     }
 
     override fun validateCode(url: String, code: String, version: String?, display: String?): Parameters {
-        val prefix = serializeInOrder(url.hashCode(), code.hashCode(), version.hashCode())
+        val prefix = toBytesInOrder(url, code, version?: "")
         TODO()
     }
 

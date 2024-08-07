@@ -5,6 +5,7 @@ import ca.uhn.fhir.parser.DataFormatException
 import de.itcr.termite.api.r4b.exc.*
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
+import de.itcr.termite.exception.api.MissingParameterException
 import de.itcr.termite.exception.api.UnsupportedFormatException
 import de.itcr.termite.exception.api.UnsupportedParameterException
 import de.itcr.termite.exception.api.UnsupportedValueException
@@ -45,6 +46,16 @@ import java.util.*
     searchInclude = [],
     searchRevInclude = [],
     searchParam = [
+        SearchParameter(
+            name = "code",
+            type = "token",
+            documentation = "A coding in the value set",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "ValueSet.compose.include.concept",
+                special = true
+            )
+        ),
         SearchParameter(
             name = "context",
             type = "token",
@@ -182,7 +193,7 @@ import java.util.*
         Parameter(
             name = "url",
             use = "in",
-            min = 1,
+            min = 0,
             max = "1",
             documentation = "URL of the value set",
             type = "uri"
@@ -214,7 +225,7 @@ import java.util.*
         Parameter(
             name = "systemVersion",
             use = "in",
-            min = 1,
+            min = 0,
             max = "1",
             documentation = "System from which the coding originates",
             type = "string"
@@ -411,7 +422,7 @@ class ValueSetController(
     )
     @ResponseBody
     fun validateCode(
-        @RequestParam(name = "id", required = false) id: String?,
+        @PathVariable(name = "id", required = false) id: String?,
         @RequestParam params: Map<String, String>,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
@@ -422,17 +433,18 @@ class ValueSetController(
             val handling = parsePreferHandling(prefer)
             val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$validate-code"
             val filteredParams = validateOperationParameters("validate-code", params, handling, apiPath, HttpMethod.GET)
-            val instances = persistence.validateCode(
+            validateValidateCodeParameters(id, filteredParams)
+            val parameters = persistence.validateCode(
                 id?.toInt(),
                 filteredParams["url"],
                 filteredParams["valueSetVersion"],
-                filteredParams["code"],
-                filteredParams["system"],
+                filteredParams["code"]!!,
+                filteredParams["system"]!!,
                 filteredParams["systemVersion"],
-                filteredParams[""])
+                filteredParams["display"])
             return ResponseEntity.ok()
                 .contentType(responseMediaType)
-                .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
+                .body(encodeResourceToSting(parameters, responseMediaType))
         }
         catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
         catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
@@ -475,5 +487,10 @@ class ValueSetController(
         }
     }
 */
+
+    private fun validateValidateCodeParameters(id: String?, params: Map<String, String>) {
+        if (id == null && "url" !in params)
+            throw MissingParameterException("Parameter 'url' is required for type-level variant")
+    }
 
 }

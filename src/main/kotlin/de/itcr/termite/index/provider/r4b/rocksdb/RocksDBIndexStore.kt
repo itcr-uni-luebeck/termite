@@ -251,6 +251,19 @@ class RocksDBIndexStore(
                 batch.put(partition, key, null)
             }
         }
+        // Concepts
+        // TODO: Ugly and inflexible if more partitions are added. Rework
+        for (concept in concepts) {
+            val group = concept.vsContentData
+            val t1 = Tuple4(concept.code, group.system!!, group.version, resource.id.toInt())
+            var key = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.keyGenerator()(t1)
+            var value = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.valueGenerator()(concept.id!!)
+            batch.put(RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE, key, value)
+            val t2 = Tuple4(resource.id.toInt(), concept.code, group.system, group.version)
+            key = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID.keyGenerator()(t2)
+            value = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID.valueGenerator()(concept.id)
+            batch.put(RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID, key, value)
+        }
         processBatch(batch)
     }
 
@@ -376,7 +389,7 @@ class RocksDBIndexStore(
 
         fun last(): Pair<ByteArray, ByteArray> {
             iterator.seekToLast()
-            return next()
+            return Pair(iterator.key(), iterator.value())
         }
 
     }
@@ -420,7 +433,7 @@ class RocksDBIndexStore(
             val resourceClazz = FhirContext.forR4B().getResourceDefinition(resourceType).implementingClass.kotlin
             val groups = searchParameters.groupBy { param -> param.sameAs }
             // Compile index partitions for self contained definitions
-            val partitionMap = (if (groups[""] != null) groups[""]!!.filter { it.name != "_id" }.associate { param ->
+            val partitionMap = (if (groups[""] != null) groups[""]!!.filter { !it.processing.special }.associate { param ->
                 val partitionName = "$resourceType.search.${param.name}"
                 val type = param.type
                 val targetType = param.processing.targetType
@@ -500,7 +513,7 @@ class RocksDBIndexStore(
         private fun determineGeneratorsForNumberType(): Pair<(Any) -> ByteArray, (Any, Int) -> ByteArray> {
             return Pair(
                 {v: Any -> serialize((v as IntegerType).value) },
-                {v: Any, id: Int -> serializeInOrder((v as IntegerType).value, id) }
+                {v: Any, id: Int -> toBytesInOrder((v as IntegerType).value, id) }
             )
         }
 
@@ -510,15 +523,15 @@ class RocksDBIndexStore(
             return when (targetType) {
                 DateType::class -> Pair(
                     { v: Any -> serialize((v as DateType).value) },
-                    { v: Any, id: Int -> serializeInOrder((v as DateType).value, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as DateType).value, id) }
                 )
                 DateTimeType::class -> Pair(
                     { v: Any -> serialize((v as DateTimeType).value) },
-                    { v: Any, id: Int -> serializeInOrder((v as DateTimeType).value, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as DateTimeType).value, id) }
                 )
                 InstantType::class -> Pair(
                     { v: Any -> serialize((v as InstantType).value) },
-                    { v: Any, id: Int -> serializeInOrder((v as InstantType).value, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as InstantType).value, id) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }
@@ -530,11 +543,11 @@ class RocksDBIndexStore(
             return when (targetType) {
                 StringType::class -> Pair(
                     { v: Any -> serialize((v as StringType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as StringType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as StringType).value, id, useHashCode = true) }
                 )
                 UriType::class -> Pair(
                     { v: Any -> serialize((v as UriType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as UriType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as UriType).value, id, useHashCode = true) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }
@@ -546,19 +559,19 @@ class RocksDBIndexStore(
             return when (targetType) {
                 StringType::class -> Pair(
                     { v: Any -> serialize((v as StringType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as StringType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as StringType).value, id, useHashCode = true) }
                 )
                 Enumeration::class -> Pair(
                     { v: Any -> serialize((v as Enumeration<*>).value.ordinal) },
-                    { v: Any, id: Int -> serializeInOrder((v as Enumeration<*>).value.ordinal, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as Enumeration<*>).value.ordinal) }
                 )
                 Identifier::class -> Pair(
-                    { v: Any -> with(v as Identifier) { serializeInOrder(v.system.hashCode(), v.value.hashCode()) } },
-                    { v: Any, id: Int -> with(v as Identifier) { serializeInOrder(v.system.hashCode(), v.value.hashCode(), id) } }
+                    { v: Any -> with(v as Identifier) { toBytesInOrder(v.system, v.value, useHashCode = true) } },
+                    { v: Any, id: Int -> with(v as Identifier) { toBytesInOrder(v.system, v.value, id, useHashCode = true) } }
                 )
                 CodeType::class -> Pair(
-                    { v: Any -> with(v as CodeType) { serializeInOrder(v.system.hashCode(), v.code.hashCode()) } },
-                    { v: Any, id: Int -> with(v as CodeType) { serializeInOrder(v.system.hashCode(), v.code.hashCode(), id) } }
+                    { v: Any -> with(v as CodeType) { toBytesInOrder(v.system, v.code, useHashCode = true) } },
+                    { v: Any, id: Int -> with(v as CodeType) { toBytesInOrder(v.system, v.code, id, useHashCode = true) } }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }
@@ -570,11 +583,11 @@ class RocksDBIndexStore(
             return when (targetType)  {
                 UriType::class -> Pair(
                     { v: Any -> serialize((v as UriType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as UriType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as UriType).value, id, useHashCode = true) }
                 )
                 CanonicalType::class -> Pair(
                     { v: Any -> serialize((v as CanonicalType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as CanonicalType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as CanonicalType).value, id, useHashCode = true) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }

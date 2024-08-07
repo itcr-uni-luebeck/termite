@@ -20,8 +20,8 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         "CodeSystem.\$lookup#system",
         8,
         20,
-        { v: Tuple5<String, String, String?, String?, Int> -> serializeInOrder(v.t1, v.t2) },
-        { v: Tuple5<String, String, String?, String?, Int> -> serializeInOrder(v.t1, v.t2, v.t3?: "", v.t4?: "", v.t5) },
+        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t1, v.t2) },
+        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t1, v.t2, v.t3?: "", v.t4?: "", v.t5) },
         { v: Long -> serialize(v) },
         { b: ByteArray -> deserializeLong(b) }
     )
@@ -30,8 +30,8 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         "CodeSystem.\$lookup#code",
         8,
         20,
-        { v: Tuple5<String, String, String?, String?, Int> -> serializeInOrder(v.t2, v.t1) },
-        { v: Tuple5<String, String, String?, String?, Int> -> serializeInOrder(v.t2, v.t1, v.t3?: "", v.t4?: "", v.t5) },
+        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t2, v.t1) },
+        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t2, v.t1, v.t3?: "", v.t4?: "", v.t5) },
         { v: Long -> serialize(v) },
         { b: ByteArray -> deserializeLong(b) }
     )
@@ -40,8 +40,8 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         "ValueSet.\$validate-code#code",
         8,
         20,
-        { v: Tuple4<String, String, String?, Int> -> serializeInOrder(v.t1, v.t2) },
-        { v: Tuple4<String, String, String?, Int> -> serializeInOrder(v.t1, v.t2, v.t3?: "", v.t4) },
+        { v: Tuple4<String, String, String?, Int> -> toBytesInOrder(v.t1, v.t2, useHashCode = true) },
+        { v: Tuple4<String, String, String?, Int> -> toBytesInOrder(v.t1, v.t2, v.t3?: "", v.t4, useHashCode = true) },
         { v: Long -> serialize(v) },
         { b: ByteArray -> deserializeLong(b) }
     )
@@ -50,8 +50,8 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         "ValueSet.\$validate-code#id",
         12,
         20,
-        { v: Tuple4<Int, String, String, String?> -> serializeInOrder(v.t1, v.t2, v.t3) },
-        { v: Tuple4<Int, String, String, String?> -> serializeInOrder(v.t1, v.t2, v.t3, v.t4?: "") },
+        { v: Tuple4<Int, String, String, String?> -> toBytesInOrder(v.t1, v.t2, v.t3, useHashCode = true) },
+        { v: Tuple4<Int, String, String, String?> -> toBytesInOrder(v.t1, v.t2, v.t3, v.t4?: "", useHashCode = true) },
         { v: Long -> serialize(v) },
         { b: ByteArray -> deserializeLong(b) }
     )
