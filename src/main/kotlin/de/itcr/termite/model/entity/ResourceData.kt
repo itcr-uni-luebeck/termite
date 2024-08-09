@@ -11,7 +11,9 @@ import javax.persistence.*
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 abstract class ResourceData(
-    @Column(name = "id", nullable = false) @Id @GeneratedValue(strategy = GenerationType.TABLE) open val id: Int?,
+    @Column(name = "id", nullable = false) @Id
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "ConditionalIdGenerator")
+    open val id: Int?,
     @Column(name = "versionId", nullable = false) @Version open val versionId: Int?,
     @Column(name = "lastUpdated") @Temporal(TemporalType.TIMESTAMP) @UpdateTimestamp open val lastUpdated: Date?,
     @Column(name = "sourceSystem") open val sourceSystem: String?,

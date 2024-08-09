@@ -381,7 +381,7 @@ class CodeSystemController(
     )
     @ResponseBody
     fun search(
-        @RequestParam params: Map<String, String>,
+        @RequestParam params: Map<String, List<String>>,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String>{

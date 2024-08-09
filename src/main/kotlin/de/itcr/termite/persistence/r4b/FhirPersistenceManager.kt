@@ -14,6 +14,8 @@ interface FhirPersistenceManager<RESOURCE_TYPE, ID_TYPE> {
 
     fun search(parameters: Parameters): List<RESOURCE_TYPE>
 
-    fun search(parameters: Map<String, String>): List<RESOURCE_TYPE>
+    fun search(parameters: Map<String, List<String>>): List<RESOURCE_TYPE>
+
+    fun exists(id: ID_TYPE): Boolean
 
 }

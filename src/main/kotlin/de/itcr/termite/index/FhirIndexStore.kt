@@ -25,7 +25,7 @@ interface FhirIndexStore<KEY, VALUE>: BatchSupport<KEY, VALUE>, IteratorSupport<
 
     fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>)
 
-    fun search(parameters: Map<String, IBase>, type: KClass<out IBaseResource>): Set<Int>
+    fun search(parameters: Map<String, List<IBase>>, type: KClass<out IBaseResource>): Set<Int>
 
     fun search(name: String, value: IBase, type: KClass<out IBaseResource>): Set<Int>
 
@@ -51,5 +51,5 @@ interface FhirIndexStore<KEY, VALUE>: BatchSupport<KEY, VALUE>, IteratorSupport<
 
 }
 
-inline fun <reified FHIR_TYPE: IResource> FhirIndexStore<*, *>.search(parameters: Map<String, IBase>): Set<Int> =
+inline fun <reified FHIR_TYPE: IResource> FhirIndexStore<*, *>.search(parameters: Map<String, List<IBase>>): Set<Int> =
     search(parameters, FHIR_TYPE::class)

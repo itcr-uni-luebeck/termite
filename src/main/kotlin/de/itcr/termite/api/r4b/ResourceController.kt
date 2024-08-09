@@ -103,18 +103,20 @@ abstract class ResourceController<TYPE, ID>(
     }
 
     fun validateSearchParameters(
-        parameters: Map<String, String>,
+        parameters: Map<String, List<String>>,
         handling: PreferHandlingEnum,
         apiPath: String,
         method: HttpMethod,
         exemptions: Set<String> = setOf("_format")
-    ): Map<String, String> {
+    ): Map<String, List<String>> {
         if ("code" in parameters) {
-            val code = parameters["code"]!!.trim()
-            if (code.startsWith("|") || !code.contains('|'))
-                throw UnsupportedValueException("Parameter 'code' has to feature a system value")
+            for (value in parameters["code"]!!) {
+                val code = value.trim()
+                if (code.startsWith("|") || !code.contains('|'))
+                    throw UnsupportedValueException("Parameter 'code' with value '$code' has to feature a system value")
+            }
         }
-        return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in searchParameterMap.keys }
+        return if (handling == PreferHandlingEnum.LENIENT) parameters.filterKeys { key -> key in searchParameterMap.keys }
         else {
             val diff = parameters.keys - searchParameterMap.keys - exemptions
             if (diff.isNotEmpty()) throw UnsupportedParameterException(diff.elementAt(0), apiPath, method)

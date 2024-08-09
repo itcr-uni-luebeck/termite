@@ -7,8 +7,8 @@ import de.itcr.termite.util.parseDate
 import org.hl7.fhir.instance.model.api.IBase
 import org.hl7.fhir.r4b.model.*
 
-fun parametersToMap(parameters: Parameters): Map<String, String>{
-    return parameters.parameter.associate { component -> component.name to component.value.primitiveValue() }
+fun parametersToMap(parameters: Parameters): Map<String, List<String>> {
+    return parameters.parameter.groupBy { it.name }.mapValues { it.value.map { v -> v.value.primitiveValue() } }
 }
 
 fun parseParameterValue(paramDef: SearchParameter, value: String): IBase {

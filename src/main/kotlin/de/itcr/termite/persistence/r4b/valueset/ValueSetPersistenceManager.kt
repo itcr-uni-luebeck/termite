@@ -51,7 +51,9 @@ class ValueSetPersistenceManager(
     }
 
     override fun update(id: Int, instance: ValueSet): ValueSet {
-        TODO("Not yet implemented")
+        instance.id = id.toString()
+        val vsData = repository.save(instance.toValueSetData())
+        return vsData.toValueSetResource()
     }
 
     override fun read(id: Int): ValueSet {
@@ -79,32 +81,38 @@ class ValueSetPersistenceManager(
 
     override fun search(parameters: Parameters): List<ValueSet> = search(parametersToMap(parameters))
 
-    override fun search(parameters: Map<String, String>): List<ValueSet> {
+    override fun search(parameters: Map<String, List<String>>): List<ValueSet> {
         return if (parameters.isEmpty()) repository.findAll().map { it.toValueSetResource() }
         else {
             val supportedParams = indexStore.searchPartitionsByType(ValueSet::class)
             val parsedParams = parameters.entries.filter { it.key != "_id" && it.key != "code" }.associate {
                 val paramDef = supportedParams["ValueSet.search.${it.key}"]!!
-                return@associate it.key to parseParameterValue(paramDef.parameter(), it.value)
+                return@associate it.key to it.value.map { v -> parseParameterValue(paramDef.parameter(), v) }
             }
-            @Suppress("UNCHECKED_CAST")
-            var ids = indexStore.search(parsedParams, ValueSet::class as KClass<out IResource>)
+            var ids: Set<Int>? = null
             // Special handling for '_id' search parameters as indexing it makes no sense
             if ("_id" in parameters) {
-                val idSet = setOf(parameters["_id"]!!.toInt())
-                ids = if (ids.isNotEmpty()) idSet intersect ids else idSet
+                val idSet = parameters["_id"]!!.map { it.toInt() }.toSet()
+                if (idSet.size > 1) return emptyList()
+                ids = idSet
             }
             // As there is an index for code systems supported by the value set it will be used if only a system value
             // is provided
-            else if ("code" in parameters) {
+            if ("code" in parameters) {
                 val paramDef = supportedParams[RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.indexName()]!!
-                val parsedParam = parseParameterValue(paramDef.parameter(), parameters["code"]!!) as CodeType
+                val parsedParam = parameters["code"]!!.map { parseParameterValue(paramDef.parameter(), it) as CodeType }
+                val idSet = mutableSetOf<Int>()
                 @Suppress("UNCHECKED_CAST")
-                val idSet = if (parsedParam.value == null)
-                    indexStore.search("system", UriType(parsedParam.system), ValueSet::class as KClass<out IResource>)
-                else indexStore.search("code", parsedParam, ValueSet::class as KClass<out IResource>)
-                ids = if (ids.isNotEmpty()) idSet intersect ids else idSet
+                parsedParam.map { v ->
+                    idSet.addAll(if (v.value == null)
+                        indexStore.search("system", UriType(v.system), ValueSet::class as KClass<out IResource>)
+                    else indexStore.search("code", v, ValueSet::class as KClass<out IResource>))
+                }
+                ids = if (ids != null) idSet intersect ids else idSet
             }
+            @Suppress("UNCHECKED_CAST")
+            val idSet = indexStore.search(parsedParams, ValueSet::class as KClass<out IResource>)
+            ids = if (ids != null) ids intersect idSet else idSet
             repository.findAllById(ids).map { it.toValueSetResource() }
         }
     }
@@ -121,9 +129,9 @@ class ValueSetPersistenceManager(
         val actualId: Int
         if (id == null) {
             if (url == null) throw PersistenceException("Cannot determine ValueSet instance: No ID nor URL provided")
-            val params = mutableMapOf<String, IBase>()
-            params["url"] = UriType(url)
-            if (valueSetVersion != null) params["version"] = StringType(valueSetVersion)
+            val params = mutableMapOf<String, List<IBase>>()
+            params["url"] = listOf(UriType(url))
+            if (valueSetVersion != null) params["version"] = listOf(StringType(valueSetVersion))
             @Suppress("UNCHECKED_CAST")
             val ids = indexStore.search(params, ValueSet::class as KClass<out IResource>)
             if (ids.size > 1) throw PersistenceException("Cannot determine ValueSet instance: Multiple instances match: IDs: $ids")
@@ -151,4 +159,5 @@ class ValueSetPersistenceManager(
         TODO("Not yet implemented")
     }
 
+    override fun exists(id: Int): Boolean = repository.existsById(id)
 }

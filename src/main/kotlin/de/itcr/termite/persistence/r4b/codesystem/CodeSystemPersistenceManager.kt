@@ -92,21 +92,24 @@ class CodeSystemPersistenceManager(
 
     override fun search(parameters: Parameters): List<CodeSystem> = search(parametersToMap(parameters))
 
-    override fun search(parameters: Map<String, String>): List<CodeSystem> {
+    override fun search(parameters: Map<String, List<String>>): List<CodeSystem> {
         return if (parameters.isEmpty()) repository.findAll().map { it.toCodeSystemResource() }
         else {
             val supportedParams = indexStore.searchPartitionsByType(CodeSystem::class)
             val parsedParams = parameters.entries.filter { it.key != "_id" }.associate {
-                val paramDef = supportedParams["CodeSystem.search.${it.key}"]
-                return@associate it.key to parseParameterValue(paramDef!!.parameter(), it.value)
+                val paramDef = supportedParams["CodeSystem.search.${it.key}"]!!
+                return@associate it.key to it.value.map { v -> parseParameterValue(paramDef.parameter(), v) }
             }
-            @Suppress("UNCHECKED_CAST")
-            var ids = indexStore.search(parsedParams, CodeSystem::class as KClass<out IResource>)
+            var ids: Set<Int>? = null
             // Special handling for '_id' search parameters as indexing it makes no sense
             if ("_id" in parameters) {
-                val idSet = setOf(parameters["_id"]!!.toInt())
-                ids = if (parsedParams.isNotEmpty()) ids intersect idSet else idSet
+                val idSet = parameters["_id"]!!.map { it.toInt() }.toSet()
+                if (idSet.size > 1) return emptyList()
+                ids = idSet
             }
+            @Suppress("UNCHECKED_CAST")
+            val idSet = indexStore.search(parsedParams, CodeSystem::class as KClass<out IResource>)
+            ids = if (ids != null) ids intersect idSet else idSet
             repository.findAllById(ids).map { it.toCodeSystemResource() }
         }
     }
@@ -128,4 +131,5 @@ class CodeSystemPersistenceManager(
         TODO("Not yet implemented")
     }
 
+    override fun exists(id: Int): Boolean = repository.existsById(id)
 }

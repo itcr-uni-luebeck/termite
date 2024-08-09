@@ -193,8 +193,8 @@ class RocksDBIndexStore(
     }
 
     // TODO: Implement short circuiting if resulting set is empty
-    override fun search(parameters: Map<String, IBase>, type: KClass<out IBaseResource>): Set<Int> {
-        val resultColl = parameters.map { entry -> search(entry.key, entry.value, type) }
+    override fun search(parameters: Map<String, List<IBase>>, type: KClass<out IBaseResource>): Set<Int> {
+        val resultColl = parameters.map { entry -> entry.value.map { search(entry.key, it, type) } }.flatten()
         return if (resultColl.isNotEmpty()) resultColl.reduce { s1: Set<Int>, s2: Set<Int> -> s1 intersect s2 }
         else emptySet()
     }

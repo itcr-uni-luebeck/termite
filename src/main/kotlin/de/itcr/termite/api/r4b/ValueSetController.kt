@@ -5,21 +5,22 @@ import ca.uhn.fhir.parser.DataFormatException
 import de.itcr.termite.api.r4b.exc.*
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
-import de.itcr.termite.exception.api.MissingParameterException
-import de.itcr.termite.exception.api.UnsupportedFormatException
-import de.itcr.termite.exception.api.UnsupportedParameterException
-import de.itcr.termite.exception.api.UnsupportedValueException
+import de.itcr.termite.exception.api.*
 import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
 import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
+import de.itcr.termite.util.isPositiveInteger
+import de.itcr.termite.util.parametersToString
 import de.itcr.termite.util.parsePreferHandling
+import de.itcr.termite.util.parseQueryParameters
 import de.itcr.termite.util.r4b.parseCodeTypeParameterValue
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
 import org.hl7.fhir.r4b.model.Enumeration
+import org.intellij.lang.annotations.RegExp
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -39,7 +40,7 @@ import java.util.*
     versioning = "no-version",
     readHistory = false,
     updateCreate = false,
-    conditionalCreate = false,
+    conditionalCreate = true,
     conditionalRead = "not-supported",
     conditionalUpdate = false,
     conditionalDelete = "not-supported",
@@ -177,7 +178,7 @@ import java.util.*
         )
     ]
 )
-@SupportsInteraction(["create", "read", "delete", "search-type"])
+@SupportsInteraction(["create", "update", "read", "delete", "search-type"])
 @SupportsOperation(
     name = "ValueSet-validate-code",
     title = "ValueSet-validate-code",
@@ -326,22 +327,106 @@ class ValueSetController(
     fun create(
         requestEntity: RequestEntity<String>,
         @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?,
+        @RequestHeader("Prefer") prefer: String?,
+        @RequestHeader("If-None-Exists") ifNoneExists: String?
+    ): ResponseEntity<String> {
+        return try {
+            logger.info("Received CREATE request for ValueSet")
+            if (ifNoneExists.isNullOrEmpty()) doCreate(requestEntity, contentType, accept)
+            else doConditionalCreate(requestEntity, contentType, accept, prefer, ifNoneExists)
+        }
+        catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
+        catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
+        catch (e: UnexpectedResourceTypeException) { return handleUnexpectedResourceType(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
+    }
+
+    private fun doCreate(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?
-    ): ResponseEntity<String>{
-        try {
-            val vs = parseBodyAsResource(requestEntity, contentType)
-            if (vs is ValueSet) {
-                logger.info("Creating ValueSet instance [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
+    ): ResponseEntity<String> {
+        val vs = parseBodyAsResource(requestEntity, contentType)
+        if (vs is ValueSet) {
+            logger.debug("Creating ValueSet instance unconditionally [url: ${vs.url}, version: ${vs.version}]")
+            val responseMediaType = determineResponseMediaType(accept, contentType)
+            val createdVs = persistence.create(vs)
+            logger.debug("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
+            return ResponseEntity.created(URI(createdVs.id))
+                .contentType(responseMediaType)
+                .eTag("W/\"${createdVs.meta.versionId}\"")
+                .lastModified(createdVs.meta.lastUpdated.time)
+                .body(encodeResourceToSting(createdVs, responseMediaType))
+        }
+        else { throw UnexpectedResourceTypeException(ResourceType.ValueSet, (vs as Resource).resourceType) }
+    }
+
+    private fun doConditionalCreate(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?,
+        @RequestHeader("Prefer") prefer: String?,
+        @RequestHeader("If-None-Exists") ifNoneExists: String
+    ): ResponseEntity<String> {
+        val handling = parsePreferHandling(prefer)
+        val params = parseQueryParameters(ifNoneExists)
+        logger.debug("Creating ValueSet instance if not exists [${parametersToString(params)}]")
+        val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.POST)
+        // TODO: Implement search version only returning number of matches or list of IDs thereof
+        val matches = persistence.search(filteredParams)
+        return when (matches.size) {
+            0 -> doCreate(requestEntity, contentType, accept)
+            1 -> {
                 val responseMediaType = determineResponseMediaType(accept, contentType)
-                val createdVs = persistence.create(vs)
-                logger.debug("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
-                return ResponseEntity.created(URI(createdVs.id))
+                val vs = matches[0]
+                logger.debug("ValueSet instance already exists [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
+                ResponseEntity.ok()
                     .contentType(responseMediaType)
-                    .eTag("W/\"${createdVs.meta.versionId}\"")
-                    .lastModified(createdVs.meta.lastUpdated.time)
-                    .body(encodeResourceToSting(createdVs, responseMediaType))
+                    .eTag("W/\"${vs.meta.versionId}\"")
+                    .lastModified(vs.meta.lastUpdated.time)
+                    .body(encodeResourceToSting(vs, responseMediaType))
             }
-            else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (vs as Resource).resourceType) }
+            else -> {
+                logger.debug("Multiple ValueSet instances match {${matches.joinToString { it.id }}}")
+                ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build()
+            }
+        }
+    }
+
+    @PutMapping(
+        path = ["{id}"],
+        consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
+    fun update(
+        requestEntity: RequestEntity<String>,
+        @PathVariable id: String,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?
+    ): ResponseEntity<String> {
+        logger.info("Received UPDATE request for ValueSet")
+        try {
+            if (!isPositiveInteger(id)) throw IdFormatException(id)
+            val idInt = id.toInt()
+            val vs = parseBodyAsResource(requestEntity, contentType)
+            val responseMediaType = determineResponseMediaType(accept, contentType)
+            if (vs is ValueSet) {
+                logger.debug("Updating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
+                /*
+                if (persistence.exists(idInt)) {
+                    logger.info("Updating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
+                    val updatedVs = persistence.update(idInt, vs)
+                }
+                else {
+                    logger.info("Creating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
+                }
+                */
+                val updatedVs = persistence.update(idInt, vs)
+                logger.debug("Updated ValueSet instance [id: ${updatedVs.id}, url: ${updatedVs.url}, version: ${updatedVs.version}]")
+                return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(updatedVs, responseMediaType))
+            }
+            else { throw UnexpectedResourceTypeException(ResourceType.ValueSet, (vs as Resource).resourceType) }
         }
         catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
         catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
@@ -360,7 +445,8 @@ class ValueSetController(
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String
     ): ResponseEntity<String> {
         try{
-            logger.info("Deleting ValueSet instance [id: $id]")
+            logger.info("Received DELETE request for ValueSet")
+            logger.debug("Deleting ValueSet instance [id: $id]")
             val responseMediaType = determineResponseMediaType(accept)
             val vs = persistence.delete(id.toInt())
             logger.debug("Deleted ValueSet instance [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
@@ -398,12 +484,13 @@ class ValueSetController(
     )
     @ResponseBody
     fun search(
-        @RequestParam params: Map<String, String>,
+        @RequestParam params: Map<String, List<String>>,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String>{
-        logger.info("Received search request for ValueSet [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+        logger.info("Received SEARCH request for ValueSet")
         try {
+            logger.debug("Searching for ValueSet instances with parameters [${parametersToString(params)}]")
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
             val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.GET)
@@ -418,6 +505,7 @@ class ValueSetController(
         catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
+    // TODO: Allow multiple search parameters with same name
     @GetMapping(
         path = ["\$validate-code", "{id}/\$validate-code"],
         produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
@@ -429,8 +517,9 @@ class ValueSetController(
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String>{
-        logger.info("Received validate-code request for ValueSet [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+        logger.info("Received validate-code request for ValueSet")
         try {
+            logger.debug("Validating if coding is in ValueSet with parameters [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
             val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$validate-code"
