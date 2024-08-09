@@ -8,6 +8,7 @@ import de.itcr.termite.exception.api.UnsupportedValueException
 import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
 import de.itcr.termite.exception.persistence.PersistenceException
 import org.apache.logging.log4j.Level
+import org.hl7.fhir.instance.model.api.IBaseResource
 import org.hl7.fhir.r4b.model.OperationOutcome
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -56,11 +57,22 @@ fun FhirController.handleException(
     val message = replaceInTemplate(template, e.message ?: e::class.simpleName ?: "Error without message")
     logger.log(logLevel, message)
     if (logStackTrace) logger.debug(e.stackTraceToString())
-    val opOutcome = generateOperationOutcomeString(severity, type, message, accept ?: "application/fhir+json")
+    val contentType = accept ?: "application/fhir+json"
+    val opOutcome = generateOperationOutcomeString(severity, type, message, contentType)
     return ResponseEntity.status(httpStatus)
         .eTag("W/\"0\"")
-        .header("Content-Type", accept)
+        .header("Content-Type", contentType)
         .body(opOutcome)
 }
 
 private fun replaceInTemplate(template: String, message: String): String = template.replace("{e}", message)
+
+fun FhirController.handlePreconditionFailed(matches: Iterable<IBaseResource>, accept: String?): ResponseEntity<String> {
+    val message = "Multiple instances match: {${matches.joinToString { it.idElement.idPart }}}"
+    logger.debug(message)
+    val contentType = accept ?: "application/fhir+json"
+    val opOutcome = generateOperationOutcomeString(
+        IssueSeverity.INFORMATION, IssueType.MULTIPLEMATCHES, message, accept ?: "application/fhir+json"
+    )
+    return ResponseEntity.status(412).eTag("W/\"0\"").header("Content-Type", contentType).body(opOutcome)
+}

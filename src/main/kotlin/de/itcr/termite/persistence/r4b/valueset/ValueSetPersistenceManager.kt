@@ -110,10 +110,12 @@ class ValueSetPersistenceManager(
                 }
                 ids = if (ids != null) idSet intersect ids else idSet
             }
-            @Suppress("UNCHECKED_CAST")
-            val idSet = indexStore.search(parsedParams, ValueSet::class as KClass<out IResource>)
-            ids = if (ids != null) ids intersect idSet else idSet
-            repository.findAllById(ids).map { it.toValueSetResource() }
+            if (parsedParams.isNotEmpty()) {
+                @Suppress("UNCHECKED_CAST")
+                val idSet = indexStore.search(parsedParams, ValueSet::class as KClass<out IResource>)
+                ids = if (ids != null) ids intersect idSet else idSet
+            }
+            repository.findAllById(ids!!).map { it.toValueSetResource() }
         }
     }
 

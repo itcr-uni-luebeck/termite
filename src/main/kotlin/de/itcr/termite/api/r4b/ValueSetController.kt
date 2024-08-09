@@ -350,7 +350,7 @@ class ValueSetController(
     ): ResponseEntity<String> {
         val vs = parseBodyAsResource(requestEntity, contentType)
         if (vs is ValueSet) {
-            logger.debug("Creating ValueSet instance unconditionally [url: ${vs.url}, version: ${vs.version}]")
+            logger.debug("Creating ValueSet instance [url: ${vs.url}, version: ${vs.version}]")
             val responseMediaType = determineResponseMediaType(accept, contentType)
             val createdVs = persistence.create(vs)
             logger.debug("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
@@ -372,8 +372,8 @@ class ValueSetController(
     ): ResponseEntity<String> {
         val handling = parsePreferHandling(prefer)
         val params = parseQueryParameters(ifNoneExists)
-        logger.debug("Creating ValueSet instance if not exists [${parametersToString(params)}]")
         val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.POST)
+        logger.debug("Creating ValueSet instance if not exists [${parametersToString(filteredParams)}]")
         // TODO: Implement search version only returning number of matches or list of IDs thereof
         val matches = persistence.search(filteredParams)
         return when (matches.size) {
@@ -388,10 +388,7 @@ class ValueSetController(
                     .lastModified(vs.meta.lastUpdated.time)
                     .body(encodeResourceToSting(vs, responseMediaType))
             }
-            else -> {
-                logger.debug("Multiple ValueSet instances match {${matches.joinToString { it.id }}}")
-                ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).build()
-            }
+            else -> handlePreconditionFailed(matches, accept)
         }
     }
 

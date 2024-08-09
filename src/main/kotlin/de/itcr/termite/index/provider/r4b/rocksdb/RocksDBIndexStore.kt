@@ -204,7 +204,6 @@ class RocksDBIndexStore(
         val partitionName = "${type.simpleName}.search.${name}"
         val partition = searchPartitionByTypeAndName(type, partitionName)!!
         val prefix = partition.prefixGenerator()(value)
-        createIterator(partition).forEach { println(it.first) }
         val iterator = createIterator(partition, prefix)
         val idSet = mutableSetOf<Int>()
         iterator.forEach {

@@ -1,7 +1,9 @@
 package de.itcr.termite.util
 
 import ca.uhn.fhir.rest.api.PreferHandlingEnum
+import org.apache.http.client.utils.URLEncodedUtils
 import org.springframework.util.MultiValueMap
+import org.springframework.web.util.UriComponents
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
@@ -17,8 +19,8 @@ fun parsePreferHandling(prefer: String?, default: PreferHandlingEnum = PreferHan
     PreferHandlingEnum.fromHeaderValue(parseHeaderValueAsMap(prefer).getOrDefault("handling", null)) ?: default
 
 // TODO: Update Spring dependencies
-fun parseQueryParameters(query: String): MultiValueMap<String, String> =
-    UriComponentsBuilder.fromHttpUrl(query).build().queryParams
+fun parseQueryParameters(query: String): Map<String, List<String>> =
+    URLEncodedUtils.parse(query, Charsets.UTF_8).associate { it.name to it.value.split(',') }
 
 fun parametersToString(parameters: Map<String, List<String>>) =
     parameters.flatMap { it.value.map { v -> Pair(it.key, v) } }.joinToString { "${it.first} = ${it.second}" }
