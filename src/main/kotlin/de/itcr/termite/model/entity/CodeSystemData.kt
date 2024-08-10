@@ -7,18 +7,17 @@ import org.hibernate.annotations.TypeDef
 import org.hl7.fhir.r4b.model.*
 import java.util.*
 import javax.persistence.*
-import org.hibernate.annotations.UpdateTimestamp
 
 @Entity
-@Table(name = "fhir_code_system_metadata", schema = "public")
+@Table(name = "code_system_data", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
-data class FhirCodeSystemMetadata(
+data class CodeSystemData(
     // Unfortunately Kotlin compiler translates Int to primitive type int while Hibernate returns the boxed type
     // leading to an IllegalAccessException. Hence, the boxed type has to be enforced via nullability
     override val id: Int,
     override val versionId: Int,
     override val lastUpdated: Date?,
-    override val source: String?,
+    override val sourceSystem: String?,
     override val profile: List<String?>,
     override val security: String?,
     override val tag: String?,
@@ -48,10 +47,10 @@ data class FhirCodeSystemMetadata(
     @Column(name = "count") val count: Int,
     @Column(name = "filter", columnDefinition = "jsonb") @Type(type = "jsonb") val filter: String?,
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
-): FhirResourceMetadata(id, versionId, lastUpdated, source, profile, security, tag)
+): ResourceData(id, versionId, lastUpdated, sourceSystem, profile, security, tag)
 
-fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
-    return FhirCodeSystemMetadata(
+fun CodeSystem.toCodeSystemData(): CodeSystemData {
+    return CodeSystemData(
         if (meta.idBase != null) meta.idBase.toInt() else 0,
         if (meta.versionId != null) meta.versionId.toInt() else 0,
         null,
@@ -87,13 +86,13 @@ fun CodeSystem.toFhirCodeSystemMetadata(): FhirCodeSystemMetadata {
     )
 }
 
-fun FhirCodeSystemMetadata.toCodeSystemResource(): CodeSystem {
+fun CodeSystemData.toCodeSystemResource(): CodeSystem {
     val cs = CodeSystem()
 
     cs.id = id.toString()
     cs.meta.versionId = versionId.toString()
     cs.meta.lastUpdated = lastUpdated
-    cs.meta.source = source
+    cs.meta.source = sourceSystem
     cs.meta.profile = profile.map { CanonicalType(it) }
     cs.meta.security = JsonUtil.deserializeList(security, "Coding") as List<Coding>
     cs.meta.tag = JsonUtil.deserializeList(tag, "Coding") as List<Coding>

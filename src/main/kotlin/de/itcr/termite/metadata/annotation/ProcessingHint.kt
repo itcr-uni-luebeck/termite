@@ -5,5 +5,6 @@ import kotlin.reflect.KClass
 
 annotation class ProcessingHint(
     val targetType: KClass<out IBase>,
-    val elementPath: String // FhirPath
+    val elementPath: String, // FhirPath
+    val special: Boolean = false // If special handling is required
 )

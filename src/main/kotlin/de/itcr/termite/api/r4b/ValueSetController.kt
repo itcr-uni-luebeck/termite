@@ -1,45 +1,42 @@
-package de.itcr.termite.api.r4b/*
-package de.itcr.termite.api
+package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.api.CodeSystemController.Companion
-import de.itcr.termite.database.TerminologyStorage
+import ca.uhn.fhir.parser.DataFormatException
+import de.itcr.termite.api.r4b.exc.*
+import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
-import de.itcr.termite.exception.ValueSetException
+import de.itcr.termite.exception.api.*
+import de.itcr.termite.exception.fhir.r4b.UnexpectedResourceTypeException
+import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
-import de.itcr.termite.util.generateOperationOutcomeString
-import de.itcr.termite.util.generateParametersString
+import de.itcr.termite.persistence.r4b.valueset.ValueSetPersistenceManager
 import de.itcr.termite.util.isPositiveInteger
-import de.itcr.termite.util.parseParameters
+import de.itcr.termite.util.parametersToString
+import de.itcr.termite.util.parsePreferHandling
+import de.itcr.termite.util.parseQueryParameters
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
+import org.hl7.fhir.r4b.model.Enumeration
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import org.springframework.http.HttpMethod
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import java.net.URI
-import java.util.*
-import kotlin.Exception
-import kotlin.math.min
 
-*/
 /**
  * Handles request regarding instances of the ValueSet resource
- *//*
+ */
 
 @ForResource(
     type = "ValueSet",
     versioning = "no-version",
     readHistory = false,
     updateCreate = false,
-    conditionalCreate = false,
+    conditionalCreate = true,
     conditionalRead = "not-supported",
     conditionalUpdate = false,
     conditionalDelete = "not-supported",
@@ -48,33 +45,156 @@ import kotlin.math.min
     searchRevInclude = [],
     searchParam = [
         SearchParameter(
+            name = "code",
+            type = "token",
+            documentation = "A coding in the value set",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "ValueSet.compose.include.concept",
+                special = true
+            )
+        ),
+        /*
+        SearchParameter(
+            name = "context",
+            type = "token",
+            documentation = "A use context assigned to the value set",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "(ValueSet.useContext.value as CodeableConcept)"
+            )
+        ),*/
+        SearchParameter(
+            name = "context-type",
+            type = "token",
+            documentation = "A type of use context assigned to the value set",
+            processing =  ProcessingHint(
+                targetType = Coding::class,
+                elementPath = "ValueSet.useContext.code"
+            )
+        ),
+        SearchParameter(
+            name = "date",
+            type = "date",
+            documentation = "The code system publication date",
+            processing = ProcessingHint(
+                targetType = DateTimeType::class,
+                elementPath = "ValueSet.date"
+            )
+        ),
+        SearchParameter(
+            name = "description",
+            type = "string",
+            documentation = "The description of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.description"
+            )
+        ),
+        SearchParameter(
+            name = "identifier",
+            type = "token",
+            documentation = "External identifier for the value set",
+            processing = ProcessingHint(
+                targetType = Identifier::class,
+                elementPath = "ValueSet.identifier"
+            )
+        ),
+        SearchParameter(
+            name = "jurisdiction",
+            type = "token",
+            documentation = "Intended jurisdiction for the value set",
+            processing = ProcessingHint(
+                targetType = Coding::class,
+                elementPath = "ValueSet.jurisdiction.coding"
+            )
+        ),
+        SearchParameter(
+            name = "name",
+            type = "string",
+            documentation = "Computationally friendly name of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.name"
+            )
+        ),
+        SearchParameter(
+            name = "publisher",
+            type = "string",
+            documentation = "Name of the publisher of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.publisher"
+            )
+        ),
+        SearchParameter(
+            name = "status",
+            type = "token",
+            documentation = "The current status of the value set",
+            processing = ProcessingHint(
+                targetType = Enumeration::class,
+                elementPath = "ValueSet.status"
+            )
+        ),
+        SearchParameter(
+            name = "title",
+            type = "string",
+            documentation = "The human-friendly name of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.title"
+            )
+        ),
+        SearchParameter(
             name = "url",
             type = "uri",
-            documentation = "URL of the resource to locate"
+            documentation = "The uri that identifies the value set",
+            processing = ProcessingHint(
+                targetType = UriType::class,
+                elementPath = "ValueSet.url"
+            )
+        ),
+        SearchParameter(
+            name = "version",
+            type = "token",
+            documentation = "The business version of the value set",
+            processing = ProcessingHint(
+                targetType = StringType::class,
+                elementPath = "ValueSet.version"
+            )
+        ),
+        SearchParameter(
+            name = "system",
+            type = "uri",
+            documentation = "Code system the value set contains codes of",
+            processing = ProcessingHint(
+                targetType = UriType::class,
+                elementPath = "ValueSet.compose.include.system"
+            )
         )
     ]
 )
-@SupportsInteraction(["create", "search-type"])
+@SupportsInteraction(["create", "update", "read", "delete", "search-type"])
 @SupportsOperation(
-    name = "ValueSet-lookup",
-    title = "ValueSet-lookup",
+    name = "ValueSet-validate-code",
+    title = "ValueSet-validate-code",
     status = "active",
     kind = "operation",
     experimental = false,
-    description = "Checks whether a given concept is in a value set",
+    description = "Validate that a coded value is in the set of codes allowed by a value set",
     affectState = false,
-    code = "lookup",
+    code = "validate-code",
     resource = ["ValueSet"],
     system = false,
     type = true,
-    instance = false,
+    instance = true,
     parameter = [
         Parameter(
             name = "url",
             use = "in",
-            min = 1,
+            min = 0,
             max = "1",
-            documentation = "URL of the ValueSet instance",
+            documentation = "URL of the value set",
             type = "uri"
         ),
         Parameter(
@@ -82,7 +202,7 @@ import kotlin.math.min
             use = "in",
             min = 0,
             max = "1",
-            documentation = "Version of the ValueSet instance",
+            documentation = "Version of the value set",
             type = "string"
         ),
         Parameter(
@@ -90,7 +210,7 @@ import kotlin.math.min
             use = "in",
             min = 1,
             max = "1",
-            documentation = "Code of the coding to be located",
+            documentation = "Code of the coding to be validated",
             type = "code"
         ),
         Parameter(
@@ -98,16 +218,56 @@ import kotlin.math.min
             use = "in",
             min = 1,
             max = "1",
-            documentation = "System from which the code originates",
+            documentation = "System from which the coding originates",
             type = "uri"
+        ),
+        Parameter(
+            name = "systemVersion",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "System from which the coding originates",
+            type = "string"
         ),
         Parameter(
             name = "display",
             use = "in",
             min = 0,
             max = "1",
-            documentation = "Display value of the concept",
+            documentation = "Display value of the coding",
             type = "uri"
+        ),
+        Parameter(
+            name = "coding",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "A coding to validate",
+            type = "Coding"
+        ),
+        Parameter(
+            name = "result",
+            use = "out",
+            min = 1,
+            max = "1",
+            documentation = "Indicates validity of the supplied concept details",
+            type = "boolean"
+        ),
+        Parameter(
+            name = "message",
+            use = "out",
+            min = 0,
+            max = "1",
+            documentation = "Error details, if result = false. If this is provided when result = true, the message carries hints and warnings",
+            type = "string"
+        ),
+        Parameter(
+            name = "display",
+            use = "out",
+            min = 0,
+            max = "1",
+            documentation = "A valid display for the concept if the system wishes to display this to a user",
+            type = "string"
         )
     ]
 )
@@ -117,13 +277,13 @@ import kotlin.math.min
     status = "active",
     kind = "operation",
     experimental = false,
-    description = "Expands a value set, returning an explicit list of all codings it contains",
+    description = "Expands a value set, returning an explicit list of codings it contains",
     affectState = false,
     code = "expand",
     resource = ["ValueSet"],
     system = false,
     type = true,
-    instance = false,
+    instance = true,
     parameter = [
         Parameter(
             name = "url",
@@ -140,316 +300,331 @@ import kotlin.math.min
             max = "1",
             documentation = "Version of the ValueSet instance",
             type = "string"
+        ),
+        Parameter(
+            name = "includeDesignations",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "Controls whether concept designations are to be included or excluded in value set expansions",
+            type = "boolean"
+        ),
+        Parameter(
+            name = "designation",
+            use = "in",
+            min = 0,
+            max = "*",
+            documentation = "A token that specifies a system+code that is either a use or a language. Designations " +
+                    "that match by language or use are included in the expansion",
+            type = "string"
+        ),
+        Parameter(
+            name = "activeOnly",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "Controls whether inactive concepts are included or excluded in value set expansions",
+            type = "boolean"
+        ),
+        Parameter(
+            name = "displayLanguage",
+            use = "in",
+            min = 0,
+            max = "1",
+            documentation = "Specifies the language to be used for description in the expansions i.e. the language to " +
+                    "be used for ValueSet.expansion.contains.display",
+            type = "code"
+        ),
+        Parameter(
+            name = "exclude-system",
+            use = "in",
+            min = 0,
+            max = "*",
+            documentation = "Code system, or a particular version of a code system to be excluded from the value set " +
+                    "expansion. The format is the same as a canonical URL: [system]|[version]",
+            type = "canonical"
+        ),
+        Parameter(
+            name = "system-version",
+            use = "in",
+            min = 0,
+            max = "*",
+            documentation = "Specifies a version to use for a system, if the value set does not specify which one to " +
+                    "use. The format is the same as a canonical URL: [system]|[version]",
+            type = "canonical"
+        ),
+        Parameter(
+            name = "return",
+            use = "out",
+            min = 1,
+            max = "1",
+            documentation = "The result of the expansion. Note: as this is the only out parameter, it is a resource, " +
+                    "and it has the name 'return', the result of this operation is returned directly as a resource",
+            type = "ValueSet"
         )
     ]
 )
 @Controller
 @RequestMapping("fhir/ValueSet")
 class ValueSetController(
-    @Autowired database: TerminologyStorage,
-    @Autowired fhirContext: FhirContext
-): ResourceController(database, fhirContext) {
+    @Autowired override val persistence: ValueSetPersistenceManager,
+    @Autowired fhirContext: FhirContext,
+    @Autowired properties: ApplicationConfig
+): ResourceController<ValueSet, Int>(persistence, fhirContext, properties, logger) {
 
     companion object{
-        private val logger: Logger = LogManager.getLogger(ValueSetController::class.java)
-        //private val delegator = Delegator<ValueSetController, ResponseEntity<String>>()
+        private val logger: Logger = LogManager.getLogger(this)
     }
 
-    */
-/**
-     * Adds a ValueSet instance to the database via the CREATE interaction
-     * @see <a href= "https://www.hl7.org/fhir/http.html#create">create interaction</a>
-     *//*
-
-    @PostMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
+    @PostMapping(
+        consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun addValueSet(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
-        try{
-            val vs = parseBodyAsResource(requestEntity, contentType)
-            if(vs is ValueSet) {
-                try{
-                    val (vsCreated, versionId, lastUpdated) = database.addValueSet(vs)
-                    logger.info("Added value set [url: ${vs.url}, version: ${vs.version}] to database")
-                    return ResponseEntity.created(URI(vsCreated.id))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .eTag("W/\"$versionId\"")
-                        .lastModified(lastUpdated.time)
-                        .body(jsonParser.encodeResourceToString(vsCreated))
-                }
-                catch (e: Exception){
-                    val opOutcome = generateOperationOutcomeString(
-                        OperationOutcome.IssueSeverity.ERROR,
-                        OperationOutcome.IssueType.PROCESSING,
-                        e.message,
-                        jsonParser
-                    )
-                    logger.warn("Adding of ValueSet instance failed during database access")
-                    logger.debug(e.stackTraceToString())
-                    return ResponseEntity.unprocessableEntity()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(opOutcome)
-                }
-            } else {
-                val message = "Request body contained instance which was not of type ValueSet but ${vs.javaClass.simpleName}"
-                val opOutcome = generateOperationOutcomeString(
-                    OperationOutcome.IssueSeverity.ERROR,
-                    OperationOutcome.IssueType.INVALID,
-                    message,
-                    jsonParser
-                )
-                logger.warn("Request body contained instance which was not of type ValueSet but ${vs.javaClass.simpleName}")
-                return ResponseEntity.unprocessableEntity()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(opOutcome)
+    fun create(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?,
+        @RequestHeader("Prefer") prefer: String?,
+        @RequestHeader("If-None-Exists") ifNoneExists: String?
+    ): ResponseEntity<String> {
+        return try {
+            logger.info("Received CREATE request for ValueSet")
+            if (ifNoneExists.isNullOrEmpty()) doCreate(requestEntity, contentType, accept)
+            else doConditionalCreate(requestEntity, contentType, accept, prefer, ifNoneExists)
+        }
+        catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
+        catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
+        catch (e: UnexpectedResourceTypeException) { return handleUnexpectedResourceType(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
+    }
+
+    private fun doCreate(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?
+    ): ResponseEntity<String> {
+        val vs = parseBodyAsResource(requestEntity, contentType)
+        if (vs is ValueSet) {
+            logger.debug("Creating ValueSet instance [url: ${vs.url}, version: ${vs.version}]")
+            val responseMediaType = determineResponseMediaType(accept, contentType)
+            val createdVs = persistence.create(vs)
+            logger.debug("Created ValueSet instance [id: ${createdVs.id}, url: ${createdVs.url}, version: ${createdVs.version}]")
+            return ResponseEntity.created(URI(createdVs.id))
+                .contentType(responseMediaType)
+                .eTag("W/\"${createdVs.meta.versionId}\"")
+                .lastModified(createdVs.meta.lastUpdated.time)
+                .body(encodeResourceToSting(createdVs, responseMediaType))
+        }
+        else { throw UnexpectedResourceTypeException(ResourceType.ValueSet, (vs as Resource).resourceType) }
+    }
+
+    private fun doConditionalCreate(
+        requestEntity: RequestEntity<String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?,
+        @RequestHeader("Prefer") prefer: String?,
+        @RequestHeader("If-None-Exists") ifNoneExists: String
+    ): ResponseEntity<String> {
+        val handling = parsePreferHandling(prefer)
+        val params = parseQueryParameters(ifNoneExists)
+        val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.POST)
+        logger.debug("Creating ValueSet instance if not exists [${parametersToString(filteredParams)}]")
+        // TODO: Implement search version only returning number of matches or list of IDs thereof
+        val matches = persistence.search(filteredParams)
+        return when (matches.size) {
+            0 -> doCreate(requestEntity, contentType, accept)
+            1 -> {
+                val responseMediaType = determineResponseMediaType(accept, contentType)
+                val vs = matches[0]
+                logger.debug("ValueSet instance already exists [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
+                ResponseEntity.ok()
+                    .contentType(responseMediaType)
+                    .eTag("W/\"${vs.meta.versionId}\"")
+                    .lastModified(vs.meta.lastUpdated.time)
+                    .body(encodeResourceToSting(vs, responseMediaType))
             }
-        }
-        catch (e: Exception){
-            if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.STRUCTURE,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.badRequest()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
+            else -> handlePreconditionFailed(matches, accept)
         }
     }
 
-    @PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
-    @ResponseBody
-    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
-        logger.info("Creating ValueSet instance if not present")
+    @PutMapping(
+        path = ["{id}"],
+        consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
+    fun update(
+        requestEntity: RequestEntity<String>,
+        @PathVariable id: String,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?
+    ): ResponseEntity<String> {
+        logger.info("Received UPDATE request for ValueSet")
         try {
+            if (!isPositiveInteger(id)) throw IdFormatException(id)
+            val idInt = id.toInt()
             val vs = parseBodyAsResource(requestEntity, contentType)
+            val responseMediaType = determineResponseMediaType(accept, contentType)
             if (vs is ValueSet) {
-                try {
-                    if (vs.id != null && isPositiveInteger(vs.idPart)) {
-                        try {
-                            // NotFoundException is thrown if resource is not present
-                            database.readValueSet(vs.idPart)
-                            return ResponseEntity.ok().build()
-                        }
-                        catch (e: NotFoundException) { logger.debug("No ValueSet instance with ID ${vs.idPart} present") }
-                    }
-                    val (createdVS, versionId, lastUpdated) = database.addValueSet(vs)
-                    logger.info("Added ValueSet instance [url: ${vs.url}, version: ${vs.version}] to database")
-                    return ResponseEntity.created(URI(createdVS.id))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .eTag("W/\"$versionId\"")
-                        .lastModified(lastUpdated.time)
-                        .body(jsonParser.encodeResourceToString(createdVS))
-                } catch (e: Exception) {
-                    println(e.stackTraceToString())
-                    val opOutcome = generateOperationOutcomeString(
-                        OperationOutcome.IssueSeverity.ERROR,
-                        OperationOutcome.IssueType.PROCESSING,
-                        e.message,
-                        jsonParser
-                    )
-                    logger.warn("Addition of ValueSet instance failed during database access")
-                    logger.debug(e.stackTraceToString())
-                    return ResponseEntity.unprocessableEntity()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(opOutcome)
+                logger.debug("Updating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
+                /*
+                if (persistence.exists(idInt)) {
+                    logger.info("Updating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
+                    val updatedVs = persistence.update(idInt, vs)
                 }
-            } else {
-                val message =
-                    "Request body contained instance which was not of type ValueSet but ${vs.javaClass.simpleName}"
-                val opOutcome = generateOperationOutcomeString(
-                    OperationOutcome.IssueSeverity.ERROR,
-                    OperationOutcome.IssueType.INVALID,
-                    message,
-                    jsonParser
-                )
-                logger.warn(message)
-                return ResponseEntity.unprocessableEntity()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(opOutcome)
+                else {
+                    logger.info("Creating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
+                }
+                */
+                val updatedVs = persistence.update(idInt, vs)
+                logger.debug("Updated ValueSet instance [id: ${updatedVs.id}, url: ${updatedVs.url}, version: ${updatedVs.version}]")
+                return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(updatedVs, responseMediaType))
             }
+            else { throw UnexpectedResourceTypeException(ResourceType.ValueSet, (vs as Resource).resourceType) }
         }
-        catch (e: Exception){
-            if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.STRUCTURE,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.badRequest()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
+        catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
+        catch (e: UnexpectedResourceTypeException) { return handleUnexpectedResourceType(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    @GetMapping("{id}")
+    @DeleteMapping(
+        path = ["{id}"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun readValueSet(@PathVariable id: String): ResponseEntity<String> {
-        logger.info("Reading code system [id = $id]")
+    fun delete(
+        @PathVariable id: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String
+    ): ResponseEntity<String> {
         try{
-            val vs = database.readValueSet(id)
-            logger.debug("Found value set with ID $id [url = ${vs.url} and version = ${vs.version}]")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(vs))
+            logger.info("Received DELETE request for ValueSet")
+            logger.debug("Deleting ValueSet instance [id: $id]")
+            val responseMediaType = determineResponseMediaType(accept)
+            val vs = persistence.delete(id.toInt())
+            logger.debug("Deleted ValueSet instance [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
+            return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(vs, responseMediaType))
         }
-        catch (e: NotFoundException) {
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.INFORMATION,
-                OperationOutcome.IssueType.NOTFOUND,
-                "No ValueSet instance with ID $id",
-                jsonParser
-            )
-            logger.debug(e.message)
-            return ResponseEntity.status(404)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
-        catch (e: Exception) {
-            val message = e.message
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.PROCESSING,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.internalServerError()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: NotFoundException) { return handleNotFound(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    @GetMapping(params = ["url"])
+    @GetMapping(
+        path = ["{id}"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun searchValueSet(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
-        logger.info("Searching for value set [url = $url,  version = $valueSetVersion]")
+    fun read(
+        @PathVariable id: String,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String
+    ): ResponseEntity<String> {
+        logger.info("Reading ValueSet instance [id: $id]")
         try{
-            val vsList = database.searchValueSet(url, valueSetVersion)
-            val bundle = Bundle()
-            bundle.id = UUID.randomUUID().toString()
-            bundle.type = Bundle.BundleType.SEARCHSET
-            bundle.total = vsList.size
-            val baseURL = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString()
-            vsList.forEach { vs ->
-                bundle.addEntry(
-                    Bundle.BundleEntryComponent()
-                        .setFullUrl("http://$baseURL/${vs.id}")
-                        .setResource(vs)
-                )
-            }
-            logger.debug("Found ${vsList.size} value sets for URL $url and value set version $valueSetVersion")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(jsonParser.encodeResourceToString(bundle))
+            val responseMediaType = determineResponseMediaType(accept)
+            val vs = persistence.read(id.toInt())
+            logger.debug("Found ValueSet instance [id: $id, url: ${vs.url}, version: ${vs.version}]")
+            return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(vs, responseMediaType))
         }
-        catch(e: Exception){
-            val message = "Search for ValueSet instances [url = $url, version = $valueSetVersion] failed"
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            throw ResponseStatusException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                message
-            )
-        }
+        catch (e: NotFoundException) { return handleNotFound(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    */
-/**
-     * Validates a code with respect to the given value set
-     * @see <a href="http://www.hl7.org/FHIR/valueset-operation-validate-code.html">validate-code operation</a>
-     *
-     * @param url URL of the value set against which the code is validated
-     * @param valueSetVersion (optional) version of the value set assigned by its maintainer
-     * @param system URI defining the code system to which the code belongs
-     * @param code value of the code
-     * @param display (optional) display value of the code in the given value set
-     *//*
-
-    @GetMapping(path = ["\$validate-code"])
+    // TODO: Implement paging
+    @GetMapping(
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun validateCode(@RequestParam url: String,
-                     @RequestParam(required = false) valueSetVersion: String?,
-                     @RequestParam system: String,
-                     @RequestParam code: String,
-                     @RequestParam(required = false) display: String?): ResponseEntity<String>{
-        var mutableUrl = url
-        val urlParts = mutableUrl.split("|")
-        mutableUrl = if (urlParts.isNotEmpty()) urlParts[0] else mutableUrl
-        logger.info("Validating code [system=$system, code=$code, display=$display] against value set [url=$mutableUrl, version=$valueSetVersion]")
-        try{
-            val (result, version) = database.validateCodeVS(mutableUrl, valueSetVersion, system, code, display)
-            val body = generateParametersString(
-                jsonParser,
-                Parameters.ParametersParameterComponent("result").setValue(BooleanType(result)),
-                Parameters.ParametersParameterComponent("message").setValue(StringType(
-                    "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
-                            "[url = $mutableUrl and version = $version]"
-                ))
-            )
-            logger.info("Validated if code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] is in value set [url = $mutableUrl, version = $version]: $result")
-            return ResponseEntity.ok().body(body)
+    fun search(
+        @RequestParam params: Map<String, List<String>>,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String>{
+        logger.info("Received SEARCH request for ValueSet")
+        try {
+            logger.debug("Searching for ValueSet instances with parameters [${parametersToString(params)}]")
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.GET)
+            val instances = persistence.search(filteredParams)
+            return ResponseEntity.ok()
+                .contentType(responseMediaType)
+                .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
         }
-        catch (e: Exception){
-            val message = "Failed to validate code [system = $system, code = $code${if(display != null) ", display = $display" else ""}] against value system [url = $mutableUrl${if(valueSetVersion != null) ", version = $valueSetVersion" else ""}]"
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            throw ResponseStatusException(
-                //TODO: Here INTERNAL_SERVER_ERROR or UNPROCESSABLE_ENTITY?
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                message
-            )
-        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    @PostMapping(path = ["\$validate-code"])
+    // TODO: Allow multiple search parameters with same name
+    @GetMapping(
+        path = ["\$validate-code", "{id}/\$validate-code"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
     @ResponseBody
-    fun validateCode(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String>{
-        logger.info("POST: Validating code against value set with request body: ${requestEntity.body}")
-        try{
-            val parameters = parseBodyAsResource(requestEntity, contentType) as Parameters
-            val paramMap = parseParameters(parameters)
-            var url = paramMap["url"] ?: throw Exception("url has to be provided in parameters in request body")
-            val urlParts = url.split("|")
-            url = if (urlParts.isNotEmpty()) urlParts[0] else url
-            val system = paramMap["system"] ?: throw Exception("system has to be provided in parameters in request body")
-            val code = paramMap["code"] ?: throw Exception("code has to be provided in parameters in request body")
-            val display = paramMap["display"]
-            //TODO: Implement other parameters like version
-            val (result, version) = database.validateCodeVS(url, null, system, code, display)
-            val resultParam = generateParametersString(
-                jsonParser,
-                Parameters.ParametersParameterComponent()
-                    .setName("result").setValue(BooleanType(result)),
-                Parameters.ParametersParameterComponent()
-                    .setName("message").setValue(StringType(
-                        "Code [system = $system and code = $code] ${if(result) "was" else "wasn't"} in value set " +
-                                "[url = $url and version = $version]"
-                    ))
-            )
-            logger.debug("Validation result: $resultParam")
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(resultParam)
+    fun validateCode(
+        @PathVariable(name = "id", required = false) id: String?,
+        @RequestParam params: Map<String, List<String>>,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String>{
+        logger.info("Received validate-code request for ValueSet")
+        try {
+            logger.debug("Validating if coding is in ValueSet with parameters [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$validate-code"
+            val filteredParams = validateOperationParameters("validate-code", params, handling, apiPath, HttpMethod.GET)
+            validateIdentifierPresenceInParameters(id, filteredParams)
+            val parameters = persistence.validateCode(
+                id?.toInt(),
+                filteredParams["url"]?.getOrNull(0),
+                filteredParams["valueSetVersion"]?.getOrNull(0),
+                filteredParams["code"]!![0],
+                filteredParams["system"]!![0],
+                filteredParams["systemVersion"]?.getOrNull(0),
+                filteredParams["display"]?.getOrNull(0))
+            return ResponseEntity.ok()
+                .contentType(responseMediaType)
+                .body(encodeResourceToSting(parameters, responseMediaType))
         }
-        catch (e: Exception){
-            logger.warn("Validation of code against value set failed")
-            logger.debug(e.stackTraceToString())
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.INVALID,
-                e.message,
-                jsonParser
-            )
-            return ResponseEntity.internalServerError()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    @GetMapping(path = ["\$expand"])
+    @GetMapping(
+        path = ["\$expand", "{id}/\$expand"],
+        produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
+    )
+    @ResponseBody
+    fun expand(
+        @PathVariable(name = "id", required = false) id: String?,
+        @RequestParam params: Map<String, List<String>>,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String> {
+        logger.info("Received expand request for ValueSet")
+        try {
+            logger.debug("Expanding ValueSet with parameters [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$expand"
+            val filteredParams = validateOperationParameters("expand", params, handling, apiPath, HttpMethod.GET)
+            validateIdentifierPresenceInParameters(id, filteredParams)
+            TODO("Not yet implemented")
+        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
+    }
+
+/*    @GetMapping(path = ["\$expand"])
     @ResponseBody
     fun expand(@RequestParam url: String, @RequestParam(required = false) valueSetVersion: String?): ResponseEntity<String>{
         logger.info("Expanding value set [url = $url,  version = $valueSetVersion]")
@@ -483,6 +658,11 @@ class ValueSetController(
             )
         }
     }
+*/
+
+    private fun validateIdentifierPresenceInParameters(id: String?, params: Map<String, List<String>>) {
+        if (id == null && "url" !in params)
+            throw MissingParameterException("Parameter 'url' is required for type-level variant")
+    }
 
 }
-*/

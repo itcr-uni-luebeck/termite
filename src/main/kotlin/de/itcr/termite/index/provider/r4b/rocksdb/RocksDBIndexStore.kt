@@ -6,10 +6,12 @@ import de.itcr.termite.Termite
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.persistence.PersistenceException
 import de.itcr.termite.index.*
+import de.itcr.termite.index.annotation.GenerateSearchPartition
 import de.itcr.termite.index.partition.*
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.SearchParameter
-import de.itcr.termite.model.entity.FhirConcept
+import de.itcr.termite.model.entity.CodeSystemConceptData
+import de.itcr.termite.model.entity.VSConceptData
 import de.itcr.termite.util.*
 import org.apache.logging.log4j.LogManager
 import org.hl7.fhir.instance.model.api.IBase
@@ -26,15 +28,13 @@ import javax.annotation.PreDestroy
 import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.findAnnotations
-import kotlin.reflect.full.superclasses
 
 @Qualifier("RocksDB")
 class RocksDBIndexStore(
     fhirContext: FhirContext,
     dbPath: Path,
     cfDescriptors: List<ColumnFamilyDescriptor>,
-    searchPartitionMap: Map<KClass<IBaseResource>, List<IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>>,
+    searchPartitionMap: Map<KClass<out IBaseResource>, List<IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>>,
     dbOptions: DBOptions? = null
 ): FhirIndexStore<ByteArray, ByteArray> {
 
@@ -43,7 +43,7 @@ class RocksDBIndexStore(
     private val writeOptions: WriteOptions
     private val database: RocksDB
     private val columnFamilyHandleMap: Map<String, ColumnFamilyHandle>
-    private val searchPartitionMap: Map<KClass<IBaseResource>, Map<String, IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>>
+    private val searchPartitionMap: Map<KClass<out IBaseResource>, Map<String, IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>>
 
     init {
         this.fhirContext = fhirContext
@@ -69,22 +69,31 @@ class RocksDBIndexStore(
         private fun createCfDescriptorsAndPartitions(
             fhirContext: FhirContext,
             properties: ApplicationConfig
-        ): Pair<List<ColumnFamilyDescriptor>, Map<KClass<IBaseResource>, List<IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>>> {
+        ): Pair<List<ColumnFamilyDescriptor>, Map<KClass<out IBaseResource>, List<IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>>> {
             val provider = PartitionProvider
-            val searchPartitionMap = provider.compileFhirSearchIndexPartitions(fhirContext, properties)
-            val descriptorList = searchPartitionMap.values.flatten().map { partition ->
-                val prefixLength = partition.prefixLength()
+            val searchPartitionMap = provider.compileFhirSearchIndexPartitions(fhirContext, properties).toMutableMap()
+            val descriptorList = searchPartitionMap.values.flatten().map { searchPartition ->
+                val prefixLength = searchPartition.prefixLength()
                 val cfOptions = ColumnFamilyOptions()
                     .optimizeUniversalStyleCompaction()
                     .useFixedLengthPrefixExtractor(prefixLength)
-                ColumnFamilyDescriptor(partition.bytes(), cfOptions)
+                ColumnFamilyDescriptor(searchPartition.bytes(), cfOptions)
             }.toMutableList()
-            descriptorList.addAll(provider.compileFhirOperationIndexPartitions().map { partition ->
-                val prefixLength = partition.prefixLength()
+            val partitionLists = provider.compileFhirOperationIndexPartitions().unzip()
+            descriptorList.addAll(partitionLists.first.map { opPartition ->
+                val prefixLength = opPartition.prefixLength()
                 val cfOptions = ColumnFamilyOptions()
                     .optimizeUniversalStyleCompaction()
                     .useFixedLengthPrefixExtractor(prefixLength)
-                ColumnFamilyDescriptor(partition.bytes(), cfOptions)
+                ColumnFamilyDescriptor(opPartition.bytes(), cfOptions)
+            })
+            descriptorList.addAll(partitionLists.second.filterNotNull().map { (type, searchPartition) ->
+                val prefixLength = searchPartition.prefixLength()
+                val cfOptions = ColumnFamilyOptions()
+                    .optimizeUniversalStyleCompaction()
+                    .useFixedLengthPrefixExtractor(prefixLength)
+                (searchPartitionMap[type]!! as MutableList).add(searchPartition)
+                ColumnFamilyDescriptor(searchPartition.bytes(), cfOptions)
             })
             // Default Column Family since it is required by RocksDB
             descriptorList.add(
@@ -128,7 +137,7 @@ class RocksDBIndexStore(
         else throw Exception("No search partitions for FHIR type '${type.simpleName}'")
     }
 
-    override fun putCodeSystem(resource: CodeSystem, concepts: Iterable<FhirConcept>) {
+    override fun putCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>) {
         val batch = createBatch()
         val id = resource.id.toInt()
         // Search indices
@@ -156,7 +165,7 @@ class RocksDBIndexStore(
         processBatch(batch)
     }
 
-    override fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<FhirConcept>) {
+    override fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>) {
         val batch = createBatch()
         val id = resource.id.toInt()
         // Search indices
@@ -174,7 +183,6 @@ class RocksDBIndexStore(
             var partition: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long> =
                 RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_SYSTEM
             var key = partition.keyGenerator()(element)
-            val value = partition.valueGenerator()(concept.id)
             batch.delete(partition, key)
             // Lookup by code
             partition = RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_CODE
@@ -185,40 +193,37 @@ class RocksDBIndexStore(
     }
 
     // TODO: Implement short circuiting if resulting set is empty
-    override fun search(parameters: Map<String, IBase>, type: KClass<out IResource>): Set<Int> {
-        return parameters.map { entry ->
-            when (entry.key) {
-                "code" -> TODO("Not yet implemented")
-                else -> {
-                    val partitionName = "${type.simpleName}.search.${entry.key}"
-                    val partition = searchPartitionByTypeAndName(type, partitionName)!!
-                    val prefix = partition.prefixGenerator()(entry.value)
-                    val iterator = createIterator(partition, prefix)
-                    val idSet = mutableSetOf<Int>()
-                    iterator.forEach {
-                        val key = it.first
-                        val id = key.sliceArray(key.size - 4 ..< key.size)
-                        idSet.add(deserializeInt(id))
-                    }
-                    iterator.close()
-                    return@map idSet
-                }
-            }
-        }.reduce { s1: Set<Int>, s2: Set<Int> -> s1 intersect s2 }
+    override fun search(parameters: Map<String, List<IBase>>, type: KClass<out IBaseResource>): Set<Int> {
+        val resultColl = parameters.map { entry -> entry.value.map { search(entry.key, it, type) } }.flatten()
+        return if (resultColl.isNotEmpty()) resultColl.reduce { s1: Set<Int>, s2: Set<Int> -> s1 intersect s2 }
+        else emptySet()
+    }
+
+
+    override fun search(name: String, value: IBase, type: KClass<out IBaseResource>): Set<Int> {
+        val partitionName = "${type.simpleName}.search.${name}"
+        val partition = searchPartitionByTypeAndName(type, partitionName)!!
+        val prefix = partition.prefixGenerator()(value)
+        val iterator = createIterator(partition, prefix)
+        val idSet = mutableSetOf<Int>()
+        iterator.forEach {
+            val key = it.first
+            val id = key.sliceArray(key.size - 4 ..< key.size)
+            idSet.add(deserializeInt(id))
+        }
+        iterator.close()
+        return idSet
     }
 
     override fun codeSystemLookup(
         code: String,
         system: String,
         version: String?
-    ): Coding {
-        // If supplied version is null the most recent version of the code system is searched
-        val maxVal = ByteArray(4) { 0xFF.toByte() }
-        val versionBytes = if (version != null) serializeVersion(version) else maxVal
-        byte
+    ): Long {
+        TODO("Not yet implemented")
     }
 
-    override fun codeSystemLookup(coding: Coding): Coding = codeSystemLookup(coding.code, coding.system, coding.version)
+    override fun codeSystemLookup(coding: Coding): Long = codeSystemLookup(coding.code, coding.system, coding.version)
 
     override fun codeSystemValidateCode(
         url: String,
@@ -239,6 +244,77 @@ class RocksDBIndexStore(
         displayLanguage: String?
     ): Triple<Boolean, String, String> {
         TODO("Not yet implemented")
+    }
+
+    override fun putValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>) {
+        val batch = createBatch()
+        val id = resource.idPart.toInt()
+        // Search indices (exclude special parameters as they are indexed differently)
+        searchPartitionsByType(ValueSet::class).values
+            .filter { !it.parameter().processing.special }
+            .forEach { partition ->
+                val elements = partition.elementPath()(resource)
+                for (element in elements) {
+                    val key = partition.keyGenerator()(element, id)
+                    batch.put(partition, key, null)
+                }
+            }
+        // Concepts
+        // TODO: Ugly and inflexible if more partitions are added. Rework
+        for (concept in concepts) {
+            val group = concept.vsContentData
+            val t1 = Tuple4(group.system!!, concept.code, group.version, resource.id.toInt())
+            var key = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.keyGenerator()(t1)
+            var value = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.valueGenerator()(concept.id!!)
+            batch.put(RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE, key, value)
+            val t2 = Tuple4(resource.id.toInt(), group.system, concept.code, group.version)
+            key = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID.keyGenerator()(t2)
+            value = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID.valueGenerator()(concept.id)
+            batch.put(RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID, key, value)
+        }
+        processBatch(batch)
+    }
+
+    override fun deleteValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>) {
+        val batch = createBatch()
+        val id = resource.id.toInt()
+        // Search indices
+        for (partition in searchPartitionsByType(ValueSet::class).values) {
+            val elements = partition.elementPath()(resource)
+            for (element in elements) {
+                val key = partition.keyGenerator()(element, id)
+                batch.put(partition, key, null)
+            }
+        }
+        processBatch(batch)
+    }
+
+    override fun valueSetValidateCode(vsId: Int, system: String, code: String, version: String?): Long? {
+        val partition = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID
+        val t = Tuple4(vsId, code, system, version)
+        if (version != null) {
+            val value = database.get(columnFamilyHandleMap[partition.indexName()], partition.keyGenerator()(t))
+            return if (value != null) partition.valueDestructor()(value) else null
+        }
+        else {
+            // FIXME: This assumes that versions adhere to semantic versioning spec!!!
+            val prefix = partition.prefixGenerator()(t)
+            val it = createIterator(partition, prefix)
+            val value = (it as Iterator).last().second
+            return partition.valueDestructor()(value)
+        }
+    }
+
+    override fun valueSetValidateCode(vsId: Int, coding: Coding): Long? =
+        valueSetValidateCode(vsId, coding.system, coding.code, coding.version)
+
+    override fun valueSetValidateCode(vsId: Int, concept: CodeableConcept): Long? {
+        var conceptId: Long?
+        for (coding in concept.coding) {
+            conceptId = valueSetValidateCode(vsId, coding)
+            if (conceptId != null) break
+        }
+        return null
     }
 
     @PreDestroy
@@ -319,15 +395,10 @@ class RocksDBIndexStore(
 
         override fun close() = iterator.close()
 
-        fun seekToLast() = iterator.seekToLast()
-
-        fun previous(): Pair<ByteArray, ByteArray> {
-            val entry = Pair(iterator.key(), iterator.value())
-            iterator.prev()
-            return entry
+        fun last(): Pair<ByteArray, ByteArray> {
+            iterator.seekToLast()
+            return Pair(iterator.key(), iterator.value())
         }
-
-        fun hasPrevious(): Boolean = iterator.isValid
 
     }
 
@@ -339,7 +410,7 @@ class RocksDBIndexStore(
         fun compileFhirSearchIndexPartitions(
             fhirContext: FhirContext,
             config: ApplicationConfig
-        ): Map<KClass<IBaseResource>, List<IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>> {
+        ): Map<KClass<out IBaseResource>, List<IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>> {
             logger.info("Compiling search parameter index partitions for provider RocksDB from API documentation")
             val classes = ResourceUtil.findClassesInPackage(config.api.packageName, classLoader)
 
@@ -359,18 +430,39 @@ class RocksDBIndexStore(
             }
         }
 
-        fun compileFhirOperationIndexPartitions(): List<IFhirOperationIndexPartition<*, *, ByteArray, *, ByteArray>> =
-            RocksDBOperationPartition::class.sealedSubclasses.mapNotNull { it.objectInstance }
+        fun compileFhirOperationIndexPartitions(): List<Pair<IFhirOperationIndexPartition<*, *, ByteArray, *, ByteArray>, Pair<KClass<out IBaseResource>, IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>?>> {
+            return RocksDBOperationPartition::class.sealedSubclasses.mapNotNull { it.objectInstance }
+                .map {
+                    val ann = it::class.findAnnotation<GenerateSearchPartition>()
+                    var searchPartitionPair: Pair<KClass<out IBaseResource > ,IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>? = null
+                    if (ann != null) {
+                        // Compile special search partitions resulting from any operation partition
+                        val param = ann.param
+                        val (prefixGenerator, keyGenerator) = determineGenerators(param.type, param.processing.targetType)
+                        val searchPartition = FhirSearchIndexPartition(
+                            it.indexName(),
+                            it.prefixLength(),
+                            it.keyLength(),
+                            { _: Nothing -> emptyList() }, // Will not be used anyway
+                            prefixGenerator,
+                            keyGenerator,
+                            param
+                        ) as IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>
+                        searchPartitionPair = Pair(ann.target, searchPartition)
+                    }
+                    return@map it to searchPartitionPair
+                }
+        }
 
         private fun compileFhirSearchIndexPartitionsForType(
             resourceType: String,
             searchParameters: List<SearchParameter>,
             fhirContext: FhirContext
-        ): Pair<KClass<*>, List<FhirSearchIndexPartition<out IBaseResource, out IBase, ByteArray>>> {
+        ): Pair<KClass<out IBaseResource>, List<FhirSearchIndexPartition<out IBaseResource, out IBase, ByteArray>>> {
             val resourceClazz = FhirContext.forR4B().getResourceDefinition(resourceType).implementingClass.kotlin
             val groups = searchParameters.groupBy { param -> param.sameAs }
             // Compile index partitions for self contained definitions
-            val partitionMap = (if (groups[""] != null) groups[""]!!.filter { it.name != "_id" }.associate { param ->
+            val partitionMap = (if (groups[""] != null) groups[""]!!.filter { !it.processing.special }.associate { param ->
                 val partitionName = "$resourceType.search.${param.name}"
                 val type = param.type
                 val targetType = param.processing.targetType
@@ -413,6 +505,7 @@ class RocksDBIndexStore(
                 UriType::class -> 4
                 CanonicalType::class -> 4
                 InstantType::class -> 8
+                Coding::class -> 12
                 else -> throw PersistenceException("Cannot find prefix length for target type ${targetType.qualifiedName}")
             }
         }
@@ -429,6 +522,7 @@ class RocksDBIndexStore(
                 UriType::class -> 8
                 CanonicalType::class -> 8
                 InstantType::class -> 12
+                Coding::class -> 12
                 else -> throw PersistenceException("Cannot find key length for target type ${targetType.qualifiedName}")
             }
         }
@@ -450,7 +544,7 @@ class RocksDBIndexStore(
         private fun determineGeneratorsForNumberType(): Pair<(Any) -> ByteArray, (Any, Int) -> ByteArray> {
             return Pair(
                 {v: Any -> serialize((v as IntegerType).value) },
-                {v: Any, id: Int -> serializeInOrder((v as IntegerType).value, id) }
+                {v: Any, id: Int -> toBytesInOrder((v as IntegerType).value, id) }
             )
         }
 
@@ -460,15 +554,15 @@ class RocksDBIndexStore(
             return when (targetType) {
                 DateType::class -> Pair(
                     { v: Any -> serialize((v as DateType).value) },
-                    { v: Any, id: Int -> serializeInOrder((v as DateType).value, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as DateType).value, id) }
                 )
                 DateTimeType::class -> Pair(
                     { v: Any -> serialize((v as DateTimeType).value) },
-                    { v: Any, id: Int -> serializeInOrder((v as DateTimeType).value, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as DateTimeType).value, id) }
                 )
                 InstantType::class -> Pair(
                     { v: Any -> serialize((v as InstantType).value) },
-                    { v: Any, id: Int -> serializeInOrder((v as InstantType).value, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as InstantType).value, id) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }
@@ -480,11 +574,11 @@ class RocksDBIndexStore(
             return when (targetType) {
                 StringType::class -> Pair(
                     { v: Any -> serialize((v as StringType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as StringType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as StringType).value, id, useHashCode = true) }
                 )
                 UriType::class -> Pair(
                     { v: Any -> serialize((v as UriType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as UriType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as UriType).value, id, useHashCode = true) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }
@@ -496,19 +590,23 @@ class RocksDBIndexStore(
             return when (targetType) {
                 StringType::class -> Pair(
                     { v: Any -> serialize((v as StringType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as StringType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as StringType).value, id, useHashCode = true) }
                 )
                 Enumeration::class -> Pair(
                     { v: Any -> serialize((v as Enumeration<*>).value.ordinal) },
-                    { v: Any, id: Int -> serializeInOrder((v as Enumeration<*>).value.ordinal, id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as Enumeration<*>).value.ordinal, id) }
                 )
                 Identifier::class -> Pair(
-                    { v: Any -> with(v as Identifier) { serializeInOrder(v.system.hashCode(), v.value.hashCode()) } },
-                    { v: Any, id: Int -> with(v as Identifier) { serializeInOrder(v.system.hashCode(), v.value.hashCode(), id) } }
+                    { v: Any -> with(v as Identifier) { toBytesInOrder(v.system, v.value, useHashCode = true) } },
+                    { v: Any, id: Int -> with(v as Identifier) { toBytesInOrder(v.system, v.value, id, useHashCode = true) } }
                 )
                 CodeType::class -> Pair(
-                    { v: Any -> with(v as CodeType) { serializeInOrder(v.system.hashCode(), v.code.hashCode()) } },
-                    { v: Any, id: Int -> with(v as CodeType) { serializeInOrder(v.system.hashCode(), v.code.hashCode(), id) } }
+                    { v: Any -> with(v as CodeType) { toBytesInOrder(v.system, v.code, useHashCode = true) } },
+                    { v: Any, id: Int -> with(v as CodeType) { toBytesInOrder(v.system, v.code, id, useHashCode = true) } }
+                )
+                Coding::class -> Pair(
+                    { v: Any -> with(v as Coding) { toBytesInOrder(v.system, v.code, useHashCode = true) } },
+                    { v: Any, id: Int -> with(v as Coding) { toBytesInOrder(v.system, v.code, id, useHashCode = true) } }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }
@@ -520,11 +618,11 @@ class RocksDBIndexStore(
             return when (targetType)  {
                 UriType::class -> Pair(
                     { v: Any -> serialize((v as UriType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as UriType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as UriType).value, id, useHashCode = true) }
                 )
                 CanonicalType::class -> Pair(
                     { v: Any -> serialize((v as CanonicalType).value.hashCode()) },
-                    { v: Any, id: Int -> serializeInOrder((v as CanonicalType).value.hashCode(), id) }
+                    { v: Any, id: Int -> toBytesInOrder((v as CanonicalType).value, id, useHashCode = true) }
                 )
                 else -> throw PersistenceException("Cannot find generators for token target type ${targetType.qualifiedName}")
             }

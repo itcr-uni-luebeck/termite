@@ -225,7 +225,7 @@ class CodeSystemController(
     @Autowired persistence: CodeSystemPersistenceManager,
     @Autowired fhirContext: FhirContext,
     @Autowired properties: ApplicationConfig
-    ): ResourceController<CodeSystem, Int>(persistence, fhirContext, properties, logger) {
+): ResourceController<CodeSystem, Int>(persistence, fhirContext, properties, logger) {
 
     companion object{
         private val logger: Logger = LogManager.getLogger(this)
@@ -244,99 +244,23 @@ class CodeSystemController(
         try {
             val cs = parseBodyAsResource(requestEntity, contentType)
             if (cs is CodeSystem) {
-                try {
-                    val responseMediaType = determineResponseMediaType(accept, contentType)
-                    val createdCs = persistence.create(cs)
-                    logger.info("Created CodeSystem instance [id: ${createdCs.id}, url: ${createdCs.url}, version: ${createdCs.version}]")
-                    return ResponseEntity.created(URI(createdCs.id))
-                        .contentType(responseMediaType)
-                        .eTag("W/\"${createdCs.meta.versionId}\"")
-                        .lastModified(createdCs.meta.lastUpdated.time)
-                        .body(encodeResourceToSting(createdCs, responseMediaType))
-                }
-                catch (e: PersistenceException) {
-                    logger.warn(e.stackTraceToString())
-                    return handleException(
-                        e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING,
-                        "Creation of CodeSystem instance failed during database access. Reason: {e}"
-                    )
-                }
-            } else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (cs as Resource).resourceType) }
+                val responseMediaType = determineResponseMediaType(accept, contentType)
+                val createdCs = persistence.create(cs)
+                logger.info("Created CodeSystem instance [id: ${createdCs.id}, url: ${createdCs.url}, version: ${createdCs.version}]")
+                return ResponseEntity.created(URI(createdCs.id))
+                    .contentType(responseMediaType)
+                    .eTag("W/\"${createdCs.meta.versionId}\"")
+                    .lastModified(createdCs.meta.lastUpdated.time)
+                    .body(encodeResourceToSting(createdCs, responseMediaType))
+            }
+            else { throw UnexpectedResourceTypeException(ResourceType.CodeSystem, (cs as Resource).resourceType) }
         }
         catch (e: UnsupportedFormatException) { return handleUnsupportedFormat(e, accept) }
         catch (e: DataFormatException) { return handleUnparsableEntity(e, accept) }
         catch (e: UnexpectedResourceTypeException) { return handleUnexpectedResourceType(e, accept) }
-        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR, IssueType.PROCESSING, "Unexpected error: {e}") }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
-
-    /*@PutMapping(consumes = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"])
-    @ResponseBody
-    fun conditionalCreate(requestEntity: RequestEntity<String>, @RequestHeader("Content-Type") contentType: String): ResponseEntity<String> {
-        logger.info("Creating CodeSystem instance if not present")
-        try {
-            val cs = parseBodyAsResource(requestEntity, contentType)
-            if (cs is CodeSystem) {
-                try {
-                    if (cs.id != null && isPositiveInteger(cs.idPart)) {
-                        try {
-                            // NotFoundException is thrown if resource is not present
-                            database.readCodeSystem(cs.idPart)
-                            return ResponseEntity.ok().build()
-                        }
-                        catch (e: NotFoundException) { logger.debug("No CodeSystem instance with ID ${cs.idPart} present") }
-                    }
-                    val (createdCS, versionId, lastUpdated) = database.addCodeSystem(cs)
-                    logger.info("Added CodeSystem instance [url: ${cs.url}, version: ${cs.version}] to database")
-                    return ResponseEntity.created(URI(createdCS.id))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .eTag("W/\"$versionId\"")
-                        .lastModified(lastUpdated.time)
-                        .body(jsonParser.encodeResourceToString(createdCS))
-                } catch (e: Exception) {
-                    println(e.stackTraceToString())
-                    val opOutcome = generateOperationOutcomeString(
-                        OperationOutcome.IssueSeverity.ERROR,
-                        OperationOutcome.IssueType.PROCESSING,
-                        e.message,
-                        jsonParser
-                    )
-                    logger.warn("Addition of CodeSystem instance failed during database access")
-                    logger.debug(e.stackTraceToString())
-                    return ResponseEntity.unprocessableEntity()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(opOutcome)
-                }
-            } else {
-                val message =
-                    "Request body contained instance which was not of type CodeSystem but ${cs.javaClass.simpleName}"
-                val opOutcome = generateOperationOutcomeString(
-                    OperationOutcome.IssueSeverity.ERROR,
-                    OperationOutcome.IssueType.INVALID,
-                    message,
-                    jsonParser
-                )
-                logger.warn(message)
-                return ResponseEntity.unprocessableEntity()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(opOutcome)
-            }
-        }
-        catch (e: Exception){
-            if(e is ResponseStatusException) throw e
-            val message = "No parser was able to handle resource; the HTTP headers were: ${requestEntity.headers}"
-            val opOutcome = generateOperationOutcomeString(
-                OperationOutcome.IssueSeverity.ERROR,
-                OperationOutcome.IssueType.STRUCTURE,
-                message,
-                jsonParser
-            )
-            logger.warn(message)
-            logger.debug(e.stackTraceToString())
-            return ResponseEntity.badRequest()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(opOutcome)
-        }
-    }*/
 
     @DeleteMapping(
         path = ["{id}"],
@@ -355,9 +279,8 @@ class CodeSystemController(
             return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(cs, responseMediaType))
         }
         catch (e: NotFoundException) { return handleNotFound(e, accept) }
-        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
-            IssueType.PROCESSING, "Deletion of CodeSystem instance failed during database access. Reason: {e}"
-        ) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
     @GetMapping(
@@ -377,9 +300,8 @@ class CodeSystemController(
             return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(cs, responseMediaType))
         }
         catch (e: NotFoundException) { return handleNotFound(e, accept) }
-        catch (e: Exception) { return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
-            IssueType.PROCESSING, "Reading of CodeSystem instance failed during database access. Reason: {e}"
-        ) }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 /*
     @GetMapping(path = ["\$validate-code"])
@@ -459,7 +381,7 @@ class CodeSystemController(
     )
     @ResponseBody
     fun search(
-        @RequestParam params: Map<String, String>,
+        @RequestParam params: Map<String, List<String>>,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String>{
@@ -475,12 +397,12 @@ class CodeSystemController(
         }
         catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
         catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
-        catch (e: Exception) { e.printStackTrace(); return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
-            IssueType.PROCESSING, "Unexpected internal error: {e}") }
+        catch (e: PersistenceException) { return handlePersistenceException(e, accept) }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
     fun lookup(
-        @RequestParam params: Map<String, String>,
+        @RequestParam params: Map<String, List<String>>,
         @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String?,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?,
         @RequestHeader("Prefer") prefer: String?
@@ -490,11 +412,11 @@ class CodeSystemController(
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
             val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/CodeSystem", HttpMethod.GET)
+            TODO("Not yet implemented")
         }
         catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
         catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
-        catch (e: Exception) { e.printStackTrace(); return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
-            IssueType.PROCESSING, "Unexpected internal error: {e}") }
+        catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
 }

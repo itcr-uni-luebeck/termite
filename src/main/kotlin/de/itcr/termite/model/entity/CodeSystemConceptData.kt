@@ -7,14 +7,18 @@ import org.hibernate.annotations.TypeDef
 import org.hl7.fhir.r4b.model.CodeSystem
 import javax.persistence.*
 
+typealias CSConceptData = CodeSystemConceptData
+
+private typealias ConceptDefinitionComponent = CodeSystem.ConceptDefinitionComponent
+
 // TODO: Check if just storing the ConceptDefinitionComponent instance as JSONB is better than destructuring it
 //       and only storing certain parts as JSONB
 @Entity
-@Table(name = "fhir_concept", schema = "public")
+@Table(name = "cs_concept", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
-data class FhirConcept (
+data class CodeSystemConceptData (
     @Column(name = "id") @Id val id: Long,
-    @ManyToOne(targetEntity = FhirCodeSystemMetadata::class) val cs: FhirCodeSystemMetadata,
+    @ManyToOne(targetEntity = CodeSystemData::class) val cs: CodeSystemData,
     @Column(name = "code") val code: String,
     @Column(name = "display") val display: String?,
     @Column(name = "definition") val definition: String?,
@@ -22,8 +26,8 @@ data class FhirConcept (
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
 )
 
-fun CodeSystem.ConceptDefinitionComponent.toFhirConcept(id: Long, cs: FhirCodeSystemMetadata): FhirConcept {
-    return FhirConcept(
+fun ConceptDefinitionComponent.toCSConceptData(id: Long, cs: CodeSystemData): CodeSystemConceptData {
+    return CodeSystemConceptData(
         id,
         cs,
         code,
@@ -34,10 +38,10 @@ fun CodeSystem.ConceptDefinitionComponent.toFhirConcept(id: Long, cs: FhirCodeSy
     )
 }
 
-fun CodeSystem.ConceptDefinitionComponent.toFhirConcept(cs: FhirCodeSystemMetadata): FhirConcept = this.toFhirConcept(0, cs)
+fun ConceptDefinitionComponent.toCSConceptData(cs: CodeSystemData): CodeSystemConceptData = this.toCSConceptData(0, cs)
 
-fun FhirConcept.toCSConceptDefinitionComponent(): CodeSystem.ConceptDefinitionComponent {
-    val csDefComponent =  CodeSystem.ConceptDefinitionComponent()
+fun CodeSystemConceptData.toCSConceptDefinitionComponent(): ConceptDefinitionComponent {
+    val csDefComponent = CodeSystem.ConceptDefinitionComponent()
     csDefComponent.code = code
     csDefComponent.display = display
     csDefComponent.definition = definition

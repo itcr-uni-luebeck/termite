@@ -7,6 +7,8 @@ import org.hl7.fhir.r4b.formats.JsonParser
 import org.hl7.fhir.r4b.model.*
 import org.hl7.fhir.r4b.model.Enumerations.FilterOperator
 
+// TODO: If input to server is validated (even against base profile) then many checks do not have to be performed
+//       assuming no issues occur during processing
 class BackboneElementParser {
 
     companion object {
@@ -19,7 +21,10 @@ class BackboneElementParser {
             CODE_SYSTEM_FILTER_COMPONENT("CodeSystem.CodeSystemFilterComponent"),
             CODE_SYSTEM_PROPERTY_COMPONENT("CodeSystem.PropertyComponent"),
             CODE_SYSTEM_CONCEPT_DESIGNATION_COMPONENT("CodeSystem.ConceptDefinitionDesignationComponent"),
-            CODE_SYSTEM_CONCEPT_PROPERTY_COMPONENT("CodeSystem.ConceptDefinitionDesignationComponent")
+            CODE_SYSTEM_CONCEPT_PROPERTY_COMPONENT("CodeSystem.ConceptDefinitionDesignationComponent"),
+
+            VALUE_SET_CONCEPT_DESIGNATION_COMPONENT("ValueSet.ConceptReferenceDesignationComponent"),
+            VALUE_SET_CONCEPT_FILTER_COMPONENT("ValueSet.ConceptSetFilterComponent")
 
         }
 
@@ -38,6 +43,8 @@ class BackboneElementParser {
                 SupportedTypes.CODE_SYSTEM_PROPERTY_COMPONENT.className -> parseCodeSystemPropertyComponent(keyValuePairs)
                 SupportedTypes.CODE_SYSTEM_CONCEPT_DESIGNATION_COMPONENT.className -> parseCodeSystemConceptDesignationComponent(keyValuePairs)
                 SupportedTypes.CODE_SYSTEM_CONCEPT_PROPERTY_COMPONENT.className -> parseCodeSystemConceptPropertyComponent(keyValuePairs)
+                SupportedTypes.VALUE_SET_CONCEPT_DESIGNATION_COMPONENT.className -> parseValueSetConceptDesignationComponent(keyValuePairs)
+                SupportedTypes.VALUE_SET_CONCEPT_FILTER_COMPONENT.className -> parseValueSetConceptFilterComponent(keyValuePairs)
                 else -> throw FhirParsingException("Unsupported BackboneElement type '$typeName'")
             }
         }
@@ -105,13 +112,46 @@ class BackboneElementParser {
         val cscpComponent = CodeSystem.ConceptPropertyComponent()
         addBaseElements(cscpComponent, keyValuePairs)
 
-        if ("value" in keyValuePairs) cscpComponent.code = keyValuePairs["code"]
+        if ("code" in keyValuePairs) cscpComponent.code = keyValuePairs["code"]
         else throw FhirParsingException("BackboneElement instance @ CodeSystem.concept.designation is missing required 'code' element")
 
         if ("value" in keyValuePairs) cscpComponent.value = parsePolymorphicElement("value", keyValuePairs as PatriciaTrie<String>)
         else throw FhirParsingException("BackboneElement instance @ CodeSystem.concept.designation is missing required 'value' element")
 
         return cscpComponent
+    }
+
+    private fun parseValueSetConceptDesignationComponent(
+        keyValuePairs: Map<String, String>
+    ): ValueSet.ConceptReferenceDesignationComponent {
+        val vscrdComponent = ValueSet.ConceptReferenceDesignationComponent()
+        addBaseElements(vscrdComponent, keyValuePairs)
+
+        if ("language" in keyValuePairs) vscrdComponent.language = keyValuePairs["language"]
+        if ("use" in keyValuePairs) vscrdComponent.use = JsonUtil.deserialize(keyValuePairs["use"], "Coding") as Coding
+
+        if ("value" in keyValuePairs) vscrdComponent.value = keyValuePairs["value"]
+        else throw FhirParsingException("BackboneElement instance @ ValueSet.[compose.include.concept|expansion.contains].designation is missing required 'value' element")
+
+        return vscrdComponent
+    }
+
+    private fun parseValueSetConceptFilterComponent(
+        keyValuePairs: Map<String, String>
+    ): ValueSet.ConceptSetFilterComponent {
+        val vscsfComponent = ValueSet.ConceptSetFilterComponent()
+        addBaseElements(vscsfComponent, keyValuePairs)
+
+        if ("property" in keyValuePairs) vscsfComponent.property = keyValuePairs["property"]
+        else throw FhirParsingException("BackboneElement instance @ ValueSet.compose.[include|exclude].concept.filter is missing required 'property' element")
+
+        if ("op" in keyValuePairs) vscsfComponent.op = FilterOperator.valueOf(keyValuePairs["op"]!!)
+        else throw FhirParsingException("BackboneElement instance @ ValueSet.compose.[include|exclude].concept.filter is missing required 'value' element")
+
+        if ("value" in keyValuePairs) vscsfComponent.value = keyValuePairs["value"]
+        else throw FhirParsingException("BackboneElement instance @ ValueSet.compose.[include|exclude].concept.filter is missing required 'value' element")
+
+        return vscsfComponent
     }
 
     private fun addBaseElements(backboneElement: BackboneElement, keyValuePairs: Map<String, String>) {

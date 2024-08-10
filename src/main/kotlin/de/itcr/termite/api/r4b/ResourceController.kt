@@ -3,15 +3,18 @@ package de.itcr.termite.api.r4b
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.rest.api.PreferHandlingEnum
 import de.itcr.termite.config.ApplicationConfig
+import de.itcr.termite.exception.api.MissingParameterException
 import de.itcr.termite.exception.api.UnsupportedParameterException
-import de.itcr.termite.metadata.annotation.ForResource
-import de.itcr.termite.metadata.annotation.ProcessingHint
-import de.itcr.termite.persistence.r4b.FhirPersistenceManager
-import org.apache.logging.log4j.Logger
+import de.itcr.termite.exception.api.UnsupportedValueException
+import de.itcr.termite.metadata.annotation.*
 import de.itcr.termite.metadata.annotation.SearchParameter
+import de.itcr.termite.persistence.r4b.FhirPersistenceManager
+import de.itcr.termite.util.r4b.parseParamMaxValue
+import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
 import org.springframework.http.HttpMethod
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.findAnnotations
 
 @ForResource(
     type = "Resource",
@@ -22,7 +25,8 @@ import kotlin.reflect.full.findAnnotation
             documentation = "Logical id of this artifact",
             processing = ProcessingHint(
                 targetType = StringType::class,
-                elementPath = "id"
+                elementPath = "id",
+                special = true
             )
         ),
         SearchParameter(
@@ -73,32 +77,73 @@ import kotlin.reflect.full.findAnnotation
     ]
 )
 abstract class ResourceController<TYPE, ID>(
-    val persistence: FhirPersistenceManager<TYPE, ID>,
+    open val persistence: FhirPersistenceManager<TYPE, ID>,
     fhirContext: FhirContext,
     properties: ApplicationConfig,
     logger: Logger
 ): FhirController(fhirContext, properties, logger) {
 
     val searchParameterMap: Map<String, SearchParameter>
+    val operationParameterMap: Map<String, Map<String, Parameter>>
 
     init {
         // Get class calling this classes constructor (some direct subclass) from call stack
         val inheritingClass = Class.forName(Thread.currentThread().stackTrace[2].className)
+
+        // Search parameters
         val paramAnnList = inheritingClass.kotlin.findAnnotation<ForResource>()?.searchParam?.toMutableList() ?: mutableListOf()
         paramAnnList.addAll(ResourceController::class.findAnnotation<ForResource>()!!.searchParam)
         this.searchParameterMap = paramAnnList.associateBy { it.name }
+
+        // Operation parameters
+        operationParameterMap = mutableMapOf()
+        inheritingClass.kotlin.findAnnotations<SupportsOperation>().map { op ->
+            val opCode = op.code
+            operationParameterMap[opCode] = op.parameter.filter { it.use == "in" }.associateBy { it.name }
+        }
     }
 
     fun validateSearchParameters(
-        parameters: Map<String, String>,
+        parameters: Map<String, List<String>>,
         handling: PreferHandlingEnum,
         apiPath: String,
         method: HttpMethod,
         exemptions: Set<String> = setOf("_format")
-    ): Map<String, String> {
-        return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in searchParameterMap.keys }
+    ): Map<String, List<String>> {
+        if ("code" in parameters) {
+            for (value in parameters["code"]!!) {
+                val code = value.trim()
+                if (code.startsWith("|") || !code.contains('|'))
+                    throw UnsupportedValueException("Parameter 'code' with value '$code' has to feature a system value")
+            }
+        }
+        return if (handling == PreferHandlingEnum.LENIENT) parameters.filterKeys { key -> key in searchParameterMap.keys }
         else {
             val diff = parameters.keys - searchParameterMap.keys - exemptions
+            if (diff.isNotEmpty()) throw UnsupportedParameterException(diff.elementAt(0), apiPath, method)
+            parameters.filter { entry -> entry.key !in exemptions }
+        }
+    }
+
+    fun validateOperationParameters(
+        operationCode: String,
+        parameters: Map<String, List<String>>,
+        handling: PreferHandlingEnum,
+        apiPath: String,
+        method: HttpMethod,
+        exemptions: Set<String> = setOf("_format")
+    ): Map<String, List<String>> {
+        val opParameterMap = operationParameterMap[operationCode]!!
+        // Check if parameter occurrence respects boundaries defined by min and max attributes
+        opParameterMap.forEach { (name, paramDef) ->
+            val amount = parameters[name]?.size ?: 0
+            if (amount < paramDef.min || amount > parseParamMaxValue(paramDef.max))
+                throw UnsupportedParameterException("Occurrence of parameter '$name' not in range [${paramDef.min}, ${paramDef.max}]")
+        }
+        // Handle unknown parameters based on handling strategy
+        return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in opParameterMap.keys}
+        else {
+            val diff = parameters.keys - opParameterMap.keys - exemptions
             if (diff.isNotEmpty()) throw UnsupportedParameterException(diff.elementAt(0), apiPath, method)
             parameters.filter { entry -> entry.key !in exemptions }
         }
