@@ -210,16 +210,15 @@ class RocksDBIndexStore(
     override fun codeSystemLookup(
         code: String,
         system: String,
-        version: String?,
-        displayLanguage: String?,
-        property: List<String>?
+        version: String?
     ): Coding {
-        TODO("Not yet implemented")
+        // If supplied version is null the most recent version of the code system is searched
+        val maxVal = ByteArray(4) { 0xFF.toByte() }
+        val versionBytes = if (version != null) serializeVersion(version) else maxVal
+        byte
     }
 
-    override fun codeSystemLookup(coding: Coding, displayLanguage: String?, property: List<String>?): Coding {
-        TODO("Not yet implemented")
-    }
+    override fun codeSystemLookup(coding: Coding): Coding = codeSystemLookup(coding.code, coding.system, coding.version)
 
     override fun codeSystemValidateCode(
         url: String,
@@ -319,6 +318,16 @@ class RocksDBIndexStore(
         override fun hasNext(): Boolean = iterator.isValid
 
         override fun close() = iterator.close()
+
+        fun seekToLast() = iterator.seekToLast()
+
+        fun previous(): Pair<ByteArray, ByteArray> {
+            val entry = Pair(iterator.key(), iterator.value())
+            iterator.prev()
+            return entry
+        }
+
+        fun hasPrevious(): Boolean = iterator.isValid
 
     }
 

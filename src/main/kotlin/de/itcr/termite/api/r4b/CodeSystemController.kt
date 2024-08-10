@@ -463,7 +463,7 @@ class CodeSystemController(
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String>{
-        logger.info("Received search request for CodeSystem [${params.map { "${it.key} = '${it.value}'" }.joinToString(", ")}]")
+        logger.info("Received search request for CodeSystem [${params.map { "${it.key}: '${it.value}'" }.joinToString(", ")}]")
         try {
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
@@ -472,6 +472,24 @@ class CodeSystemController(
             return ResponseEntity.ok()
                 .contentType(responseMediaType)
                 .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
+        }
+        catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
+        catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
+        catch (e: Exception) { e.printStackTrace(); return handleException(e, accept, HttpStatus.INTERNAL_SERVER_ERROR, IssueSeverity.ERROR,
+            IssueType.PROCESSING, "Unexpected internal error: {e}") }
+    }
+
+    fun lookup(
+        @RequestParam params: Map<String, String>,
+        @RequestHeader("Content-Type", defaultValue = "application/fhir+json") contentType: String?,
+        @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String?,
+        @RequestHeader("Prefer") prefer: String?
+    ): ResponseEntity<String>{
+        logger.info("Received CodeSystem-lookup request [${params.map { "${it.key}: '${it.value}'" }.joinToString(", ")}]")
+        try {
+            val responseMediaType = determineResponseMediaType(accept)
+            val handling = parsePreferHandling(prefer)
+            val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/CodeSystem", HttpMethod.GET)
         }
         catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
         catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }

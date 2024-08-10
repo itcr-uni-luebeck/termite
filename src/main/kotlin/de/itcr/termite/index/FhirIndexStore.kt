@@ -28,9 +28,9 @@ interface FhirIndexStore<KEY, VALUE>: BatchSupport<KEY, VALUE>, IteratorSupport<
 
     fun search(parameters: Map<String, IBase>, type: KClass<out IResource>): Set<Int>
 
-    fun codeSystemLookup(code: String, system: String, version: String?, displayLanguage: String?, property: List<String>?): Coding
+    fun codeSystemLookup(code: String, system: String, version: String?): Coding
 
-    fun codeSystemLookup(coding: Coding, displayLanguage: String?, property: List<String>?): Coding
+    fun codeSystemLookup(coding: Coding): Coding
 
     fun codeSystemValidateCode(url: String, code: String, version: String?, display: String?, displayLanguage: String?): Triple<Boolean, String, String>
 

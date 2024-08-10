@@ -8,6 +8,11 @@ import java.nio.ByteBuffer
 import java.util.Date
 import kotlin.reflect.full.companionObjectInstance
 
+private val versionRegex = ("^(?<major>25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)" +
+        "(?:\\.(?<minor>25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d))?" +
+        "(?:\\.(?<patch>25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d))?" +
+        "(?:[.:,;+\\-|#](?<text>.+))?\$").toRegex()
+
 //private val anyArraySerializer = serializer<Array<*>>()
 private val stringArraySerializer = serializer<Array<String>>()
 
@@ -100,6 +105,24 @@ fun serializeLongArray(longArr: LongArray): ByteArray {
 fun serialize(a: Date): ByteArray = serialize(a.time)
 
 fun serialize(a: Enum<*>): ByteArray = serialize(a.ordinal)
+
+/**
+ * Attempts to parse version string to byte array of length 4 (bytes, i.e. 32 bits) according to the Semantic Versioning
+ * specification (@see <a href="https://semver.org/">SemVer</a>) where the version string shall conform to
+ * <major>.<minor>.<patch>[.:-+#~|]<text> and major, minor, and patch should be in range 0 - 255. Additional text at the end of
+ * the string is converted into a number according to lexical order and compressed into the range 0 - 255. This part of
+ * the string cannot be reliably used to order version strings. If the version string does not match this pattern the
+ * method indicates this via returning null.
+ */
+fun serializeVersion(v: String): ByteArray? {
+    val results = versionRegex.matchEntire(v) ?: return null
+    val arr = ByteArray(4) { 0x00 }
+    if (results.groups["text"] != null) arr[3] = results.groups["text"]!!.value[0].code.toByte()
+    if (results.groups["patch"] != null) arr[2] = results.groups["patch"]!!.value.toInt().toByte()
+    if (results.groups["minor"] != null) arr[1] = results.groups["minor"]!!.value.toInt().toByte()
+    arr[0] = results.groups["major"]!!.value.toInt().toByte()
+    return arr
+}
 
 /**
  * Deserializes ByteArray to object of specified type T
@@ -212,3 +235,14 @@ fun serializeInOrder(vararg args: Any): ByteArray {
 }
 
 fun serializeInOrder(vararg args: String): ByteArray = args.mapToBytes()
+
+fun byteArrayOf(vararg args: ByteArray): ByteArray {
+    val length = args.map { it.size }.sum()
+    val arr = ByteArray(length) { 0x00 }
+    var idx = 0
+    for (argArr in args) {
+        argArr.copyInto(arr, idx)
+        idx += argArr.size
+    }
+    return arr
+}

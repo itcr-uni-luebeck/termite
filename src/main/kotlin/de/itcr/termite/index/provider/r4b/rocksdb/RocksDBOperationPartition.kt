@@ -16,16 +16,7 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
     indexName, prefixLength, keyLength, prefixGenerator, keyGenerator, valueGenerator, valueDestructor
 ) {
 
-    data object CODE_SYSTEM_LOOKUP_BY_SYSTEM: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long>(
-        "CodeSystem.\$lookup#system",
-        8,
-        20,
-        { v: Tuple5<String, String, String?, String?, Int> -> serializeInOrder(v.t1, v.t2) },
-        { v: Tuple5<String, String, String?, String?, Int> -> serializeInOrder(v.t1, v.t2, v.t3?: "", v.t4?: "", v.t5) },
-        { v: Long -> serialize(v) },
-        { b: ByteArray -> deserializeLong(b) }
-    )
-
+    // Key structure: code, system, version, display, CodeSystem instance ID
     data object CODE_SYSTEM_LOOKUP_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long>(
         "CodeSystem.\$lookup#code",
         8,
