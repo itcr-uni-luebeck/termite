@@ -14,3 +14,17 @@ fun IParser.encodeResourceToString(resource: IBaseResource, summarized: Boolean)
         return@synchronized str
     }
 }
+
+fun IParser.encodeResourceToString(
+    resource: IBaseResource,
+    summarized: Boolean,
+    dontEncode: Set<String> = emptySet(),
+    doEncode: Set<String> = emptySet()
+): String {
+    synchronized(this) {
+        isSummaryMode = summarized
+        setDontEncodeElements(dontEncode)
+        setEncodeElements(doEncode)
+        return encodeResourceToString(resource)
+    }
+}

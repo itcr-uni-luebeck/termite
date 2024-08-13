@@ -2,7 +2,7 @@ package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.parser.DataFormatException
-import de.itcr.termite.api.r4b.exc.*
+import de.itcr.termite.api.r4b.handler.*
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.api.*
@@ -15,15 +15,18 @@ import de.itcr.termite.util.isPositiveInteger
 import de.itcr.termite.util.parametersToString
 import de.itcr.termite.util.parsePreferHandling
 import de.itcr.termite.util.parseQueryParameters
+import de.itcr.termite.util.r4b.tagAsSummarized
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.hl7.fhir.r4b.model.*
 import org.hl7.fhir.r4b.model.Enumeration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.RequestEntity
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 import java.net.URI
 
@@ -288,7 +291,7 @@ import java.net.URI
         Parameter(
             name = "url",
             use = "in",
-            min = 1,
+            min = 0,
             max = "1",
             documentation = "URL of the ValueSet instance",
             type = "uri"
@@ -317,14 +320,6 @@ import java.net.URI
             documentation = "A token that specifies a system+code that is either a use or a language. Designations " +
                     "that match by language or use are included in the expansion",
             type = "string"
-        ),
-        Parameter(
-            name = "activeOnly",
-            use = "in",
-            min = 0,
-            max = "1",
-            documentation = "Controls whether inactive concepts are included or excluded in value set expansions",
-            type = "boolean"
         ),
         Parameter(
             name = "displayLanguage",
@@ -502,7 +497,7 @@ class ValueSetController(
             logger.info("Received DELETE request for ValueSet")
             logger.debug("Deleting ValueSet instance [id: $id]")
             val responseMediaType = determineResponseMediaType(accept)
-            val vs = persistence.delete(id.toInt())
+            val vs = persistence.delete(id.toInt()).tagAsSummarized()
             logger.debug("Deleted ValueSet instance [id: ${vs.id}, url: ${vs.url}, version: ${vs.version}]")
             return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(vs, responseMediaType))
         }
@@ -523,7 +518,7 @@ class ValueSetController(
         logger.info("Reading ValueSet instance [id: $id]")
         try{
             val responseMediaType = determineResponseMediaType(accept)
-            val vs = persistence.read(id.toInt())
+            val vs = persistence.read(id.toInt()).tagAsSummarized()
             logger.debug("Found ValueSet instance [id: $id, url: ${vs.url}, version: ${vs.version}]")
             return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(vs, responseMediaType))
         }
@@ -548,7 +543,7 @@ class ValueSetController(
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
             val filteredParams = validateSearchParameters(params, handling, "${properties.api.baseUrl}/ValueSet", HttpMethod.GET)
-            val instances = persistence.search(filteredParams)
+            val instances = persistence.search(filteredParams).map { it.tagAsSummarized() }
             return ResponseEntity.ok()
                 .contentType(responseMediaType)
                 .body(generateBundleString(Bundle.BundleType.SEARCHSET, instances, responseMediaType))
@@ -567,7 +562,7 @@ class ValueSetController(
     @ResponseBody
     fun validateCode(
         @PathVariable(name = "id", required = false) id: String?,
-        @RequestParam params: Map<String, List<String>>,
+        @RequestParam params: MultiValueMap<String, String>,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String>{
@@ -577,19 +572,20 @@ class ValueSetController(
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
             val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$validate-code"
-            val filteredParams = validateOperationParameters("validate-code", params, handling, apiPath, HttpMethod.GET)
-            validateIdentifierPresenceInParameters(id, filteredParams)
-            val parameters = persistence.validateCode(
+            val curatedParams = validateOperationParameters("validate-code", params, handling, apiPath, HttpMethod.GET)
+            validateIdentifierPresenceInParameters(id, curatedParams)
+            val outcome = persistence.validateCode(
                 id?.toInt(),
-                filteredParams["url"]?.getOrNull(0),
-                filteredParams["valueSetVersion"]?.getOrNull(0),
-                filteredParams["code"]!![0],
-                filteredParams["system"]!![0],
-                filteredParams["systemVersion"]?.getOrNull(0),
-                filteredParams["display"]?.getOrNull(0))
-            return ResponseEntity.ok()
+                curatedParams
+            )
+            return if (outcome.hasLeft()) ResponseEntity.ok()
                 .contentType(responseMediaType)
-                .body(encodeResourceToSting(parameters, responseMediaType))
+                .body(encodeResourceToSting(outcome.left!!, responseMediaType))
+            else if (outcome.hasRight()) {
+                val opOutcome = outcome.right!!
+                ValidateCodeHandler.handle(this, responseMediaType, opOutcome)
+            }
+            else throw NoResultException("Operation returned no result")
         }
         catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
         catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
@@ -604,7 +600,7 @@ class ValueSetController(
     @ResponseBody
     fun expand(
         @PathVariable(name = "id", required = false) id: String?,
-        @RequestParam params: Map<String, List<String>>,
+        @RequestParam params: MultiValueMap<String, String>,
         @RequestHeader("Accept", defaultValue = "application/fhir+json") accept: String,
         @RequestHeader("Prefer") prefer: String?
     ): ResponseEntity<String> {
@@ -614,9 +610,18 @@ class ValueSetController(
             val responseMediaType = determineResponseMediaType(accept)
             val handling = parsePreferHandling(prefer)
             val apiPath = "${properties.api.baseUrl}/ValueSet${if (id != null) "/{id}" else ""}/\$expand"
-            val filteredParams = validateOperationParameters("expand", params, handling, apiPath, HttpMethod.GET)
-            validateIdentifierPresenceInParameters(id, filteredParams)
-            TODO("Not yet implemented")
+            val curatedParams = validateOperationParameters("expand", params, handling, apiPath, HttpMethod.GET)
+            validateIdentifierPresenceInParameters(id, curatedParams)
+            val outcome = persistence.expand(id?.toInt(), curatedParams)
+            val dontEncode = if ("includeDesignation" !in params) setOf("ValueSet.compose") else emptySet()
+            return if (outcome.hasLeft()) ResponseEntity.ok()
+                .contentType(responseMediaType)
+                .body(encodeResourceToSting(outcome.left!!, responseMediaType, dontEncode = dontEncode))
+            else if (outcome.hasRight()) {
+                val opOutcome = outcome.right!!
+                ExpandHandler.handle(this, responseMediaType, opOutcome)
+            }
+            else throw NoResultException("Operation returned no result")
         }
         catch (e: UnsupportedValueException) { return handleUnsupportedParameterValue(e, accept) }
         catch (e: UnsupportedParameterException) { return handleUnsupportedParameter(e, accept) }
@@ -664,5 +669,15 @@ class ValueSetController(
         if (id == null && "url" !in params)
             throw MissingParameterException("Parameter 'url' is required for type-level variant")
     }
+
+    private object ValidateCodeHandler: OperationOutcomeHandler(
+        IssueType.NOTFOUND to HttpStatus.NOT_FOUND,
+        IssueType.MULTIPLEMATCHES to HttpStatus.INTERNAL_SERVER_ERROR
+    )
+
+    private object ExpandHandler: OperationOutcomeHandler(
+        IssueType.NOTFOUND to HttpStatus.NOT_FOUND,
+        IssueType.MULTIPLEMATCHES to HttpStatus.INTERNAL_SERVER_ERROR
+    )
 
 }

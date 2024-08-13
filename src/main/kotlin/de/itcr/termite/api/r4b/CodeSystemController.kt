@@ -2,7 +2,7 @@ package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
 import ca.uhn.fhir.parser.DataFormatException
-import de.itcr.termite.api.r4b.exc.*
+import de.itcr.termite.api.r4b.handler.*
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.NotFoundException
 import de.itcr.termite.exception.api.UnsupportedFormatException
@@ -22,8 +22,8 @@ import org.springframework.http.*
 import org.springframework.web.bind.annotation.*
 import java.net.URI
 
-typealias IssueSeverity = OperationOutcome.IssueSeverity
-typealias IssueType = OperationOutcome.IssueType
+private typealias IssueSeverity = OperationOutcome.IssueSeverity
+private typealias IssueType = OperationOutcome.IssueType
 
 @ForResource(
     type = "CodeSystem",

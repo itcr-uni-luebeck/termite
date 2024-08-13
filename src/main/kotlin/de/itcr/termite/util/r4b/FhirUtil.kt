@@ -88,3 +88,7 @@ fun parseParamMaxValue(value: String): Int {
     return if (value == "*") Int.MAX_VALUE
     else value.toInt()
 }
+
+fun Map<String, List<String>>.asParameters(): Parameters = Parameters().apply {
+    this@asParameters.forEach { (key, values) -> values.forEach { value -> this.addParameter(key, value) } }
+}

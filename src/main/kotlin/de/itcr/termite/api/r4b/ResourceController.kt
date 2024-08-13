@@ -134,19 +134,24 @@ abstract class ResourceController<TYPE, ID>(
         exemptions: Set<String> = setOf("_format")
     ): Map<String, List<String>> {
         val opParameterMap = operationParameterMap[operationCode]!!
-        // Check if parameter occurrence respects boundaries defined by min and max attributes
-        opParameterMap.forEach { (name, paramDef) ->
-            val amount = parameters[name]?.size ?: 0
-            if (amount < paramDef.min || amount > parseParamMaxValue(paramDef.max))
-                throw UnsupportedParameterException("Occurrence of parameter '$name' not in range [${paramDef.min}, ${paramDef.max}]")
-        }
         // Handle unknown parameters based on handling strategy
-        return if (handling == PreferHandlingEnum.LENIENT) parameters.filter { entry -> entry.key in opParameterMap.keys}
+        val curatedParameters = if (handling == PreferHandlingEnum.LENIENT) {
+            parameters.filter { entry -> entry.key in opParameterMap.keys }.toMutableMap()
+        }
         else {
             val diff = parameters.keys - opParameterMap.keys - exemptions
             if (diff.isNotEmpty()) throw UnsupportedParameterException(diff.elementAt(0), apiPath, method)
-            parameters.filter { entry -> entry.key !in exemptions }
+            parameters.filter { entry -> entry.key !in exemptions }.toMutableMap()
         }
+        // Check if parameter occurrence respects boundaries defined by min and max attributes
+        opParameterMap.forEach { (name, paramDef) ->
+            val value = parameters[name]
+            curatedParameters[name] = value ?: emptyList()
+            val amount = value?.size ?: 0
+            if (amount < paramDef.min || amount > parseParamMaxValue(paramDef.max))
+                throw UnsupportedParameterException("Occurrence of parameter '$name' not in range [${paramDef.min}, ${paramDef.max}]")
+        }
+        return curatedParameters
     }
 
 }

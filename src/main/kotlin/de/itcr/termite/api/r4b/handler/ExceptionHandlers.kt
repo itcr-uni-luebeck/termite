@@ -1,4 +1,4 @@
-package de.itcr.termite.api.r4b.exc
+package de.itcr.termite.api.r4b.handler
 
 import de.itcr.termite.api.r4b.FhirController
 import de.itcr.termite.exception.NotFoundException
@@ -13,8 +13,8 @@ import org.hl7.fhir.r4b.model.OperationOutcome
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 
-typealias IssueSeverity = OperationOutcome.IssueSeverity
-typealias IssueType = OperationOutcome.IssueType
+internal typealias IssueSeverity = OperationOutcome.IssueSeverity
+internal typealias IssueType = OperationOutcome.IssueType
 
 fun FhirController.handleUnsupportedFormat(exc: UnsupportedFormatException, accept: String?) =
     this.handleException(exc, accept, HttpStatus.NOT_ACCEPTABLE, IssueSeverity.ERROR, IssueType.VALUE)

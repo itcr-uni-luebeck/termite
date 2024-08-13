@@ -1,9 +1,9 @@
 package de.itcr.termite.api.r4b
 
 import ca.uhn.fhir.context.FhirContext
-import de.itcr.termite.api.r4b.exc.handleUnparsableEntity
-import de.itcr.termite.api.r4b.exc.handleUnsupportedFormat
-import de.itcr.termite.api.r4b.exc.handleUnsupportedParameterValue
+import de.itcr.termite.api.r4b.handler.handleUnparsableEntity
+import de.itcr.termite.api.r4b.handler.handleUnsupportedFormat
+import de.itcr.termite.api.r4b.handler.handleUnsupportedParameterValue
 import de.itcr.termite.config.ApplicationConfig
 import de.itcr.termite.exception.api.UnsupportedFormatException
 import de.itcr.termite.exception.api.UnsupportedValueException

@@ -5,7 +5,7 @@ import org.hibernate.id.enhanced.SequenceStyleGenerator
 import java.io.Serializable
 import javax.persistence.SequenceGenerator
 
-@SequenceGenerator(name = "ConditionalIdGenerator")
+@SequenceGenerator(name = "ConditionalIdGenerator", allocationSize = 1)
 class ConditionalIdGenerator(): SequenceStyleGenerator() {
 
     override fun generate(session: SharedSessionContractImplementor, obj: Any): Serializable {

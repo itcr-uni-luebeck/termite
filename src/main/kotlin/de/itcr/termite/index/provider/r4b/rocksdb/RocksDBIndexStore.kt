@@ -267,7 +267,7 @@ class RocksDBIndexStore(
             var key = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.keyGenerator()(t1)
             var value = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE.valueGenerator()(concept.id!!)
             batch.put(RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_CODE, key, value)
-            val t2 = Tuple4(resource.id.toInt(), group.system, concept.code, group.version)
+            val t2 = Tuple4(resource.id.toInt(), concept.code, group.system, group.version)
             key = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID.keyGenerator()(t2)
             value = RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID.valueGenerator()(concept.id)
             batch.put(RocksDBOperationPartition.VALUE_SET_VALIDATE_CODE_BY_ID, key, value)

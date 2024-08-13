@@ -1,5 +1,6 @@
 package de.itcr.termite.util
 
+import java.time.Instant
 import java.util.*
 import javax.xml.bind.DatatypeConverter
 
@@ -12,3 +13,5 @@ import javax.xml.bind.DatatypeConverter
  * @return Instance of java.util.Date class representing timestamp expressed by date string
  */
 fun parseDate(dateString: String): Date = DatatypeConverter.parseDate(dateString).time
+
+fun now(): Date = Date.from(Instant.now())

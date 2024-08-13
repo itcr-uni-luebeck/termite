@@ -44,7 +44,7 @@ abstract class FhirController(val fhirContext: FhirContext, val properties: Appl
      * inspired by the FHIR-Marshal handles this issue
      * @see <a href="https://github.com/itcr-uni-luebeck/fhir-marshal/blob/main/src/main/kotlin/de/uksh/medic/fhirmarshal/controller/ValidationController.kt">FHIR-Marshal</a>
      */
-    protected fun parseBodyAsResource(requestEntity: RequestEntity<String>, contentType: String): IBaseResource {
+    fun parseBodyAsResource(requestEntity: RequestEntity<String>, contentType: String): IBaseResource {
         val (parser, parserFormat) = parsers[contentType] ?: throw UnsupportedFormatException("Unsupported content type: $contentType")
         try {
             return parser.parseResource(requestEntity.body)
@@ -54,22 +54,33 @@ abstract class FhirController(val fhirContext: FhirContext, val properties: Appl
         }
     }
 
-    protected fun parseBodyAsResource(requestEntity: RequestEntity<String>, contentType: MediaType): IBaseResource =
+    fun parseBodyAsResource(requestEntity: RequestEntity<String>, contentType: MediaType): IBaseResource =
         parseBodyAsResource(requestEntity, contentType.toString())
 
-    protected fun encodeResourceToString(resource: IBaseResource, contentType: String, summarized: Boolean = false): String {
+    fun encodeResourceToString(
+        resource: IBaseResource,
+        contentType: String,
+        summarized: Boolean = false,
+        dontEncode: Set<String> = emptySet(),
+        doEncode: Set<String> = emptySet()
+    ): String {
         val (parser, parserFormat) = parsers[contentType] ?:
             throw UnsupportedFormatException("Unsupported content type: $contentType. Only supports: ${parsers.keys.joinToString(", ")}")
         try {
-            return parser.encodeResourceToString(resource, summarized)
+            return parser.encodeResourceToString(resource, summarized, dontEncode, doEncode)
         } catch (e: DataFormatException) {
             val message = "Data is not in $parserFormat format"
             throw DataFormatException(message, e)
         }
     }
 
-    protected fun encodeResourceToSting(resource: IBaseResource, contentType: MediaType, summarized: Boolean = false): String =
-        encodeResourceToString(resource, contentType.toString(), summarized)
+    fun encodeResourceToSting(
+        resource: IBaseResource,
+        contentType: MediaType,
+        summarized: Boolean = false,
+        dontEncode: Set<String> = emptySet(),
+        doEncode: Set<String> = emptySet()
+    ): String = encodeResourceToString(resource, contentType.toString(), summarized, dontEncode, doEncode)
 
     fun generateOperationOutcome(severity: OperationOutcome.IssueSeverity, code: OperationOutcome.IssueType, diagnostics: String?): OperationOutcome {
         val opOutcome = OperationOutcome.OperationOutcomeIssueComponent()

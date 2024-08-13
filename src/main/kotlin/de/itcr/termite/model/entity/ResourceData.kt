@@ -1,6 +1,7 @@
 package de.itcr.termite.model.entity
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import org.hibernate.annotations.GenericGenerator
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
 import org.hibernate.annotations.UpdateTimestamp
@@ -12,7 +13,11 @@ import javax.persistence.*
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 abstract class ResourceData(
     @Column(name = "id", nullable = false) @Id
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "ConditionalIdGenerator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "conditional_id_gen")
+    @GenericGenerator(
+        name = "conditional_id_gen",
+        strategy = "de.itcr.termite.persistence.sequence.ConditionalIdGenerator"
+    )
     open val id: Int?,
     @Column(name = "versionId", nullable = false) @Version open val versionId: Int?,
     @Column(name = "lastUpdated") @Temporal(TemporalType.TIMESTAMP) @UpdateTimestamp open val lastUpdated: Date?,
