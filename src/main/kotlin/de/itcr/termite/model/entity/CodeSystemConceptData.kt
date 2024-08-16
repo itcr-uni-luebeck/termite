@@ -9,7 +9,7 @@ import javax.persistence.*
 
 typealias CSConceptData = CodeSystemConceptData
 
-private typealias ConceptDefinitionComponent = CodeSystem.ConceptDefinitionComponent
+private typealias CSConcept = CodeSystem.ConceptDefinitionComponent
 
 // TODO: Check if just storing the ConceptDefinitionComponent instance as JSONB is better than destructuring it
 //       and only storing certain parts as JSONB
@@ -17,18 +17,30 @@ private typealias ConceptDefinitionComponent = CodeSystem.ConceptDefinitionCompo
 @Table(name = "cs_concept", schema = "public")
 @TypeDef(name = "jsonb", typeClass = JsonBinaryType::class)
 data class CodeSystemConceptData (
-    @Column(name = "id") @Id val id: Long,
-    @ManyToOne(targetEntity = CodeSystemData::class) val cs: CodeSystemData,
+    @Column(name = "id") @Id @GeneratedValue(strategy = GenerationType.IDENTITY) val id: Long?,
+    @ManyToOne val cs: CodeSystemData,
     @Column(name = "code") val code: String,
     @Column(name = "display") val display: String?,
     @Column(name = "definition") val definition: String?,
     @Column(name = "designation", columnDefinition = "jsonb") @Type(type = "jsonb") val designation: String?,
     @Column(name = "property", columnDefinition = "jsonb") @Type(type = "jsonb") val property: String?
-)
+) {
 
-fun ConceptDefinitionComponent.toCSConceptData(id: Long, cs: CodeSystemData): CodeSystemConceptData {
+    // See https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is CodeSystemConceptData) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = this::class.hashCode()
+
+}
+
+fun CSConcept.toCSConceptData(cs: CodeSystemData): CodeSystemConceptData {
     return CodeSystemConceptData(
-        id,
+        id?.toLong(),
         cs,
         code,
         display,
@@ -38,10 +50,9 @@ fun ConceptDefinitionComponent.toCSConceptData(id: Long, cs: CodeSystemData): Co
     )
 }
 
-fun ConceptDefinitionComponent.toCSConceptData(cs: CodeSystemData): CodeSystemConceptData = this.toCSConceptData(0, cs)
-
-fun CodeSystemConceptData.toCSConceptDefinitionComponent(): ConceptDefinitionComponent {
-    val csDefComponent = CodeSystem.ConceptDefinitionComponent()
+fun CodeSystemConceptData.toCSConceptDefinitionComponent(): CSConcept {
+    val csDefComponent = CSConcept()
+    csDefComponent.id = id.toString()
     csDefComponent.code = code
     csDefComponent.display = display
     csDefComponent.definition = definition

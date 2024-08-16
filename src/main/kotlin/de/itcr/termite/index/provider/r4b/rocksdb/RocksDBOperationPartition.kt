@@ -21,22 +21,34 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
     indexName, prefixLength, keyLength, prefixGenerator, keyGenerator, valueGenerator, valueDestructor
 ) {
 
-    data object CODE_SYSTEM_LOOKUP_BY_SYSTEM: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long>(
-        "CodeSystem.\$lookup#system",
+    @GenerateSearchPartition(
+        target = CodeSystem::class,
+        param = SearchParameter(
+            name = "code",
+            type = "token",
+            processing = ProcessingHint(
+                targetType = CodeType::class,
+                elementPath = "",
+                special = true
+            )
+        )
+    )
+    data object CODE_SYSTEM_VALIDATE_CODE_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple4<String, String, String?, Int>, Long>(
+        "CodeSystem.search.code",
         8,
         20,
-        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t1, v.t2) },
-        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t1, v.t2, v.t3?: "", v.t4?: "", v.t5) },
+        { v: Tuple4<String, String, String?, Int> -> toBytesInOrder(v.t1, v.t2, useHashCode = true) },
+        { v: Tuple4<String, String, String?, Int> -> toBytesInOrder(v.t1, v.t2, v.t3?: "", v.t4, useHashCode = true) },
         { v: Long -> serialize(v) },
         { b: ByteArray -> deserializeLong(b) }
     )
 
-    data object CODE_SYSTEM_LOOKUP_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long>(
-        "CodeSystem.\$lookup#code",
-        4,
+    data object CODE_SYSTEM_VALIDATE_CODE_BY_ID: RocksDBOperationPartition<CodeSystem, Tuple4<Int, String, String, String?>, Long>(
+        "CodeSystem.search.code#id",
+        12,
         20,
-        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t2, v.t1) },
-        { v: Tuple5<String, String, String?, String?, Int> -> toBytesInOrder(v.t2, v.t1, v.t3?: "", v.t4?: "", v.t5) },
+        { v: Tuple4<Int, String, String, String?> -> toBytesInOrder(v.t1, v.t2, v.t3, useHashCode = true) },
+        { v: Tuple4<Int, String, String, String?> -> toBytesInOrder(v.t1, v.t2, v.t3, v.t4?: "", useHashCode = true) },
         { v: Long -> serialize(v) },
         { b: ByteArray -> deserializeLong(b) }
     )
@@ -53,7 +65,7 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
             )
         )
     )
-    data object VALUE_SET_VALIDATE_CODE_BY_CODE: RocksDBOperationPartition<CodeSystem, Tuple4<String, String, String?, Int>, Long>(
+    data object VALUE_SET_VALIDATE_CODE_BY_CODE: RocksDBOperationPartition<ValueSet, Tuple4<String, String, String?, Int>, Long>(
         "ValueSet.search.code",
         8,
         20,
@@ -63,7 +75,7 @@ sealed class RocksDBOperationPartition<FHIR_MODEL, KEY_ELEMENT, VALUE_ELEMENT>(
         { b: ByteArray -> deserializeLong(b) }
     )
 
-    data object VALUE_SET_VALIDATE_CODE_BY_ID: RocksDBOperationPartition<CodeSystem, Tuple4<Int, String, String, String?>, Long>(
+    data object VALUE_SET_VALIDATE_CODE_BY_ID: RocksDBOperationPartition<ValueSet, Tuple4<Int, String, String, String?>, Long>(
         "ValueSet.search.code#id",
         12,
         20,

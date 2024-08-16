@@ -33,11 +33,11 @@ interface FhirIndexStore<KEY, VALUE>: BatchSupport<KEY, VALUE>, IteratorSupport<
 
     fun codeSystemLookup(coding: Coding): Long
 
-    fun codeSystemValidateCode(url: String, code: String, version: String?, display: String?, displayLanguage: String?): Triple<Boolean, String, String>
+    fun codeSystemValidateCode(csId: Int, system: String, code: String): Long?
 
-    fun codeSystemValidateCode(coding: Coding, displayLanguage: String?): Triple<Boolean, String, String>
+    fun codeSystemValidateCode(csId: Int, coding: Coding): Long?
 
-    fun codeSystemValidateCode(concept: CodeableConcept, displayLanguage: String?): Triple<Boolean, String, String>
+    fun codeSystemValidateCode(csId: Int, concept: CodeableConcept): Long?
 
     fun putValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>)
 

@@ -12,7 +12,7 @@ interface CodeSystemConceptDataRepository: CrudRepository<CodeSystemConceptData,
 
     @Transactional
     @Modifying
-    @Query(value = "DELETE FROM fhir_concept WHERE cs_id = ?1 RETURNING *", nativeQuery = true)
+    @Query(value = "DELETE FROM cs_concept WHERE cs_id = ?1 RETURNING *", nativeQuery = true)
     fun deleteByCodeSystem(csId: Int): List<CodeSystemConceptData>
 
 }

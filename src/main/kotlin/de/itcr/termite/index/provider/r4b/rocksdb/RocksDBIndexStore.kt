@@ -10,6 +10,7 @@ import de.itcr.termite.index.annotation.GenerateSearchPartition
 import de.itcr.termite.index.partition.*
 import de.itcr.termite.metadata.annotation.ForResource
 import de.itcr.termite.metadata.annotation.SearchParameter
+import de.itcr.termite.model.entity.CSConceptData
 import de.itcr.termite.model.entity.CodeSystemConceptData
 import de.itcr.termite.model.entity.VSConceptData
 import de.itcr.termite.util.*
@@ -137,7 +138,7 @@ class RocksDBIndexStore(
         else throw Exception("No search partitions for FHIR type '${type.simpleName}'")
     }
 
-    override fun putCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>) {
+    override fun putCodeSystem(resource: CodeSystem, concepts: Iterable<CSConceptData>) {
         val batch = createBatch()
         val id = resource.id.toInt()
         // Search indices
@@ -148,24 +149,23 @@ class RocksDBIndexStore(
                 batch.put(partition, key, null)
             }
         }
-        // Lookup
+        // Concepts
+        // TODO: Ugly and inflexible if more partitions are added. Rework
         for (concept in concepts) {
-            val element = Tuple5(resource.url, concept.code, concept.display, resource.version, id)
-            // Lookup by system
-            var partition: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long> =
-                RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_SYSTEM
-            var key = partition.keyGenerator()(element)
-            val value = partition.valueGenerator()(concept.id)
-            batch.put(partition, key, value)
-            // Lookup by code
-            partition = RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_CODE
-            key = partition.keyGenerator()(element)
-            batch.put(partition, key, value)
+            val cs = concept.cs
+            val t1 = Tuple4(cs.url, concept.code, cs.version, resource.id.toInt())
+            var key = RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_CODE.keyGenerator()(t1)
+            var value = RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_CODE.valueGenerator()(concept.id!!)
+            batch.put(RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_CODE, key, value)
+            val t2 = Tuple4(resource.id.toInt(), cs.url, concept.code, cs.version)
+            key = RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_ID.keyGenerator()(t2)
+            value = RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_ID.valueGenerator()(concept.id)
+            batch.put(RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_ID, key, value)
         }
         processBatch(batch)
     }
 
-    override fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<CodeSystemConceptData>) {
+    override fun deleteCodeSystem(resource: CodeSystem, concepts: Iterable<CSConceptData>) {
         val batch = createBatch()
         val id = resource.id.toInt()
         // Search indices
@@ -173,21 +173,8 @@ class RocksDBIndexStore(
             val elements = partition.elementPath()(resource)
             for (element in elements) {
                 val key = partition.keyGenerator()(element, id)
-                batch.put(partition, key, null)
+                batch.delete(partition, key)
             }
-        }
-        // Lookup
-        for (concept in concepts) {
-            val element = Tuple5(resource.url, concept.code, concept.display, resource.version, id)
-            // Lookup by system
-            var partition: RocksDBOperationPartition<CodeSystem, Tuple5<String, String, String?, String?, Int>, Long> =
-                RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_SYSTEM
-            var key = partition.keyGenerator()(element)
-            batch.delete(partition, key)
-            // Lookup by code
-            partition = RocksDBOperationPartition.CODE_SYSTEM_LOOKUP_BY_CODE
-            key = partition.keyGenerator()(element)
-            batch.delete(partition, key)
         }
         processBatch(batch)
     }
@@ -225,25 +212,25 @@ class RocksDBIndexStore(
 
     override fun codeSystemLookup(coding: Coding): Long = codeSystemLookup(coding.code, coding.system, coding.version)
 
-    override fun codeSystemValidateCode(
-        url: String,
-        code: String,
-        version: String?,
-        display: String?,
-        displayLanguage: String?
-    ): Triple<Boolean, String, String> {
-        TODO("Not yet implemented")
+    override fun codeSystemValidateCode(csId: Int, system: String, code: String): Long? {
+        val partition = RocksDBOperationPartition.CODE_SYSTEM_VALIDATE_CODE_BY_ID
+        val t: Tuple4<Int, String, String, String?> = Tuple4(csId, system, code, null)
+        val prefix = partition.prefixGenerator()(t)
+        val it = createIterator(partition, prefix)
+        val value = (it as Iterator).last().second
+        return partition.valueDestructor()(value)
     }
 
-    override fun codeSystemValidateCode(coding: Coding, displayLanguage: String?): Triple<Boolean, String, String> {
-        TODO("Not yet implemented")
-    }
+    override fun codeSystemValidateCode(csId: Int, coding: Coding): Long? =
+        codeSystemValidateCode(csId, coding.system, coding.code)
 
-    override fun codeSystemValidateCode(
-        concept: CodeableConcept,
-        displayLanguage: String?
-    ): Triple<Boolean, String, String> {
-        TODO("Not yet implemented")
+    override fun codeSystemValidateCode(csId: Int, concept: CodeableConcept): Long? {
+        var conceptId: Long?
+        for (coding in concept.coding) {
+            conceptId = valueSetValidateCode(csId, coding)
+            if (conceptId != null) break
+        }
+        return null
     }
 
     override fun putValueSet(resource: ValueSet, concepts: Iterable<VSConceptData>) {
@@ -283,7 +270,7 @@ class RocksDBIndexStore(
             val elements = partition.elementPath()(resource)
             for (element in elements) {
                 val key = partition.keyGenerator()(element, id)
-                batch.put(partition, key, null)
+                batch.delete(partition, key)
             }
         }
         processBatch(batch)
@@ -434,7 +421,7 @@ class RocksDBIndexStore(
             return RocksDBOperationPartition::class.sealedSubclasses.mapNotNull { it.objectInstance }
                 .map {
                     val ann = it::class.findAnnotation<GenerateSearchPartition>()
-                    var searchPartitionPair: Pair<KClass<out IBaseResource > ,IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>? = null
+                    var searchPartitionPair: Pair<KClass<out IBaseResource>, IFhirSearchIndexPartition<IBaseResource, IBase, ByteArray>>? = null
                     if (ann != null) {
                         // Compile special search partitions resulting from any operation partition
                         val param = ann.param
@@ -443,7 +430,7 @@ class RocksDBIndexStore(
                             it.indexName(),
                             it.prefixLength(),
                             it.keyLength(),
-                            { _: Nothing -> emptyList() }, // Will not be used anyway
+                            { _: Any -> emptyList() }, // Will not be used anyway
                             prefixGenerator,
                             keyGenerator,
                             param

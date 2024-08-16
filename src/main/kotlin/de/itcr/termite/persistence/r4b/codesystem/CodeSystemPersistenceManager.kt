@@ -8,13 +8,12 @@ import de.itcr.termite.index.FhirIndexStore
 import de.itcr.termite.model.entity.*
 import de.itcr.termite.model.repository.CodeSystemDataRepository
 import de.itcr.termite.model.repository.CSConceptDataRepository
-import de.itcr.termite.util.r4b.parametersToMap
-import de.itcr.termite.util.r4b.parseParameterValue
-import de.itcr.termite.util.r4b.tagAsSummarized
-import de.itcr.termite.util.toBytesInOrder
+import de.itcr.termite.util.Either
+import de.itcr.termite.util.Leither
+import de.itcr.termite.util.r4b.*
 import org.apache.logging.log4j.LogManager
-import org.hl7.fhir.r4b.model.CodeSystem
-import org.hl7.fhir.r4b.model.Parameters
+import org.hl7.fhir.instance.model.api.IBase
+import org.hl7.fhir.r4b.model.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import kotlin.random.Random
@@ -39,25 +38,23 @@ class CodeSystemPersistenceManager(
     override fun create(instance: CodeSystem): CodeSystem {
         // Calculate concept count if necessary
         instance.count = if (instance.count > 0) instance.count else instance.concept.size
-        val csMetadata = instance.toCodeSystemData()
-        val storedMetadata: CodeSystemData
-        try { storedMetadata = repository.save(csMetadata) }
-        catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem metadata. Reason: ${e.message}", e) }
-        instance.id = storedMetadata.id.toString()
-        val concepts: Iterable<CodeSystemConceptData>
-        try { concepts = conceptRepository.saveAll(instance.concept.map { it.toCSConceptData(random.nextLong(), storedMetadata) }) }
-        catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem concepts. Reason: ${e.message}", e) }
-        try { indexStore.putCodeSystem(instance, concepts) }
+        val csData = instance.toCodeSystemData()
+        val storedData: CodeSystemData
+        try { storedData = repository.save(csData) }
+        catch (e: Exception) { throw PersistenceException("Failed to store CodeSystem data. Reason: ${e.message}", e) }
+        instance.id = storedData.id.toString()
+        try { indexStore.putCodeSystem(instance, csData.concept) }
         catch (e: Exception) {
-            conceptRepository.deleteByCodeSystem(storedMetadata.id)
-            repository.delete(storedMetadata)
+            repository.delete(storedData)
             throw PersistenceException("Failed to index CodeSystem instance. Reason: ${e.message}", e)
         }
-        return storedMetadata.toCodeSystemResource().tagAsSummarized()
+        return storedData.toCodeSystemResource()
     }
 
     override fun update(id: Int, instance: CodeSystem): CodeSystem {
-        TODO("Not yet implemented")
+        instance.id = id.toString()
+        val vsData = repository.save(instance.toCodeSystemData())
+        return vsData.toCodeSystemResource()
     }
 
     override fun read(id: Int): CodeSystem {
@@ -114,9 +111,35 @@ class CodeSystemPersistenceManager(
         }
     }
 
-    override fun validateCode(url: String, code: String, version: String?, display: String?): Parameters {
-        val prefix = toBytesInOrder(url, code, version?: "")
-        TODO()
+    override fun validateCode(id: Int?, parameters: Map<String, List<String>>): Either<Parameters, OperationOutcome> {
+        val actualId: Int
+        val url: String
+        val coding = parseCodeTypeParameterValue("code", parameters["code"]!![0]) // Always present after validation
+        if (id == null) {
+            url = parameters["url"]?.getOrNull(0) ?: coding.system
+                ?: throw PersistenceException("Cannot determine CodeSystem instance: No ID nor URL provided")
+            val params = mutableMapOf<String, List<IBase>>()
+            params["url"] = listOf(UriType(url))
+            val version = parameters["version"]?.getOrNull(0)
+            if (version != null) params["version"] = listOf(StringType(version))
+            @Suppress("UNCHECKED_CAST")
+            val ids = indexStore.search(params, CodeSystem::class as KClass<out IResource>)
+            if (ids.size > 1) throw PersistenceException("Cannot determine CodeSystem instance: Multiple instances match: IDs: $ids")
+            else if (ids.isEmpty()) return Leither(ValidateCodeParameters(false, "No CodeSystem instance matched criteria"))
+            actualId = ids.first()
+        }
+        else {
+            actualId = id
+            url = repository.findById(id).get().url
+        }
+        val conceptId = indexStore.codeSystemValidateCode(actualId, coding.system?: url, coding.code)
+            ?: return Leither(ValidateCodeParameters(false, "Coding not in ValueSet instance [id: $actualId]"))
+        val concept = conceptRepository.findById(conceptId).get() // Should never be null unless inconsistencies exist
+        val display = parameters["display"]!!.getOrNull(0)
+        return Leither(if (display != null && display != concept.display)
+            ValidateCodeParameters(false, "Coding present in CodeSystem instance [id: $actualId] but displays did not match [expected: '${concept.display}', actual: $display]")
+        else ValidateCodeParameters(true, "Coding present in CodeSystem instance [id: $actualId]", concept.display)
+        )
     }
 
     override fun lookup(

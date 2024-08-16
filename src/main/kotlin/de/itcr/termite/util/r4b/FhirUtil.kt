@@ -44,7 +44,7 @@ fun parseTokenParameterValue(paramDef: SearchParameter, value: String): IBase {
 fun parseCodeTypeParameterValue(name: String, value: String): CodeType {
     val splitParam = value.split("|")
     return when (splitParam.size) {
-        1 -> if (value.trim().startsWith('|')) CodeType(splitParam[0]) else CodeType().setSystem(splitParam[0])
+        1 -> if (value.trim().endsWith('|')) CodeType().setSystem(splitParam[0]) else CodeType(splitParam[0])
         2 -> CodeType(splitParam[1].ifBlank { null }).setSystem(splitParam[0])
         else -> throw UnsupportedValueException("Parameter '$name' of type 'token' with target class 'CodeType' can at most consists of two parts. Actual: '$value'")
     }

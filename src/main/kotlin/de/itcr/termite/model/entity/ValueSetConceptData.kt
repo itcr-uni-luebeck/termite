@@ -8,8 +8,8 @@ import javax.persistence.*
 
 typealias VSConceptData = ValueSetConceptData
 
-private typealias Concept = ValueSet.ConceptReferenceComponent
-private typealias ConceptDesignation = ValueSet.ConceptReferenceDesignationComponent
+private typealias VSConcept = ValueSet.ConceptReferenceComponent
+private typealias VSConceptDesignation = ValueSet.ConceptReferenceDesignationComponent
 
 @Entity
 @Table(name = "vs_concept", schema = "public")
@@ -34,7 +34,7 @@ data class ValueSetConceptData (
 
 }
 
-fun Concept.toVSConceptData(vsContentData: ValueSetContentData): ValueSetConceptData {
+fun VSConcept.toVSConceptData(vsContentData: ValueSetContentData): ValueSetConceptData {
     return ValueSetConceptData(
         id?.toLong(),
         vsContentData,
@@ -44,12 +44,12 @@ fun Concept.toVSConceptData(vsContentData: ValueSetContentData): ValueSetConcept
     )
 }
 
-fun ValueSetConceptData.toVSConceptReferenceComponent(): Concept {
-    val vsRefComponent = Concept()
+fun ValueSetConceptData.toVSConceptReferenceComponent(): VSConcept {
+    val vsRefComponent = VSConcept()
     vsRefComponent.id = id.toString()
     vsRefComponent.code = code
     vsRefComponent.display = display
     vsRefComponent.designation = JsonUtil.deserializeList(designation, "ValueSet.ConceptReferenceDesignationComponent")
-                as MutableList<ConceptDesignation>
+                as MutableList<VSConceptDesignation>
     return vsRefComponent
 }

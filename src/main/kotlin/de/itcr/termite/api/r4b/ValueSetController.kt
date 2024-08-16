@@ -229,7 +229,7 @@ import java.net.URI
             use = "in",
             min = 0,
             max = "1",
-            documentation = "System from which the coding originates",
+            documentation = "The version of the code system, if one was provided in the source data",
             type = "string"
         ),
         Parameter(
@@ -462,15 +462,6 @@ class ValueSetController(
             val responseMediaType = determineResponseMediaType(accept, contentType)
             if (vs is ValueSet) {
                 logger.debug("Updating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
-                /*
-                if (persistence.exists(idInt)) {
-                    logger.info("Updating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
-                    val updatedVs = persistence.update(idInt, vs)
-                }
-                else {
-                    logger.info("Creating ValueSet instance [id: ${id}, url: ${vs.url}, version: ${vs.version}]")
-                }
-                */
                 val updatedVs = persistence.update(idInt, vs)
                 logger.debug("Updated ValueSet instance [id: ${updatedVs.id}, url: ${updatedVs.url}, version: ${updatedVs.version}]")
                 return ResponseEntity.ok().contentType(responseMediaType).body(encodeResourceToSting(updatedVs, responseMediaType))
@@ -554,7 +545,6 @@ class ValueSetController(
         catch (e: Throwable) { return handleUnexpectedError(e, accept) }
     }
 
-    // TODO: Allow multiple search parameters with same name
     @GetMapping(
         path = ["\$validate-code", "{id}/\$validate-code"],
         produces = ["application/json", "application/fhir+json", "application/xml", "application/fhir+xml", "application/fhir+ndjson", "application/ndjson"]
