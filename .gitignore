@@ -11,3 +11,5 @@ logging.log
 !/database/.gitkeep
 
 /.commit
+/.kotlin/
+/index/

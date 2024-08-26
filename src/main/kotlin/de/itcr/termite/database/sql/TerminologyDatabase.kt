@@ -70,8 +70,9 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
         logger.debug("Creating Translation table ...")
         super.execute("CREATE TABLE IF NOT EXISTS Translation (CM_ID BIGINT REFERENCES ConceptMaps, " +
                 "CODE TEXT NOT NULL, DISPLAY TEXT NOT NULL, SOURCE_URL TEXT NOT NULL, SOURCE_VERSION TEXT, " +
-                "TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET_CODE TEXT NOT NULL, TARGET_DISPLAY TEXT, " +
-                "EQUIVALENCE TEXT NOT NULL, COMMENT TEXT, DEPENDS_ON JSONB)")
+                "TARGET_URL TEXT NOT NULL, TARGET_VERSION TEXT, TARGET_CODE TEXT, TARGET_DISPLAY TEXT, " +
+                "EQUIVALENCE TEXT NOT NULL, COMMENT TEXT, DEPENDS_ON JSONB, " +
+                "CONSTRAINT unmatched CHECK ((EQUIVALENCE = 'unmatched') != (TARGET_CODE IS NOT NULL)))")
         logger.debug("Creating Translation index ...")
         super.execute("CREATE INDEX IF NOT EXISTS Idx_Translation ON Translation(CM_ID, CODE, SOURCE_URL, CODE, " +
                 "SOURCE_VERSION, TARGET_URL, TARGET_VERSION, TARGET_CODE, EQUIVALENCE)")
@@ -662,8 +663,9 @@ class TerminologyDatabase constructor(private val ctx: FhirContext, url: String)
         val rs = super.executeQuery(query, params)
         val results = mutableListOf<Pair<ConceptMapEquivalence, Coding>>()
         while (rs.next()) {
-            val targetCoding = Coding(targetSystem, rs.getString(1), rs.getString(2))
             val equivalence = ConceptMapEquivalence.fromCode(rs.getString(3))
+            if (equivalence == ConceptMapEquivalence.UNMATCHED) continue
+            val targetCoding = Coding(targetSystem, rs.getString(1), rs.getString(2))
             results.add(Pair(equivalence, targetCoding))
         }
         return results
